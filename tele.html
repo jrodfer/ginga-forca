@@ -52,28 +52,39 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
 .resum h1 { font-size: 5vw; line-height: 1; }
 .resum ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1vw; align-content: start;
   grid-template-columns: repeat(auto-fill, minmax(38vw, 1fr)); }
-.resum li { display: grid; grid-template-columns: 3vw 1fr auto; gap: 1.2vw; align-items: baseline;
+.resum li { border-left: .4vw solid var(--accent); display: grid; grid-template-columns: 3vw 1fr auto; gap: 1.2vw; align-items: baseline;
   padding: 1.2vw 1.4vw; background: var(--panel); border-radius: .8vw; font-size: 2vw; }
 .resum li .idx { font: 700 2.2vw var(--display); color: var(--muted); }
 .resum li .pauta { font: 700 2.6vw var(--display); }
 .peu { color: var(--muted); font-size: 1.6vw; }
 
 /* exercici */
-.exercici { grid-template-columns: 61% 1fr; grid-template-rows: auto 1fr auto; gap: 1.6vw 2.6vw; }
-.dalt { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; }
-.dalt .titol { font: 700 1.8vw var(--display); color: var(--muted); letter-spacing: .04em; }
+.exercici { grid-template-columns: 61% 1fr; grid-template-rows: auto minmax(0, 1fr) auto; gap: 1.4vw 2.6vw; padding-bottom: 4.6vw; }
+.dalt { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+.dalt .esq { display: flex; align-items: center; gap: 1.4vw; }
+.dalt .lockup { width: 10vw; }
+.dalt .sep { width: .2vw; height: 2.4vw; border-radius: .1vw; background: var(--line); }
+.dalt .titol { font: 800 1.9vw var(--display); color: var(--fg); }
+.dalt .pastilla { font: 800 1.2vw var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--accent-fg, #10231D);
+  background: var(--accent); border-radius: 2vw; padding: .5vw 1.3vw; }
 .video { position: relative; width: 100%; aspect-ratio: 16 / 9; align-self: center; border-radius: 1vw; overflow: hidden; background: #000; }
 .video > div, .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .sense-video { display: grid; place-items: center; color: var(--muted); font-size: 2vw; text-align: center; padding: 3vw; }
-.estat { display: grid; align-content: center; gap: 1.6vw; min-width: 0; }
-.estat h2 { font-size: 4.2vw; line-height: 1; text-wrap: balance; }
+.estat { display: grid; align-content: center; gap: 1.2vw; min-width: 0; min-height: 0; }
+.estat h2 { font-size: 3.6vw; line-height: 1.05; text-wrap: balance; }
 .estat .det { color: var(--muted); font-size: 1.7vw; }
 .estat .instr { margin: 0; color: var(--muted); font: 500 1.25vw/1.45 var(--body);
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .estat .instr:empty { display: none; }
-.caixa { background: var(--panel); border-radius: 1.2vw; padding: 2vw; display: grid; gap: .6vw; justify-items: center; text-align: center; }
-.caixa .gran { font: 800 13vw/0.9 var(--display); font-variant-numeric: tabular-nums; }
-.caixa .unitat { font: 600 2.4vw var(--display); color: var(--muted); }
+.caixa { background: var(--panel); border-radius: 1.4vw; padding: 2vw; display: grid; gap: .6vw; justify-items: center;
+  text-align: center; border-top: .55vw solid var(--accent); }
+.caixa .eyebrow { color: var(--accent); font-weight: 900; }
+.caixa.descans { border-top-color: var(--rest); }
+.caixa.descans .eyebrow { color: var(--rest); }
+.caixa.feina { border-top-color: var(--ok); }
+.caixa.feina .eyebrow { color: var(--ok); }
+.caixa .gran { font: 900 11vw/0.9 var(--display); font-variant-numeric: tabular-nums; }
+.caixa .unitat { font: 800 2.4vw var(--display); color: var(--muted); }
 .punts { display: flex; gap: 1vw; margin-top: .6vw; }
 .punts span { width: 1.4vw; height: 1.4vw; border-radius: 50%; border: .25vw solid var(--ok); }
 .punts span.fet { background: var(--ok); }
@@ -109,13 +120,15 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
   </section>
 
   <section class="pantalla resum" id="v-resum" hidden>
-    <div style="display:grid;gap:.8vw"><div class="eyebrow" id="r-data"></div><h1 id="r-titol"></h1></div>
+    <div style="display:grid;gap:.8vw"><svg class="lockup" style="width:14vw;margin-bottom:1vw" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
+      <div class="eyebrow" id="r-data"></div><h1 id="r-titol"></h1></div>
     <ol id="r-llista"></ol>
-    <div class="peu">Toca «Comença» al mòbil. El mòbil fa de comandament.</div>
+    <div class="peu">Prem OK al comandament o toca «Comença» al mòbil.</div>
   </section>
 
   <section class="pantalla exercici" id="v-exercici" hidden>
-    <div class="dalt"><span class="titol" id="e-sessio"></span><span class="eyebrow" id="e-comptador"></span></div>
+    <div class="dalt"><div class="esq"><svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg><span class="sep"></span><span class="titol" id="e-sessio"></span></div>
+      <span class="pastilla" id="e-comptador"></span></div>
     <div class="video" id="e-video"><div id="yt"></div></div>
     <div class="estat">
       <div style="display:grid;gap:.6vw"><h2 id="e-nom"></h2><div class="det" id="e-det"></div>
@@ -240,7 +253,7 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
       mostra("v-resum");
       $("r-titol").textContent = netNom(ses.t);
       var dt = ses.d ? new Date(ses.d + "T12:00:00") : null;
-      $("r-data").textContent = dt && !isNaN(dt) ? DIES[dt.getDay()] + " " + dt.getDate() + " de " + MESOS[dt.getMonth()] : "Ginga · Força";
+      $("r-data").textContent = dt && !isNaN(dt) ? DIES[dt.getDay()] + " " + dt.getDate() + " de " + MESOS[dt.getMonth()] : "Força";
       var ol = $("r-llista"); ol.textContent = "";
       (ses.e || []).forEach(function (e, k) {
         var li = document.createElement("li");
