@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Ginga Força · Tele</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@500;600&display=swap">
+<script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+<style>
+/* Pantalla de la tele (receptor de Google Cast). Es mira a 3 metres: tot en vw, xifres enormes.
+   Vídeo a l'esquerra, l'estat de la sèrie a la dreta, la sessió sencera a baix. */
+:root {
+  --bg: #0e130f;
+  --panel: #171e18;
+  --fg: #eef2ec;
+  --muted: #8f9b90;
+  --line: #273027;
+  --accent: #62b56a;
+  --rest: #f2a447;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", Arial, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body); }
+[hidden] { display: none !important; }
+.num, h1, h2 { font-family: var(--display); margin: 0; letter-spacing: .01em; }
+.eyebrow { font-size: 1.15vw; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+
+.pantalla { position: absolute; inset: 0; padding: 3.2vw 3.6vw; display: grid; }
+
+/* espera i resum */
+.centre { place-content: center; text-align: center; gap: 1.4vw; }
+.marca { font: 800 2.2vw/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.centre h1 { font-size: 6vw; line-height: 1; }
+.centre p { margin: 0; color: var(--muted); font-size: 2vw; }
+.resum { grid-template-rows: auto 1fr auto; gap: 2.4vw; }
+.resum h1 { font-size: 5vw; line-height: 1; }
+.resum ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1vw; align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(38vw, 1fr)); }
+.resum li { display: grid; grid-template-columns: 3vw 1fr auto; gap: 1.2vw; align-items: baseline;
+  padding: 1.2vw 1.4vw; background: var(--panel); border-radius: .8vw; font-size: 2vw; }
+.resum li .idx { font: 700 2.2vw var(--display); color: var(--muted); }
+.resum li .pauta { font: 700 2.6vw var(--display); }
+.peu { color: var(--muted); font-size: 1.6vw; }
+
+/* exercici */
+.exercici { grid-template-columns: 61% 1fr; grid-template-rows: auto 1fr auto; gap: 1.6vw 2.6vw; }
+.dalt { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; }
+.dalt .titol { font: 700 1.8vw var(--display); color: var(--muted); letter-spacing: .04em; }
+.video { position: relative; width: 100%; aspect-ratio: 16 / 9; align-self: center; border-radius: 1vw; overflow: hidden; background: #000; }
+.video > div, .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.sense-video { display: grid; place-items: center; color: var(--muted); font-size: 2vw; text-align: center; padding: 3vw; }
+.estat { display: grid; align-content: center; gap: 1.6vw; min-width: 0; }
+.estat h2 { font-size: 4.2vw; line-height: 1; text-wrap: balance; }
+.estat .det { color: var(--muted); font-size: 1.7vw; }
+.caixa { background: var(--panel); border-radius: 1.2vw; padding: 2vw; display: grid; gap: .6vw; justify-items: center; text-align: center; }
+.caixa .gran { font: 800 13vw/0.9 var(--display); font-variant-numeric: tabular-nums; }
+.caixa .unitat { font: 600 2.4vw var(--display); color: var(--muted); }
+.punts { display: flex; gap: 1vw; margin-top: .6vw; }
+.punts span { width: 1.4vw; height: 1.4vw; border-radius: 50%; border: .25vw solid var(--accent); }
+.punts span.fet { background: var(--accent); }
+.punts span.ara { box-shadow: 0 0 0 .35vw var(--panel), 0 0 0 .6vw var(--accent); }
+.caixa.descans .gran { color: var(--rest); }
+.caixa.feina .gran { color: var(--accent); }
+.barra { width: 100%; height: .7vw; background: var(--line); border-radius: .35vw; overflow: hidden; }
+.barra > div { height: 100%; width: 100%; transform-origin: left; }
+.descans .barra > div { background: var(--rest); }
+.feina .barra > div { background: var(--accent); }
+.caixa .seguent { color: var(--muted); font-size: 1.7vw; }
+.tira { grid-column: 1 / -1; display: flex; gap: .8vw; }
+.tira div { flex: 1; min-width: 0; padding: .9vw 1vw .7vw; border-top: .45vw solid var(--line); color: var(--muted);
+  font-size: 1.25vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tira div.fet { border-color: var(--accent); }
+.tira div.ara { border-color: var(--fg); color: var(--fg); }
+
+.final .gran { font: 800 12vw/1 var(--display); color: var(--accent); }
+</style>
+</head>
+<body>
+  <section class="pantalla centre" id="v-espera">
+    <div class="marca">Ginga · Força</div>
+    <h1>A punt</h1>
+    <p>Obre la sessió al mòbil i toca «Comença».</p>
+  </section>
+
+  <section class="pantalla resum" id="v-resum" hidden>
+    <div style="display:grid;gap:.8vw"><div class="eyebrow" id="r-data"></div><h1 id="r-titol"></h1></div>
+    <ol id="r-llista"></ol>
+    <div class="peu">Toca «Comença» al mòbil. El mòbil fa de comandament.</div>
+  </section>
+
+  <section class="pantalla exercici" id="v-exercici" hidden>
+    <div class="dalt"><span class="titol" id="e-sessio"></span><span class="eyebrow" id="e-comptador"></span></div>
+    <div class="video" id="e-video"><div id="yt"></div></div>
+    <div class="estat">
+      <div style="display:grid;gap:.6vw"><h2 id="e-nom"></h2><div class="det" id="e-det"></div></div>
+      <div class="caixa" id="e-caixa">
+        <div class="eyebrow" id="e-etiqueta"></div>
+        <div class="gran" id="e-gran"></div>
+        <div class="unitat" id="e-unitat"></div>
+        <div class="punts" id="e-punts"></div>
+        <div class="barra" id="e-barra" hidden><div id="e-barra-in"></div></div>
+        <div class="seguent" id="e-seguent"></div>
+      </div>
+    </div>
+    <div class="tira" id="e-tira"></div>
+  </section>
+
+  <section class="pantalla centre final" id="v-final" hidden>
+    <div class="marca">Ginga · Força</div>
+    <div class="gran">Fet!</div>
+    <p id="f-txt"></p>
+  </section>
+
+<script>
+(function () {
+  "use strict";
+  var NS = "urn:x-cast:cat.ginga.forca";
+  var $ = function (id) { return document.getElementById(id); };
+  var DIES = ["Diumenge", "Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte"];
+  var MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"];
+
+  function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  function netNom(t) { return (t || "").replace(/^S\d+\s+\w+\s+-\s+/, ""); }
+  function quantitat(e) {
+    if (e.u === "r") return { num: String(e.q), unitat: e.c ? "reps per costat" : "reps" };
+    if (e.q >= 60 && e.q % 60 === 0) return { num: (e.q / 60) + "'", unitat: e.c ? "minuts per costat" : "minuts" };
+    return { num: e.q + "\"", unitat: e.c ? "segons per costat" : "segons" };
+  }
+  function pauta(e) { var q = quantitat(e); return (e.s > 1 ? e.s + "×" : "") + q.num + (e.c ? " /costat" : ""); }
+  function mostra(id) { ["v-espera", "v-resum", "v-exercici", "v-final"].forEach(function (v) { $(v).hidden = v !== id; }); }
+
+  // ---- so a la tele quan s'acaba el descans
+  var audio = null;
+  try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (err) {}
+  function xiulet(n) {
+    if (!audio) return;
+    try { audio.resume(); } catch (err) {}
+    for (var k = 0; k < n; k++) {
+      var o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + k * 0.25;
+      o.frequency.value = 880; o.connect(g); g.connect(audio.destination);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18); o.start(t); o.stop(t + 0.2);
+    }
+  }
+
+  // ---- YouTube
+  var yt = null, ytLlest = false, videoVol = null;
+  window.onYouTubeIframeAPIReady = function () {
+    yt = new YT.Player("yt", {
+      width: "100%", height: "100%",
+      playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3 },
+      events: {
+        onReady: function () { ytLlest = true; if (videoVol) posaVideo(videoVol, true); },
+        onStateChange: function (ev) { if (ev.data === YT.PlayerState.ENDED) { yt.seekTo(0); yt.playVideo(); } }   // en bucle
+      }
+    });
+  };
+  var s = document.createElement("script"); s.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(s);
+
+  var videoActual = null;
+  function posaVideo(id, forca) {
+    videoVol = id;
+    var cont = $("e-video");
+    var sense = cont.querySelector(".sense-video");
+    if (!id) {
+      if (!sense) { sense = document.createElement("div"); sense.className = "sense-video";
+        sense.textContent = "Aquest exercici no té vídeo"; cont.appendChild(sense); }
+      if (ytLlest) yt.pauseVideo();
+      videoActual = null; return;
+    }
+    if (sense) sense.remove();
+    if (!ytLlest || (!forca && videoActual === id)) return;
+    videoActual = id;
+    yt.loadVideoById(id);
+    // si la tele no deixa arrencar amb so, arrenca sense
+    setTimeout(function () { try { if (yt.getPlayerState() !== YT.PlayerState.PLAYING) { yt.mute(); yt.playVideo(); } } catch (err) {} }, 2500);
+  }
+
+  // ---- temporitzador local (el mòbil envia quant en queda)
+  var compte = null;
+  function paraCompte() { if (compte) { clearInterval(compte.id); compte = null; } }
+  function arrencaCompte(queda, total, fase) {
+    paraCompte();
+    var c = { fi: Date.now() + queda * 1000, total: total || queda, fase: fase, sonat: false };
+    $("e-barra").hidden = false;
+    var tick = function () {
+      var q = (c.fi - Date.now()) / 1000;
+      $("e-gran").textContent = mmss(q);
+      $("e-barra-in").style.transform = "scaleX(" + Math.max(0, Math.min(1, q / c.total)) + ")";
+      if (q <= 0) { if (!c.sonat && c.fase === "descans") { c.sonat = true; xiulet(2); } paraCompte(); }
+    };
+    c.id = setInterval(tick, 200); compte = c; tick();
+  }
+
+  // ---- pintar l'estat que arriba del mòbil
+  function pinta(m) {
+    var ses = m.sessio || {};
+    if (m.vista === "resum") {
+      paraCompte(); if (ytLlest) yt.pauseVideo();
+      mostra("v-resum");
+      $("r-titol").textContent = netNom(ses.t);
+      var dt = ses.d ? new Date(ses.d + "T12:00:00") : null;
+      $("r-data").textContent = dt && !isNaN(dt) ? DIES[dt.getDay()] + " " + dt.getDate() + " de " + MESOS[dt.getMonth()] : "Ginga · Força";
+      var ol = $("r-llista"); ol.textContent = "";
+      (ses.e || []).forEach(function (e, k) {
+        var li = document.createElement("li");
+        li.innerHTML = '<span class="idx"></span><span class="nom"></span><span class="pauta"></span>';
+        li.children[0].textContent = k + 1; li.children[1].textContent = e.n; li.children[2].textContent = pauta(e);
+        ol.appendChild(li);
+      });
+      return;
+    }
+    if (m.vista === "final") {
+      paraCompte(); if (ytLlest) yt.pauseVideo();
+      var total = (m.fetes || []).reduce(function (a, b) { return a + b; }, 0);
+      $("f-txt").textContent = total + " sèries de " + (ses.e || []).length + " exercicis. Posa l'RPE a intervals.icu.";
+      mostra("v-final"); return;
+    }
+    var e = (ses.e || [])[m.i]; if (!e) return;
+    mostra("v-exercici");
+    $("e-sessio").textContent = netNom(ses.t);
+    $("e-comptador").textContent = "Exercici " + (m.i + 1) + " de " + ses.e.length;
+    $("e-nom").textContent = e.n;
+    $("e-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
+    posaVideo(e.v || "");
+
+    var fetes = Math.min((m.fetes || [])[m.i] || 0, e.s), caixa = $("e-caixa");
+    caixa.className = "caixa" + (m.fase === "descans" ? " descans" : m.fase === "feina" ? " feina" : "");
+    $("e-seguent").textContent = m.fase === "descans" ? (m.seguent || "") : "";
+    var punts = $("e-punts"); punts.textContent = "";
+    var ara = m.fase === "descans" ? fetes - 1 : fetes;
+    for (var k = 0; k < e.s && e.s > 1; k++) {
+      var sp = document.createElement("span"); sp.className = k < fetes ? "fet" : (k === ara ? "ara" : ""); punts.appendChild(sp);
+    }
+    if (m.fase === "descans" || m.fase === "feina") {
+      $("e-etiqueta").textContent = m.fase === "descans" ? "Descans" : (m.text || "Ara");
+      $("e-unitat").textContent = "";
+      arrencaCompte(m.queda || 0, m.total, m.fase);
+    } else {
+      paraCompte(); $("e-barra").hidden = true;
+      var q = quantitat(e);
+      $("e-etiqueta").textContent = e.s > 1 ? "Sèrie " + (fetes + 1) + " de " + e.s : "Una tanda";
+      $("e-gran").textContent = q.num; $("e-unitat").textContent = q.unitat;
+    }
+    var tira = $("e-tira"); tira.textContent = "";
+    ses.e.forEach(function (x, k) {
+      var d = document.createElement("div");
+      d.className = k === m.i ? "ara" : (((m.fetes || [])[k] || 0) >= x.s ? "fet" : "");
+      d.textContent = x.n; tira.appendChild(d);
+    });
+  }
+
+  function rebut(m) {
+    if (!m || typeof m !== "object") return;
+    if (m.tipus === "estat") pinta(m);
+    else if (m.tipus === "video" && ytLlest) { m.accio === "pausa" ? yt.pauseVideo() : (yt.unMute(), yt.playVideo()); }
+  }
+
+  // ---- prova sense Chromecast: tele.html#prova, tele.html#prova-descans
+  if (/^#prova/.test(location.hash)) {
+    var ses = { t: "S1 Dl - Forca A", d: "2026-10-19", e: [
+      { n: "Sentadilla", v: "-bJIpOq-LWk", s: 4, q: 6, u: "r", c: 0, d: 120, x: "" },
+      { n: "Pes mort romanès", v: "_oyxCn2iSjU", s: 3, q: 8, u: "r", c: 0, d: 90, x: "" },
+      { n: "Step down excèntric", v: "SZXOPRVP1Oc", s: 3, q: 8, u: "r", c: 1, d: 60, x: "baixant en 3s" },
+      { n: "Elevació de talons", v: "KRJIKsY02nE", s: 3, q: 15, u: "r", c: 0, d: 45, x: "" },
+      { n: "Core", v: "zY7t1OqE43Y", s: 1, q: 480, u: "s", c: 0, d: 0, x: "" }] };
+    var h = location.hash;
+    rebut(h === "#prova-resum" ? { tipus: "estat", sessio: ses, i: 0, fetes: [0, 0, 0, 0, 0], vista: "resum" }
+        : h === "#prova-descans" ? { tipus: "estat", sessio: ses, i: 2, fetes: [4, 3, 1, 0, 0], vista: "exercici", fase: "descans",
+                                     queda: 47, total: 60, seguent: "Després: sèrie 2 de 3" }
+        : { tipus: "estat", sessio: ses, i: 0, fetes: [1, 0, 0, 0, 0], vista: "exercici", fase: "serie" });
+    return;
+  }
+
+  // ---- receptor de Google Cast
+  try {
+    var ctx = cast.framework.CastReceiverContext.getInstance();
+    var opts = new cast.framework.CastReceiverOptions();
+    opts.disableIdleTimeout = true;          // no hi ha cap vídeo "de Cast": sense això es tancaria sol
+    opts.skipPlayersLoad = true;
+    opts.customNamespaces = {};
+    opts.customNamespaces[NS] = cast.framework.system.MessageType.JSON;
+    ctx.addCustomMessageListener(NS, function (ev) { rebut(ev.data); });
+    ctx.start(opts);
+  } catch (err) {}
+})();
+</script>
+</body>
+</html>

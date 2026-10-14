@@ -104,15 +104,43 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .nav button:disabled { opacity: .3; cursor: default; }
 .final { text-align: center; display: grid; gap: 12px; padding-block: 24px; }
 .final .num { font-size: 3.4rem; color: var(--accent); }
+.cap { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.cast { flex: none; width: 44px; height: 44px; }
+google-cast-launcher { display: block; width: 44px; height: 44px; cursor: pointer;
+  --connected-color: var(--accent); --disconnected-color: var(--fg); }
+.a-la-tele { background: var(--accent); color: var(--accent-fg); border-radius: 10px; padding: 10px 12px; font-size: .95rem; }
+.a-la-tele .muted { color: inherit; opacity: .8; }
+.emetent .video { display: none; }
+
+/* Mòbil de costat o pantalla ampla: vídeo a l'esquerra, sèrie i descans a la dreta */
+@media (orientation: landscape) and (min-width: 700px) {
+  main { max-width: 1400px; }
+  #vista-exercici:not([hidden]) { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; column-gap: 24px; }
+  #vista-exercici > :first-child { grid-column: 1 / -1; }
+  #vista-exercici > :nth-child(2) { grid-column: 1; grid-row: 2 / span 5; }
+  #vista-exercici > :nth-child(n+3) { grid-column: 2; }
+  .emetent #vista-exercici:not([hidden]) { grid-template-columns: minmax(0, 1fr); }
+  .emetent #vista-exercici > * { grid-column: 1 !important; grid-row: auto !important; }
+  .serie .num { font-size: 6rem; }
+  .descans .num { font-size: 6.5rem; }
+}
 @media (prefers-reduced-motion: reduce) { .progres > div { transition: none; } }
 </style>
 </head>
 <body>
 <main>
-  <header style="display:grid;gap:6px">
-    <div class="eyebrow" id="data"></div>
-    <h1 id="titol">Força</h1>
+  <header class="cap">
+    <div style="display:grid;gap:6px;min-width:0">
+      <div class="eyebrow" id="data"></div>
+      <h1 id="titol">Força</h1>
+    </div>
+    <div class="cast" id="cast-bloc" hidden>
+      <google-cast-launcher id="cast-boto" aria-label="Envia a la tele"></google-cast-launcher>
+    </div>
   </header>
+  <div class="a-la-tele" id="a-la-tele" hidden>
+    <span><strong>A la tele</strong> <span class="muted" id="tele-nom"></span> · el mòbil fa de comandament</span>
+  </div>
 
   <div class="demo" id="avis-demo" hidden>Sessió d'exemple. Les teves arriben amb l'enllaç del correu setmanal de Ginga.</div>
 
@@ -136,7 +164,11 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     </div>
     <div style="display:grid;gap:8px">
       <div class="video" id="video"></div>
-      <a class="tele" id="tele" href="#" target="_blank" rel="noopener">Mira-ho a la tele <span class="muted">· s'obre a YouTube, toca el botó de Cast</span></a>
+      <div class="fila" id="video-tele" hidden>
+        <button class="btn sec" type="button" id="tele-play">Reprodueix el vídeo</button>
+        <button class="btn sec" type="button" id="tele-pausa">Atura el vídeo</button>
+      </div>
+      <a class="tele" id="tele" href="#" target="_blank" rel="noopener">Obre el vídeo a YouTube</a>
     </div>
     <div style="display:grid;gap:2px">
       <h2 id="ex-nom"></h2>
@@ -243,6 +275,44 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   $("avis-demo").hidden = !esExemple;
   if (sessio.m) { $("notes").textContent = sessio.m; $("notes-bloc").hidden = false; }
 
+  // ---- Google Cast: la tele (tele.html) pinta el que li envia el mòbil, que és qui mana
+  var NS = "urn:x-cast:cat.ginga.forca";
+  var APP = "7F88A6AB";
+  var vista = "resum", fase = "serie", feinaTxt = "", seguentTxt = "";
+  function sessioCast() {
+    try { return cast.framework.CastContext.getInstance().getCurrentSession(); } catch (err) { return null; }
+  }
+  function envia(msg) {
+    var s = sessioCast();
+    if (s) s.sendMessage(NS, msg).catch(function () {});
+  }
+  function emet() {
+    if (!sessioCast()) return;
+    envia({ tipus: "estat", sessio: sessio, i: estat.i, fetes: estat.fetes, vista: vista, fase: fase,
+            text: feinaTxt, seguent: seguentTxt, queda: tempo ? Math.max(0, (tempo.fi - Date.now()) / 1000) : null,
+            total: tempo ? tempo.total : null });
+  }
+  function canviCast() {
+    var s = sessioCast();
+    document.body.classList.toggle("emetent", !!s);
+    $("a-la-tele").hidden = !s;
+    $("video-tele").hidden = !s;
+    if (s) { $("tele-nom").textContent = s.getCastDevice().friendlyName || ""; emet(); }
+    else { videoActual = null; if (!$("vista-exercici").hidden) posaVideo(sessio.e[estat.i]); }
+  }
+  window.__onGCastApiAvailable = function (disponible) {
+    if (!disponible) return;          // iPhone o navegador sense Cast: el botó no surt
+    try {
+      var ctx = cast.framework.CastContext.getInstance();
+      ctx.setOptions({ receiverApplicationId: APP, autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED });
+      ctx.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function () { setTimeout(canviCast, 0); });
+      $("cast-bloc").hidden = false;
+      canviCast();
+    } catch (err) {}
+  };
+  $("tele-play").addEventListener("click", function () { envia({ tipus: "video", accio: "play" }); });
+  $("tele-pausa").addEventListener("click", function () { envia({ tipus: "video", accio: "pausa" }); });
+
   function pintaLlista() {
     var ol = $("llista"); ol.textContent = "";
     sessio.e.forEach(function (e, i) {
@@ -263,6 +333,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     var algun = seriesFetes() > 0;
     $("comenca").textContent = algun ? "Continua" : "Comença";
     $("reinicia").hidden = !algun;
+    vista = "resum"; emet();
   }
 
   // ---- so, vibració i pantalla encesa
@@ -290,7 +361,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   function para() { if (tempo) { clearInterval(tempo.id); tempo = null; } }
   function compta(segons, onTick, onFi) {
     para();
-    var t = { fi: Date.now() + segons * 1000, onTick: onTick, onFi: onFi, avisat: false };
+    var t = { fi: Date.now() + segons * 1000, total: segons, onTick: onTick, onFi: onFi, avisat: false };
     var tick = function () {
       var queda = (t.fi - Date.now()) / 1000;
       if (queda <= 3.05 && !t.avisat && segons > 5) { t.avisat = true; xiulet(1); }
@@ -299,7 +370,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     };
     t.id = setInterval(tick, 200); tempo = t; tick();
   }
-  function afegeix(s) { if (tempo) tempo.fi += s * 1000; }
+  function afegeix(s) { if (tempo) { tempo.fi += s * 1000; tempo.total += s; emet(); } }
 
   // ---- vista d'exercici
   function mostra(vista) {
@@ -309,11 +380,12 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 
   var videoActual = null;
   function posaVideo(e) {
+    $("tele").hidden = !e.v;
+    if (e.v) $("tele").href = "https://www.youtube.com/watch?v=" + encodeURIComponent(e.v);
+    if (sessioCast()) { videoActual = null; $("video").textContent = ""; return; }
     if (videoActual === e.v + "|" + e.n) return;
     videoActual = e.v + "|" + e.n;
     var cont = $("video"); cont.textContent = "";
-    $("tele").hidden = !e.v;
-    if (e.v) $("tele").href = "https://www.youtube.com/watch?v=" + encodeURIComponent(e.v);
     if (e.v) {
       var f = document.createElement("iframe");
       f.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(e.v) + "?rel=0&playsinline=1&modestbranding=1";
@@ -357,6 +429,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     var accio = $("accio"); accio.hidden = false;
     accio.textContent = e.u === "s" ? "Comença el temps" : "Sèrie feta";
     accio.onclick = function () { preparaSo(); e.u === "s" ? faseFeina(e) : serieFeta(); };
+    vista = "exercici"; fase = "serie"; emet();
   }
 
   function faseFeina(e) {
@@ -371,6 +444,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
         pas++;
         if (pas < durades.length) { xiulet(1); seguent(); } else { serieFeta(); }
       });
+      vista = "exercici"; fase = "feina"; feinaTxt = costats[pas]; emet();
     })();
   }
 
@@ -389,6 +463,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     compta(e.d, function (q) { $("descans-temps").textContent = mmss(q); }, function () {
       xiulet(2); ultimaExercici ? seguentExercici() : faseSerie();
     });
+    vista = "exercici"; fase = "descans"; seguentTxt = $("seguent").textContent; emet();
   }
 
   function seguentExercici() {
@@ -401,6 +476,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   function final() {
     para(); mostra("vista-final");
     $("final-txt").textContent = seriesFetes() + " sèries de " + sessio.e.length + " exercicis.";
+    vista = "final"; emet();
     try { if (bloqueig) bloqueig.release(); } catch (err) {}
   }
 
@@ -426,5 +502,6 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   pintaLlista();
 })();
 </script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
 </body>
 </html>
