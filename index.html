@@ -105,9 +105,11 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .final { text-align: center; display: grid; gap: 12px; padding-block: 24px; }
 .final .num { font-size: 3.4rem; color: var(--accent); }
 .cap { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.cast { flex: none; width: 44px; height: 44px; }
-google-cast-launcher { display: block; width: 44px; height: 44px; cursor: pointer;
-  --connected-color: var(--accent); --disconnected-color: var(--fg); }
+.boto-tele { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px;
+  border: 1.5px solid var(--line); background: var(--card); color: var(--fg); font: 600 .95rem var(--body); cursor: pointer; }
+.boto-tele svg { width: 22px; height: 22px; fill: currentColor; }
+.boto-tele.connectat { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.avis-tele { background: var(--rest-soft); border-radius: 10px; padding: 10px 12px; font-size: .9rem; }
 .a-la-tele { background: var(--accent); color: var(--accent-fg); border-radius: 10px; padding: 10px 12px; font-size: .95rem; }
 .a-la-tele .muted { color: inherit; opacity: .8; }
 .emetent .video { display: none; }
@@ -134,10 +136,12 @@ google-cast-launcher { display: block; width: 44px; height: 44px; cursor: pointe
       <div class="eyebrow" id="data"></div>
       <h1 id="titol">Força</h1>
     </div>
-    <div class="cast" id="cast-bloc" hidden>
-      <google-cast-launcher id="cast-boto" aria-label="Envia a la tele"></google-cast-launcher>
-    </div>
+    <button class="boto-tele" id="cast-boto" type="button" aria-label="Envia a la tele">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 18v3h3a3 3 0 0 0-3-3zm0-4v2a5 5 0 0 1 5 5h2a7 7 0 0 0-7-7zm0-4v2a9 9 0 0 1 9 9h2A11 11 0 0 0 1 10zm20-7H3a2 2 0 0 0-2 2v3h2V5h18v14h-7v2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/></svg>
+      <span id="cast-txt">Tele</span>
+    </button>
   </header>
+  <div class="avis-tele" id="avis-tele" hidden></div>
   <div class="a-la-tele" id="a-la-tele" hidden>
     <span><strong>A la tele</strong> <span class="muted" id="tele-nom"></span> · el mòbil fa de comandament</span>
   </div>
@@ -292,8 +296,29 @@ google-cast-launcher { display: block; width: 44px; height: 44px; cursor: pointe
             text: feinaTxt, seguent: seguentTxt, queda: tempo ? Math.max(0, (tempo.fi - Date.now()) / 1000) : null,
             total: tempo ? tempo.total : null });
   }
+  var castLlest = false;
+  function avisTele(text) { $("avis-tele").textContent = text || ""; $("avis-tele").hidden = !text; }
+  $("cast-boto").addEventListener("click", function () {
+    if (!castLlest) {
+      return avisTele(window.chrome && /Android|Windows|Mac|Linux|CrOS/.test(navigator.userAgent) && !/iPhone|iPad/.test(navigator.userAgent)
+        ? "Aquest navegador no carrega Google Cast. Obre l'enllaç amb Chrome (no dins de Gmail) i mira que el mòbil estigui a la mateixa wifi que la tele."
+        : "Des d'aquest aparell no es pot fer Cast. Amb iPhone, duplica la pantalla amb AirPlay i gira el mòbil.");
+    }
+    var ctx = cast.framework.CastContext.getInstance();
+    if (sessioCast()) { ctx.endCurrentSession(true); return; }
+    if (ctx.getCastState() === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
+      avisTele("No trobo cap tele que pugui obrir Ginga. Mira que el Chromecast estigui a la mateixa wifi i, mentre l'aplicació " +
+               "de Cast no estigui publicada, que el seu número de sèrie estigui registrat com a aparell de prova.");
+    }
+    ctx.requestSession().then(function () { avisTele(""); }, function (err) {
+      if (err !== "cancel" && err !== chrome.cast.ErrorCode.CANCEL) avisTele("No s'ha pogut connectar amb la tele (" + err + ").");
+    });
+  });
+
   function canviCast() {
     var s = sessioCast();
+    $("cast-boto").classList.toggle("connectat", !!s);
+    $("cast-txt").textContent = s ? "Desconnecta" : "Tele";
     document.body.classList.toggle("emetent", !!s);
     $("a-la-tele").hidden = !s;
     $("video-tele").hidden = !s;
@@ -306,7 +331,7 @@ google-cast-launcher { display: block; width: 44px; height: 44px; cursor: pointe
       var ctx = cast.framework.CastContext.getInstance();
       ctx.setOptions({ receiverApplicationId: APP, autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED });
       ctx.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function () { setTimeout(canviCast, 0); });
-      $("cast-bloc").hidden = false;
+      castLlest = true;
       canviCast();
     } catch (err) {}
   };
