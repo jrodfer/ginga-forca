@@ -218,6 +218,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   </section>
 </main>
 
+<script src="motor.js"></script>
 <script>
 (function () {
   "use strict";
@@ -233,7 +234,6 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
       { n: "Planxa lateral", v: "rrrxDvyfYN0", s: 3, q: 30, u: "s", c: 1, d: 30, x: "" }
     ]
   };
-  var CANVI_COSTAT = 5;   // segons per canviar de costat en els exercicis de temps
 
   function llegeixHash() {
     var codi = (location.hash || "").slice(1);
@@ -253,29 +253,17 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   sessio = sessio || EXEMPLE;
   var clau = "ginga-forca:" + ((location.hash || "").slice(1, 80) || "exemple");
 
-  // Estat: exercici actual, sèries fetes per exercici, fase (serie | feina | descans)
-  var estat = { i: 0, fetes: sessio.e.map(function () { return 0; }) };
-  try { var desat = JSON.parse(localStorage.getItem(clau) || "null");
-        if (desat && desat.fetes && desat.fetes.length === sessio.e.length) estat = desat; } catch (err) {}
-  function desa() { try { localStorage.setItem(clau, JSON.stringify(estat)); } catch (err) {} }
-
+  var G = window.GingaMotor, mmss = G.mmss, quantitat = G.quantitat, pauta = G.pauta;
   var $ = function (id) { return document.getElementById(id); };
   var DIES = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
   var MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"];
+  function suma(fetes) { return fetes.reduce(function (a, b) { return a + b; }, 0); }
+  var totalSeries = sessio.e.reduce(function (a, e) { return a + e.s; }, 0);
 
-  function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
-  function quantitat(e) {
-    if (e.u === "r") return { num: String(e.q), unitat: e.c ? "reps per costat" : "reps" };
-    if (e.q >= 60 && e.q % 60 === 0) return { num: (e.q / 60) + "'", unitat: e.c ? "minuts per costat" : "minuts" };
-    return { num: e.q + "\"", unitat: e.c ? "segons per costat" : "segons" };
-  }
-  function pauta(e) { var q = quantitat(e); return (e.s > 1 ? e.s + "×" : "") + q.num + (e.c ? " /costat" : ""); }
-  function totalSeries() { return sessio.e.reduce(function (a, e) { return a + e.s; }, 0); }
-  function seriesFetes() { return estat.fetes.reduce(function (a, b) { return a + b; }, 0); }
-
-  // ---- capçalera i llista
-  document.title = sessio.t.replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/g, "Força") + " · Ginga";
-  $("titol").textContent = sessio.t.replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/g, "Força");
+  // ---- capçalera
+  var titol = sessio.t.replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/g, "Força");
+  document.title = titol + " · Ginga";
+  $("titol").textContent = titol;
   if (sessio.d) {
     var dt = new Date(sessio.d + "T12:00:00");
     if (!isNaN(dt)) $("data").textContent = DIES[dt.getDay()] + " " + dt.getDate() + " de " + MESOS[dt.getMonth()];
@@ -283,106 +271,9 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   $("avis-demo").hidden = !esExemple;
   if (sessio.m) { $("notes").textContent = sessio.m; $("notes-bloc").hidden = false; }
 
-  // ---- Google Cast: la tele (tele.html) pinta el que li envia el mòbil, que és qui mana
-  var NS = "urn:x-cast:cat.ginga.forca";
-  var APP = "7F88A6AB";
-  var vista = "resum", fase = "serie", feinaTxt = "", seguentTxt = "";
-  function sessioCast() {
-    try { return cast.framework.CastContext.getInstance().getCurrentSession(); } catch (err) { return null; }
-  }
-  function envia(msg) {
-    var s = sessioCast();
-    if (s) s.sendMessage(NS, msg).catch(function () {});
-  }
-  function emet() {
-    if (!sessioCast()) return;
-    envia({ tipus: "estat", sessio: sessio, i: estat.i, fetes: estat.fetes, vista: vista, fase: fase,
-            text: feinaTxt, seguent: seguentTxt, queda: tempo ? Math.max(0, (tempo.fi - Date.now()) / 1000) : null,
-            total: tempo ? tempo.total : null });
-  }
-  var castLlest = false;
-  function avisTele(text) { $("avis-tele").textContent = text || ""; $("avis-tele").hidden = !text; }
-  $("cast-boto").addEventListener("click", function () {
-    if (!castLlest) {
-      return avisTele(window.chrome && /Android|Windows|Mac|Linux|CrOS/.test(navigator.userAgent) && !/iPhone|iPad/.test(navigator.userAgent)
-        ? "Aquest navegador no carrega Google Cast. Obre l'enllaç amb Chrome (no dins de Gmail) i mira que el mòbil estigui a la mateixa wifi que la tele."
-        : "Des d'aquest aparell no es pot fer Cast. Amb iPhone, duplica la pantalla amb AirPlay i gira el mòbil.");
-    }
-    var ctx = cast.framework.CastContext.getInstance();
-    if (sessioCast()) { ctx.endCurrentSession(true); return; }
-    if (ctx.getCastState() === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
-      avisTele("No trobo cap tele que pugui obrir Ginga. Mira que el Chromecast estigui a la mateixa wifi i, mentre l'aplicació " +
-               "de Cast no estigui publicada, que el seu número de sèrie estigui registrat com a aparell de prova.");
-    }
-    ctx.requestSession().then(function () { avisTele(""); }, function (err) {
-      if (err !== "cancel" && err !== chrome.cast.ErrorCode.CANCEL) avisTele("No s'ha pogut connectar amb la tele (" + err + ").");
-    });
-  });
-
-  // el comandament de la tele: la tele envia el botó i aquí es fa com si l'haguessis tocat al mòbil
-  function comandament(a) {
-    if (!$("vista-final").hidden) return;
-    if (!$("vista-resum").hidden) { if (a === "principal" || a === "seguent") $("comenca").click(); return; }
-    var enDescans = !$("bloc-descans").hidden;
-    if (a === "principal") $(enDescans ? "salta" : "accio").click();
-    else if (a === "seguent") $(enDescans ? "salta" : "endavant").click();
-    else if (a === "anterior") $("enrere").click();
-    else if (a === "mes15" && enDescans) $("mes15").click();
-  }
-  var escoltant = null;
-  function escoltaTele(s) {
-    if (s === escoltant) return;
-    escoltant = s;
-    s.addMessageListener(NS, function (ns, text) {
-      try { var m = JSON.parse(text); if (m && m.tipus === "comandament") comandament(m.accio); } catch (err) {}
-    });
-  }
-
-  function canviCast() {
-    var s = sessioCast();
-    $("cast-boto").classList.toggle("connectat", !!s);
-    $("cast-txt").textContent = s ? "Desconnecta" : "Tele";
-    document.body.classList.toggle("emetent", !!s);
-    $("a-la-tele").hidden = !s;
-    $("video-tele").hidden = !s;
-    if (s) { $("tele-nom").textContent = s.getCastDevice().friendlyName || ""; escoltaTele(s); mantenEncesa(); emet(); }
-    else { videoActual = null; if (!$("vista-exercici").hidden) posaVideo(sessio.e[estat.i]); }
-  }
-  window.__onGCastApiAvailable = function (disponible) {
-    if (!disponible) return;          // iPhone o navegador sense Cast: el botó no surt
-    try {
-      var ctx = cast.framework.CastContext.getInstance();
-      ctx.setOptions({ receiverApplicationId: APP, autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED });
-      ctx.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function () { setTimeout(canviCast, 0); });
-      castLlest = true;
-      canviCast();
-    } catch (err) {}
-  };
-  $("tele-play").addEventListener("click", function () { envia({ tipus: "video", accio: "play" }); });
-  $("tele-pausa").addEventListener("click", function () { envia({ tipus: "video", accio: "pausa" }); });
-
-  function pintaLlista() {
-    var ol = $("llista"); ol.textContent = "";
-    sessio.e.forEach(function (e, i) {
-      var li = document.createElement("li");
-      if (estat.fetes[i] >= e.s) li.className = "fet";
-      var idx = document.createElement("span"); idx.className = "idx"; idx.textContent = i + 1;
-      var mig = document.createElement("div"); mig.style.minWidth = "0";
-      var nom = document.createElement("div"); nom.className = "nom"; nom.textContent = e.n;
-      var det = document.createElement("div"); det.className = "det";
-      det.textContent = [e.x, e.d ? "descans " + mmss(e.d) : ""].filter(Boolean).join(" · ");
-      mig.appendChild(nom); if (det.textContent) mig.appendChild(det);
-      var p = document.createElement("span"); p.className = "pauta"; p.textContent = pauta(e);
-      li.appendChild(idx); li.appendChild(mig); li.appendChild(p);
-      li.style.cursor = "pointer";
-      li.addEventListener("click", function () { estat.i = i; desa(); obreExercici(); });
-      ol.appendChild(li);
-    });
-    var algun = seriesFetes() > 0;
-    $("comenca").textContent = algun ? "Continua" : "Comença";
-    $("reinicia").hidden = !algun;
-    vista = "resum"; emet();
-  }
+  var desat = null;
+  try { desat = JSON.parse(localStorage.getItem(clau) || "null"); } catch (err) {}
+  if (!desat || !desat.fetes || desat.fetes.length !== sessio.e.length) desat = null;
 
   // ---- so, vibració i pantalla encesa
   var audio = null;
@@ -402,35 +293,16 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     try { if (navigator.wakeLock && !bloqueig) navigator.wakeLock.request("screen").then(function (b) {
       bloqueig = b; b.addEventListener("release", function () { bloqueig = null; }); }).catch(function () {}); } catch (err) {}
   }
-  document.addEventListener("visibilitychange", function () { if (!document.hidden && !$("vista-exercici").hidden) mantenEncesa(); });
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && (remot || (foto && foto.vista === "exercici"))) mantenEncesa();
+  });
 
-  // ---- temporitzador únic (feina o descans)
-  var tempo = null;   // { fi, onTick, onFi }
-  function para() { if (tempo) { clearInterval(tempo.id); tempo = null; } }
-  function compta(segons, onTick, onFi) {
-    para();
-    var t = { fi: Date.now() + segons * 1000, total: segons, onTick: onTick, onFi: onFi, avisat: false };
-    var tick = function () {
-      var queda = (t.fi - Date.now()) / 1000;
-      if (queda <= 3.05 && !t.avisat && segons > 5) { t.avisat = true; xiulet(1); }
-      if (queda <= 0) { para(); onTick(0); onFi(); return; }
-      onTick(queda);
-    };
-    t.id = setInterval(tick, 200); tempo = t; tick();
-  }
-  function afegeix(s) { if (tempo) { tempo.fi += s * 1000; tempo.total += s; emet(); } }
-
-  // ---- vista d'exercici
-  function mostra(vista) {
-    ["vista-resum", "vista-exercici", "vista-final"].forEach(function (v) { $(v).hidden = v !== vista; });
-    window.scrollTo(0, 0);
-  }
-
+  // ---- vídeo (al mòbil només quan no s'emet: si no, sona per partida doble)
   var videoActual = null;
   function posaVideo(e) {
     $("tele").hidden = !e.v;
     if (e.v) $("tele").href = "https://www.youtube.com/watch?v=" + encodeURIComponent(e.v);
-    if (sessioCast()) { videoActual = null; $("video").textContent = ""; return; }
+    if (remot) { videoActual = null; $("video").textContent = ""; return; }
     if (videoActual === e.v + "|" + e.n) return;
     videoActual = e.v + "|" + e.n;
     var cont = $("video"); cont.textContent = "";
@@ -450,106 +322,181 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     }
   }
 
-  function obreExercici() {
-    para(); mantenEncesa(); mostra("vista-exercici");
-    var i = estat.i, e = sessio.e[i];
+  // ---- pintar la foto de l'estat (vingui del motor del mòbil o de la tele)
+  var foto = null, compte = null, vistaActual = null;
+  function mostra(vista) {
+    ["vista-resum", "vista-exercici", "vista-final"].forEach(function (v) { $(v).hidden = v !== vista; });
+    if (vista !== vistaActual) window.scrollTo(0, 0);
+    vistaActual = vista;
+  }
+  function pinta(f) {
+    foto = f;
+    try { localStorage.setItem(clau, JSON.stringify({ i: f.i, fetes: f.fetes })); } catch (err) {}
+    if (f.vista === "resum") { mostra("vista-resum"); compte = null; return pintaLlista(f); }
+    if (f.vista === "final") {
+      mostra("vista-final"); compte = null;
+      $("final-txt").textContent = suma(f.fetes) + " sèries de " + sessio.e.length + " exercicis.";
+      try { if (bloqueig && !remot) bloqueig.release(); } catch (err) {}
+      return;
+    }
+    mostra("vista-exercici"); mantenEncesa();
+    var i = f.i, e = sessio.e[i], fetes = Math.min(f.fetes[i], e.s);
     posaVideo(e);
     $("comptador").textContent = "Exercici " + (i + 1) + " de " + sessio.e.length;
-    $("barra").style.width = Math.round(seriesFetes() / totalSeries() * 100) + "%";
+    $("barra").style.width = Math.round(suma(f.fetes) / totalSeries * 100) + "%";
     $("ex-nom").textContent = e.n;
     $("ex-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
     $("ex-com").hidden = !e.i; $("ex-i").textContent = e.i || "";
     $("ex-com-t").textContent = sessio.l === "en" ? "How to do it" : "Com es fa";
     $("enrere").disabled = i === 0;
     $("endavant").disabled = i === sessio.e.length - 1;
-    faseSerie();
-  }
 
-  function faseSerie() {
-    var e = sessio.e[estat.i], fetes = Math.min(estat.fetes[estat.i], e.s);
-    if (fetes >= e.s) { return seguentExercici(); }
-    var q = quantitat(e);
-    $("bloc-serie").hidden = false; $("bloc-feina").hidden = true; $("bloc-descans").hidden = true;
-    $("serie-txt").textContent = e.s > 1 ? "Sèrie " + (fetes + 1) + " de " + e.s : "Una tanda";
-    $("objectiu").textContent = q.num; $("unitat").textContent = q.unitat;
-    var punts = $("punts"); punts.textContent = "";
-    for (var k = 0; k < e.s && e.s > 1; k++) {
-      var sp = document.createElement("span"); sp.className = k < fetes ? "fet" : (k === fetes ? "ara" : ""); punts.appendChild(sp);
+    var serie = f.fase === "serie", feina = f.fase === "feina", descans = f.fase === "descans";
+    $("bloc-serie").hidden = !serie; $("bloc-feina").hidden = !feina; $("bloc-descans").hidden = !descans;
+    if (serie) {
+      var q = quantitat(e);
+      $("serie-txt").textContent = e.s > 1 ? "Sèrie " + (fetes + 1) + " de " + e.s : "Una tanda";
+      $("objectiu").textContent = q.num; $("unitat").textContent = q.unitat;
+      var punts = $("punts"); punts.textContent = "";
+      for (var k = 0; k < e.s && e.s > 1; k++) {
+        var sp = document.createElement("span"); sp.className = k < fetes ? "fet" : (k === fetes ? "ara" : ""); punts.appendChild(sp);
+      }
     }
-    var accio = $("accio"); accio.hidden = false;
-    accio.textContent = e.u === "s" ? "Comença el temps" : "Sèrie feta";
-    accio.onclick = function () { preparaSo(); e.u === "s" ? faseFeina(e) : serieFeta(); };
-    vista = "exercici"; fase = "serie"; emet();
+    if (feina) $("feina-txt").textContent = f.text || "Ara";
+    if (descans) $("seguent").textContent = f.seguent || "";
+    $("accio").hidden = descans;
+    $("accio").textContent = feina ? "Acaba ara" : (e.u === "s" ? "Comença el temps" : "Sèrie feta");
+    compte = (feina || descans) && f.queda != null ? { fi: Date.now() + f.queda * 1000 } : null;
+    rellotge();
   }
-
-  function faseFeina(e) {
-    $("bloc-serie").hidden = true; $("bloc-feina").hidden = false; $("accio").hidden = false;
-    var costats = e.c ? ["Primer costat", "Canvia de costat", "Segon costat"] : ["Ara"];
-    var durades = e.c ? [e.q, CANVI_COSTAT, e.q] : [e.q];
-    var pas = 0;
-    $("accio").textContent = "Acaba ara"; $("accio").onclick = function () { para(); serieFeta(); };
-    (function seguent() {
-      $("feina-txt").textContent = costats[pas];
-      compta(durades[pas], function (q) { $("feina-temps").textContent = mmss(q); }, function () {
-        pas++;
-        if (pas < durades.length) { xiulet(1); seguent(); } else { serieFeta(); }
-      });
-      vista = "exercici"; fase = "feina"; feinaTxt = costats[pas]; emet();
-    })();
+  function rellotge() {
+    if (!compte) return;
+    var t = mmss((compte.fi - Date.now()) / 1000);
+    $("feina-temps").textContent = t; $("descans-temps").textContent = t;
   }
+  setInterval(rellotge, 250);
 
-  function serieFeta() {
-    var e = sessio.e[estat.i];
-    estat.fetes[estat.i] = Math.min(e.s, estat.fetes[estat.i] + 1); desa();
-    $("barra").style.width = Math.round(seriesFetes() / totalSeries() * 100) + "%";
-    var ultimaExercici = estat.fetes[estat.i] >= e.s;
-    var ultimaSessio = ultimaExercici && estat.i === sessio.e.length - 1;
-    if (ultimaSessio) { xiulet(2); return final(); }
-    if (!e.d) { xiulet(2); return ultimaExercici ? seguentExercici() : faseSerie(); }
-    $("bloc-serie").hidden = true; $("bloc-feina").hidden = true; $("bloc-descans").hidden = false; $("accio").hidden = true;
-    var prox = ultimaExercici ? sessio.e[estat.i + 1] : e;
-    $("seguent").textContent = ultimaExercici ? "Després: " + prox.n + " · " + pauta(prox)
-                                              : "Després: sèrie " + (estat.fetes[estat.i] + 1) + " de " + e.s;
-    compta(e.d, function (q) { $("descans-temps").textContent = mmss(q); }, function () {
-      xiulet(2); ultimaExercici ? seguentExercici() : faseSerie();
+  function pintaLlista(f) {
+    var ol = $("llista"); ol.textContent = "";
+    sessio.e.forEach(function (e, i) {
+      var li = document.createElement("li");
+      if (f.fetes[i] >= e.s) li.className = "fet";
+      var idx = document.createElement("span"); idx.className = "idx"; idx.textContent = i + 1;
+      var mig = document.createElement("div"); mig.style.minWidth = "0";
+      var nom = document.createElement("div"); nom.className = "nom"; nom.textContent = e.n;
+      var det = document.createElement("div"); det.className = "det";
+      det.textContent = [e.x, e.d ? "descans " + mmss(e.d) : ""].filter(Boolean).join(" · ");
+      mig.appendChild(nom); if (det.textContent) mig.appendChild(det);
+      var p = document.createElement("span"); p.className = "pauta"; p.textContent = pauta(e);
+      li.appendChild(idx); li.appendChild(mig); li.appendChild(p);
+      li.style.cursor = "pointer";
+      li.addEventListener("click", function () { fes("obre", i); });
+      ol.appendChild(li);
     });
-    vista = "exercici"; fase = "descans"; seguentTxt = $("seguent").textContent; emet();
+    var algun = suma(f.fetes) > 0;
+    $("comenca").textContent = algun ? "Continua" : "Comença";
+    $("reinicia").hidden = !algun;
   }
 
-  function seguentExercici() {
-    var proper = sessio.e.findIndex(function (e, k) { return k > estat.i && estat.fetes[k] < e.s; });
-    if (proper < 0) proper = sessio.e.findIndex(function (e, k) { return estat.fetes[k] < e.s; });
-    if (proper < 0) return final();
-    estat.i = proper; desa(); obreExercici();
+  // ---- qui mana: el motor del mòbil, o la tele quan s'emet
+  var motor = null, remot = false;
+  function motorLocal(f) {
+    motor = new G.Motor(sessio, f, { canvi: pinta, xiulet: xiulet });
+    if (f && f.vista === "exercici") motor.obre(f.i);
+    else if (f && f.vista === "final") motor._final();
+    else motor.resum();
   }
-
-  function final() {
-    para(); mostra("vista-final");
-    $("final-txt").textContent = seriesFetes() + " sèries de " + sessio.e.length + " exercicis.";
-    vista = "final"; emet();
-    try { if (bloqueig) bloqueig.release(); } catch (err) {}
-  }
-
-  $("comenca").addEventListener("click", function () {
+  function fes(accio, arg) {
     preparaSo();
-    var pendent = sessio.e.findIndex(function (e, k) { return estat.fetes[k] < e.s; });
-    if (pendent < 0) { estat = { i: 0, fetes: sessio.e.map(function () { return 0; }) }; pendent = 0; }
-    estat.i = pendent; desa(); obreExercici();
-  });
-  $("reinicia").addEventListener("click", function () {
-    estat = { i: 0, fetes: sessio.e.map(function () { return 0; }) }; desa(); pintaLlista();
-  });
-  $("enrere").addEventListener("click", function () { if (estat.i > 0) { estat.i--; desa(); obreExercici(); } });
-  $("endavant").addEventListener("click", function () { if (estat.i < sessio.e.length - 1) { estat.i++; desa(); obreExercici(); } });
-  $("mes15").addEventListener("click", function () { afegeix(15); });
-  $("salta").addEventListener("click", function () {
-    if (!tempo) return; var f = tempo.onFi; para(); f();
-  });
-  $("a-la-llista").addEventListener("click", function () { para(); pintaLlista(); mostra("vista-resum"); });
-  $("final-llista").addEventListener("click", function () { pintaLlista(); mostra("vista-resum"); });
+    if (remot) envia({ tipus: "comandament", accio: accio, i: arg });
+    else if (motor) motor.accio(accio, arg);
+  }
+  $("comenca").addEventListener("click", function () { fes("comenca"); });
+  $("reinicia").addEventListener("click", function () { fes("reinicia"); });
+  $("accio").addEventListener("click", function () { fes("principal"); });
+  $("salta").addEventListener("click", function () { fes("salta"); });
+  $("mes15").addEventListener("click", function () { fes("mes15"); });
+  $("enrere").addEventListener("click", function () { fes("anterior"); });
+  $("endavant").addEventListener("click", function () { if (foto) fes("obre", foto.i + 1); });
+  $("a-la-llista").addEventListener("click", function () { fes("resum"); });
+  $("final-llista").addEventListener("click", function () { fes("resum"); });
   window.addEventListener("hashchange", function () { location.reload(); });
 
-  pintaLlista();
+  // ---- Google Cast: quan s'emet, el motor passa a la tele (tele.html) i el mòbil en fa de comandament
+  var NS = "urn:x-cast:cat.ginga.forca";
+  var APP = "7F88A6AB";
+  function sessioCast() {
+    try { return cast.framework.CastContext.getInstance().getCurrentSession(); } catch (err) { return null; }
+  }
+  function envia(msg) {
+    var s = sessioCast();
+    if (s) s.sendMessage(NS, msg).catch(function () {});
+  }
+  var castLlest = false;
+  function avisTele(text) { $("avis-tele").textContent = text || ""; $("avis-tele").hidden = !text; }
+  $("cast-boto").addEventListener("click", function () {
+    if (!castLlest) {
+      return avisTele(window.chrome && /Android|Windows|Mac|Linux|CrOS/.test(navigator.userAgent) && !/iPhone|iPad/.test(navigator.userAgent)
+        ? "Aquest navegador no carrega Google Cast. Obre l'enllaç amb Chrome (no dins de Gmail) i mira que el mòbil estigui a la mateixa wifi que la tele."
+        : "Des d'aquest aparell no es pot fer Cast. Amb iPhone, duplica la pantalla amb AirPlay i gira el mòbil.");
+    }
+    var ctx = cast.framework.CastContext.getInstance();
+    if (sessioCast()) { ctx.endCurrentSession(true); return; }
+    if (ctx.getCastState() === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
+      avisTele("No trobo cap tele que pugui obrir Ginga. Mira que el Chromecast estigui a la mateixa wifi.");
+    }
+    ctx.requestSession().then(function () { avisTele(""); }, function (err) {
+      if (err !== "cancel" && err !== chrome.cast.ErrorCode.CANCEL) avisTele("No s'ha pogut connectar amb la tele (" + err + ").");
+    });
+  });
+
+  var escoltant = null;
+  function escoltaTele(s) {
+    if (s === escoltant) return;
+    escoltant = s;
+    s.addMessageListener(NS, function (ns, text) {
+      try { var m = JSON.parse(text); if (m && m.tipus === "estat" && remot) pinta(m); } catch (err) {}
+    });
+  }
+  function canviCast() {
+    var s = sessioCast();
+    $("cast-boto").classList.toggle("connectat", !!s);
+    $("cast-txt").textContent = s ? "Desconnecta" : "Tele";
+    document.body.classList.toggle("emetent", !!s);
+    $("a-la-tele").hidden = !s;
+    $("video-tele").hidden = !s;
+    if (s) {
+      $("tele-nom").textContent = s.getCastDevice().friendlyName || "";
+      escoltaTele(s);
+      if (!remot) {                          // el motor passa a la tele, amb l'estat d'ara
+        var f = motor ? motor.foto() : foto;
+        if (motor) { motor.atura(); motor = null; }
+        remot = true;
+        if (foto && foto.vista === "exercici") posaVideo(sessio.e[foto.i]);
+        envia({ tipus: "inici", sessio: sessio, estat: f });
+      } else {                               // reconnexió: la tele conserva el seu estat i ens el torna
+        envia({ tipus: "inici", sessio: sessio, estat: foto });
+      }
+      mantenEncesa();
+    } else if (remot) {                      // s'ha deixat d'emetre: el mòbil continua on era la tele
+      remot = false; videoActual = null;
+      motorLocal(foto);
+    }
+  }
+  window.__onGCastApiAvailable = function (disponible) {
+    if (!disponible) return;
+    try {
+      var ctx = cast.framework.CastContext.getInstance();
+      ctx.setOptions({ receiverApplicationId: APP, autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED });
+      ctx.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function () { setTimeout(canviCast, 0); });
+      castLlest = true;
+      canviCast();
+    } catch (err) {}
+  };
+  $("tele-play").addEventListener("click", function () { envia({ tipus: "video", accio: "play" }); });
+  $("tele-pausa").addEventListener("click", function () { envia({ tipus: "video", accio: "pausa" }); });
+
+  motorLocal(desat ? { i: desat.i, fetes: desat.fetes, vista: "resum" } : null);
 })();
 </script>
 <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
