@@ -81,6 +81,13 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
 .tira div.fet { border-color: var(--accent); }
 .tira div.ara { border-color: var(--fg); color: var(--fg); }
 
+.ajuda { position: absolute; left: 3.6vw; right: 3.6vw; bottom: 1.2vw; display: flex; gap: 2.4vw;
+  color: var(--muted); font-size: 1.1vw; }
+.ajuda b { color: var(--fg); font-weight: 600; }
+.avis-boto { position: absolute; top: 2vw; left: 50%; transform: translateX(-50%); background: var(--panel);
+  color: var(--fg); border: .15vw solid var(--line); border-radius: 2vw; padding: .6vw 1.6vw; font-size: 1.3vw;
+  opacity: 0; transition: opacity .2s; }
+.avis-boto.visible { opacity: 1; }
 .final .gran { font: 800 12vw/1 var(--display); color: var(--accent); }
 </style>
 </head>
@@ -115,6 +122,12 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
     <div class="tira" id="e-tira"></div>
   </section>
 
+  <div class="ajuda" id="ajuda" hidden>
+    <span><b>OK</b> sèrie feta / salta el descans</span><span><b>←︎ →︎</b> exercici</span>
+    <span><b>↑︎</b> +15 s de descans</span><span><b>↓︎</b> vídeo</span>
+  </div>
+  <div class="avis-boto" id="avis-boto" aria-live="polite"></div>
+
   <section class="pantalla centre final" id="v-final" hidden>
     <div class="marca">Ginga · Força</div>
     <div class="gran">Fet!</div>
@@ -137,7 +150,10 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
     return { num: e.q + "\"", unitat: e.c ? "segons per costat" : "segons" };
   }
   function pauta(e) { var q = quantitat(e); return (e.s > 1 ? e.s + "×" : "") + q.num + (e.c ? " /costat" : ""); }
-  function mostra(id) { ["v-espera", "v-resum", "v-exercici", "v-final"].forEach(function (v) { $(v).hidden = v !== id; }); }
+  function mostra(id) {
+    ["v-espera", "v-resum", "v-exercici", "v-final"].forEach(function (v) { $(v).hidden = v !== id; });
+    $("ajuda").hidden = id !== "v-exercici";
+  }
 
   // ---- so a la tele quan s'acaba el descans
   var audio = null;
@@ -160,7 +176,11 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
       width: "100%", height: "100%",
       playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3 },
       events: {
-        onReady: function () { ytLlest = true; if (videoVol) posaVideo(videoVol, true); },
+        onReady: function () {
+          ytLlest = true;
+          try { yt.getIframe().setAttribute("tabindex", "-1"); } catch (err) {}   // que no es quedi les tecles
+          if (videoVol) posaVideo(videoVol, true);
+        },
         onStateChange: function (ev) { if (ev.data === YT.PlayerState.ENDED) { yt.seekTo(0); yt.playVideo(); } }   // en bucle
       }
     });
@@ -267,6 +287,37 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
     else if (m.tipus === "video" && ytLlest) { m.accio === "pausa" ? yt.pauseVideo() : (yt.unMute(), yt.playVideo()); }
   }
 
+  // ---- comandament de la tele: el mòbil és qui mana, la tele només li passa el botó
+  var ctx = null;
+  var TECLES = {
+    Enter: "principal", NumpadEnter: "principal", " ": "principal", Select: "principal",
+    MediaPlayPause: "principal", MediaPlay: "principal", MediaPause: "principal",
+    ArrowRight: "seguent", MediaTrackNext: "seguent", MediaFastForward: "seguent",
+    ArrowLeft: "anterior", MediaTrackPrevious: "anterior", MediaRewind: "anterior",
+    ArrowUp: "mes15", ArrowDown: "video"
+  };
+  var CODIS = { 13: "principal", 23: "principal", 179: "principal", 415: "principal", 19: "principal", 250: "principal",
+                39: "seguent", 176: "seguent", 417: "seguent", 228: "seguent",
+                37: "anterior", 177: "anterior", 412: "anterior", 227: "anterior", 38: "mes15", 40: "video" };
+  var NOMS = { principal: "OK", seguent: "Següent", anterior: "Anterior", mes15: "+15 s", video: "Vídeo" };
+  var avisId = null;
+  function avisa(text) {
+    var a = $("avis-boto"); a.textContent = text; a.classList.add("visible");
+    clearTimeout(avisId); avisId = setTimeout(function () { a.classList.remove("visible"); }, 1500);
+  }
+  document.addEventListener("keydown", function (ev) {
+    var accio = TECLES[ev.key] || CODIS[ev.keyCode];
+    avisa("Comandament: " + (accio ? NOMS[accio] : (ev.key || ev.keyCode)));   // per saber quins botons arriben
+    if (!accio) return;
+    ev.preventDefault();
+    if (accio === "video") {
+      if (ytLlest) { yt.getPlayerState() === YT.PlayerState.PLAYING ? yt.pauseVideo() : (yt.unMute(), yt.playVideo()); }
+      return;
+    }
+    try { if (ctx) ctx.sendCustomMessage(NS, undefined, { tipus: "comandament", accio: accio }); } catch (err) {}
+  });
+  window.addEventListener("blur", function () { setTimeout(function () { window.focus(); }, 0); });
+
   // ---- prova sense Chromecast: tele.html#prova, tele.html#prova-descans
   if (/^#prova/.test(location.hash)) {
     var ses = { t: "S1 Dl - Forca A", d: "2026-10-19", e: [
@@ -286,7 +337,7 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
 
   // ---- receptor de Google Cast
   try {
-    var ctx = cast.framework.CastReceiverContext.getInstance();
+    ctx = cast.framework.CastReceiverContext.getInstance();
     var opts = new cast.framework.CastReceiverOptions();
     opts.disableIdleTimeout = true;          // no hi ha cap vídeo "de Cast": sense això es tancaria sol
     opts.skipPlayersLoad = true;

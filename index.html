@@ -146,7 +146,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   </header>
   <div class="avis-tele" id="avis-tele" hidden></div>
   <div class="a-la-tele" id="a-la-tele" hidden>
-    <span><strong>A la tele</strong> <span class="muted" id="tele-nom"></span> · el mòbil fa de comandament</span>
+    <span><strong>A la tele</strong> <span class="muted" id="tele-nom"></span> · el mòbil i el comandament de la tele fan de comandament</span>
   </div>
 
   <div class="demo" id="avis-demo" hidden>Sessió d'exemple. Les teves arriben amb l'enllaç del correu setmanal de Ginga.</div>
@@ -319,6 +319,25 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     });
   });
 
+  // el comandament de la tele: la tele envia el botó i aquí es fa com si l'haguessis tocat al mòbil
+  function comandament(a) {
+    if (!$("vista-final").hidden) return;
+    if (!$("vista-resum").hidden) { if (a === "principal" || a === "seguent") $("comenca").click(); return; }
+    var enDescans = !$("bloc-descans").hidden;
+    if (a === "principal") $(enDescans ? "salta" : "accio").click();
+    else if (a === "seguent") $(enDescans ? "salta" : "endavant").click();
+    else if (a === "anterior") $("enrere").click();
+    else if (a === "mes15" && enDescans) $("mes15").click();
+  }
+  var escoltant = null;
+  function escoltaTele(s) {
+    if (s === escoltant) return;
+    escoltant = s;
+    s.addMessageListener(NS, function (ns, text) {
+      try { var m = JSON.parse(text); if (m && m.tipus === "comandament") comandament(m.accio); } catch (err) {}
+    });
+  }
+
   function canviCast() {
     var s = sessioCast();
     $("cast-boto").classList.toggle("connectat", !!s);
@@ -326,7 +345,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     document.body.classList.toggle("emetent", !!s);
     $("a-la-tele").hidden = !s;
     $("video-tele").hidden = !s;
-    if (s) { $("tele-nom").textContent = s.getCastDevice().friendlyName || ""; emet(); }
+    if (s) { $("tele-nom").textContent = s.getCastDevice().friendlyName || ""; escoltaTele(s); mantenEncesa(); emet(); }
     else { videoActual = null; if (!$("vista-exercici").hidden) posaVideo(sessio.e[estat.i]); }
   }
   window.__onGCastApiAvailable = function (disponible) {
