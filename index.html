@@ -266,8 +266,8 @@ google-cast-launcher { display: block; width: 44px; height: 44px; cursor: pointe
   function seriesFetes() { return estat.fetes.reduce(function (a, b) { return a + b; }, 0); }
 
   // ---- capçalera i llista
-  document.title = sessio.t.replace(/^S\d+\s+\w+\s+-\s+/, "") + " · Ginga";
-  $("titol").textContent = sessio.t.replace(/^S\d+\s+\w+\s+-\s+/, "");
+  document.title = sessio.t.replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/g, "Força") + " · Ginga";
+  $("titol").textContent = sessio.t.replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/g, "Força");
   if (sessio.d) {
     var dt = new Date(sessio.d + "T12:00:00");
     if (!isNaN(dt)) $("data").textContent = DIES[dt.getDay()] + " " + dt.getDate() + " de " + MESOS[dt.getMonth()];

@@ -126,7 +126,7 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
   var MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"];
 
   function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
-  function netNom(t) { return (t || "").replace(/^S\d+\s+\w+\s+-\s+/, ""); }
+  function netNom(t) { return (t || "").replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/g, "Força"); }
   function quantitat(e) {
     if (e.u === "r") return { num: String(e.q), unitat: e.c ? "reps per costat" : "reps" };
     if (e.q >= 60 && e.q % 60 === 0) return { num: (e.q / 60) + "'", unitat: e.c ? "minuts per costat" : "minuts" };
