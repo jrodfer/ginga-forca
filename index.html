@@ -4,38 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#1f4d25">
+<meta name="theme-color" content="#10231D">
 <title>Ginga Força</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
 <style>
-/* Layout: una columna de mòbil; a dalt el vídeo, al mig la sèrie en xifres grans, a baix els botons al polze. */
+/* Layout: una columna de mòbil; a dalt el vídeo, al mig la sèrie en xifres grans, a baix els botons al polze.
+   Identitat de Ginga: Sunset orange per a les accions, Tropical green per al que està fet, Samba yellow per al
+   descans en fosc, Night ink i Warm white de fons. Nunito per a tot. */
 :root {
-  --bg: #f3f4ef;          /* guix */
-  --card: #ffffff;
-  --fg: #1b211c;
-  --muted: #5e675f;
-  --line: #dde0d6;
-  --accent: #2e6b34;      /* el verd dels correus de Ginga */
-  --accent-fg: #ffffff;
-  --rest: #c26a12;        /* descans: ambre de cronòmetre */
-  --rest-soft: #f6e7d6;
-  --done: #2e6b34;
-  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
-  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --bg: #FFF4E8;          /* Warm white */
+  --card: #FFFFFF;
+  --fg: #10231D;          /* Night ink */
+  --muted: #56655D;
+  --line: #EBDCC8;
+  --accent: #FF6A2B;      /* Sunset orange */
+  --accent-fg: #10231D;
+  --ok: #00996B;          /* Tropical green */
+  --rest: #D9541C;        /* el descans: taronja fosc, que es llegeix sobre blanc càlid */
+  --rest-soft: #FFE4D3;
+  --punt: #00996B;
+  --display: "Nunito", "Helvetica Neue", Arial, sans-serif;
+  --body: "Nunito", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #121612; --card: #1b201b; --fg: #e8ece6; --muted: #9aa59b; --line: #2c342c;
-    --accent: #5fae66; --accent-fg: #0d150e; --rest: #f0a34a; --rest-soft: #3a2a17; --done: #5fae66;
+    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31; --punt: #FFC531;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #121612; --card: #1b201b; --fg: #e8ece6; --muted: #9aa59b; --line: #2c342c;
-  --accent: #5fae66; --accent-fg: #0d150e; --rest: #f0a34a; --rest-soft: #3a2a17; --done: #5fae66;
+  --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+  --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31; --punt: #FFC531;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -47,12 +50,12 @@ body {
 }
 main { max-width: 560px; margin: 0 auto; display: grid; gap: 16px; padding-block: 16px; }
 [hidden] { display: none !important; }
-h1, h2, .num { font-family: var(--display); letter-spacing: .01em; text-wrap: balance; margin: 0; }
-h1 { font-size: 2rem; line-height: 1.05; font-weight: 800; }
-h2 { font-size: 1.6rem; line-height: 1.1; font-weight: 700; }
-.eyebrow { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+h1, h2, .num { font-family: var(--display); letter-spacing: -.01em; text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; line-height: 1.1; font-weight: 900; }
+h2 { font-size: 1.5rem; line-height: 1.15; font-weight: 800; }
+.eyebrow { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
 .muted { color: var(--muted); }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
 .demo { background: var(--rest-soft); color: var(--fg); border-radius: 10px; padding: 10px 12px; font-size: .9rem; }
 details summary { cursor: pointer; font-weight: 600; }
 details p { margin: 8px 0 0; color: var(--muted); }
@@ -62,25 +65,25 @@ ol.plan { list-style: none; margin: 0; padding: 0; display: grid; }
 ol.plan li { display: grid; grid-template-columns: 2rem 1fr auto; gap: 10px; align-items: baseline;
   padding: 12px 0; border-top: 1px solid var(--line); }
 ol.plan li:first-child { border-top: 0; }
-ol.plan .idx { font-family: var(--display); font-weight: 700; font-size: 1.2rem; color: var(--muted); }
-ol.plan .nom { font-weight: 600; min-width: 0; }
+ol.plan .idx { font-family: var(--display); font-weight: 800; font-size: 1.2rem; color: var(--muted); }
+ol.plan .nom { font-weight: 700; min-width: 0; }
 ol.plan .det { font-size: .88rem; color: var(--muted); }
-ol.plan .pauta { font-family: var(--display); font-weight: 700; font-size: 1.25rem; white-space: nowrap;
+ol.plan .pauta { font-family: var(--display); font-weight: 800; font-size: 1.15rem; white-space: nowrap;
   font-variant-numeric: tabular-nums; }
 ol.plan li.fet .nom, ol.plan li.fet .pauta { color: var(--muted); text-decoration: line-through; }
 ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 
 /* botons */
-.btn { appearance: none; border: 0; border-radius: 12px; font: 700 1.15rem/1 var(--display); letter-spacing: .03em;
+.btn { appearance: none; border: 0; border-radius: 14px; font: 800 1.05rem/1 var(--display); letter-spacing: .04em;
   text-transform: uppercase; padding: 18px 16px; width: 100%; cursor: pointer; background: var(--accent); color: var(--accent-fg); }
 .btn.sec { background: transparent; color: var(--fg); border: 1.5px solid var(--line); }
-.btn.rest { background: var(--rest); color: #fff; }
-.btn:focus-visible, a:focus-visible, button:focus-visible { outline: 3px solid var(--rest); outline-offset: 2px; }
+.btn.rest { background: var(--rest); color: var(--accent-fg); }
+.btn:focus-visible, a:focus-visible, button:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
 .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* exercici */
 .progres { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
-.progres > div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.progres > div { height: 100%; background: var(--ok); width: 0; transition: width .3s; }
 .video { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
 .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .sense-video { display: grid; place-items: center; text-align: center; padding: 16px; color: #ddd; height: 100%; }
@@ -89,22 +92,29 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   color: var(--fg); text-decoration: none; font-weight: 600; font-size: .95rem; }
 .tele .muted { font-weight: 400; font-size: .85rem; }
 .serie { display: grid; gap: 4px; text-align: center; padding-block: 8px; }
-.serie .num { font-size: 4.6rem; line-height: .95; font-weight: 800; font-variant-numeric: tabular-nums; }
-.serie .unitat { font-family: var(--display); font-size: 1.4rem; font-weight: 600; color: var(--muted); }
+.serie .num { font-size: 4.6rem; line-height: .95; font-weight: 900; font-variant-numeric: tabular-nums; }
+.serie .unitat { font-family: var(--display); font-size: 1.25rem; font-weight: 700; color: var(--muted); }
 .punts { display: flex; gap: 8px; justify-content: center; }
-.punts span { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); }
-.punts span.fet { background: var(--accent); }
-.punts span.ara { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+.punts span { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ok); }
+.punts span.fet { background: var(--ok); }
+.punts span.ara { box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--ok); }
 .descans { background: var(--rest-soft); border-radius: 14px; padding: 16px; text-align: center; display: grid; gap: 8px; }
-.descans .num { font-size: 5rem; line-height: 1; color: var(--rest); font-variant-numeric: tabular-nums; }
-.feina .num { color: var(--accent); }
+.descans .num { font-size: 5rem; line-height: 1; font-weight: 900; color: var(--rest); font-variant-numeric: tabular-nums; }
+.feina .num { color: var(--ok); }
 .seguent { font-size: .95rem; }
 .nav { display: flex; justify-content: space-between; gap: 10px; }
 .nav button { all: unset; cursor: pointer; color: var(--muted); font-weight: 600; padding: 8px 0; }
 .nav button:disabled { opacity: .3; cursor: default; }
 .final { text-align: center; display: grid; gap: 12px; padding-block: 24px; }
-.final .num { font-size: 3.4rem; color: var(--accent); }
-.cap { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.final .num { font-size: 3.4rem; font-weight: 900; color: var(--accent); }
+.cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lockup { display: block; height: auto; }
+.lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lockup .lk-g { stroke: var(--accent); stroke-width: 28; }
+.lockup .lk-t { stroke: var(--fg); stroke-width: 24; }
+.lockup .lk-p { fill: var(--punt); }
+.cap .lockup { width: 116px; }
+.titol-bloc { display: grid; gap: 6px; }
 .boto-tele { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px;
   border: 1.5px solid var(--line); background: var(--card); color: var(--fg); font: 600 .95rem var(--body); cursor: pointer; }
 .boto-tele svg { width: 22px; height: 22px; fill: currentColor; }
@@ -127,7 +137,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   .descans .num { font-size: 6.5rem; }
 }
 .com { margin-top: 6px; }
-.com summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.com summary { cursor: pointer; font-weight: 800; color: var(--fg); }
+.com summary::marker { color: var(--accent); }
 .com p { margin: 6px 0 0; color: var(--muted); font-size: .95rem; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .progres > div { transition: none; } }
 </style>
@@ -135,15 +146,16 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 <body>
 <main>
   <header class="cap">
-    <div style="display:grid;gap:6px;min-width:0">
-      <div class="eyebrow" id="data"></div>
-      <h1 id="titol">Força</h1>
-    </div>
+    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
     <button class="boto-tele" id="cast-boto" type="button" aria-label="Envia a la tele">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 18v3h3a3 3 0 0 0-3-3zm0-4v2a5 5 0 0 1 5 5h2a7 7 0 0 0-7-7zm0-4v2a9 9 0 0 1 9 9h2A11 11 0 0 0 1 10zm20-7H3a2 2 0 0 0-2 2v3h2V5h18v14h-7v2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/></svg>
       <span id="cast-txt">Tele</span>
     </button>
   </header>
+  <div class="titol-bloc">
+    <div class="eyebrow" id="data"></div>
+    <h1 id="titol">Força</h1>
+  </div>
   <div class="avis-tele" id="avis-tele" hidden></div>
   <div class="a-la-tele" id="a-la-tele" hidden>
     <span><strong>A la tele</strong> <span class="muted" id="tele-nom"></span> · el mòbil i el comandament de la tele fan de comandament</span>
@@ -267,7 +279,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   if (sessio.d) {
     var dt = new Date(sessio.d + "T12:00:00");
     if (!isNaN(dt)) $("data").textContent = DIES[dt.getDay()] + " " + dt.getDate() + " de " + MESOS[dt.getMonth()];
-  } else { $("data").textContent = "Ginga · força"; }
+  } else { $("data").textContent = "Força"; }
   $("avis-demo").hidden = !esExemple;
   if (sessio.m) { $("notes").textContent = sessio.m; $("notes-bloc").hidden = false; }
 

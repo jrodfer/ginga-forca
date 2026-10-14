@@ -7,36 +7,45 @@
 <title>Ginga Força · Tele</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <script src="motor.js"></script>
 <style>
 /* Pantalla de la tele (receptor de Google Cast). Es mira a 3 metres: tot en vw, xifres enormes.
    Vídeo a l'esquerra, l'estat de la sèrie a la dreta, la sessió sencera a baix. */
 :root {
-  --bg: #0e130f;
-  --panel: #171e18;
-  --fg: #eef2ec;
-  --muted: #8f9b90;
-  --line: #273027;
-  --accent: #62b56a;
-  --rest: #f2a447;
-  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --body: "Barlow", Arial, sans-serif;
+  --bg: #10231D;          /* Night ink */
+  --panel: #17302A;
+  --fg: #FFF4E8;          /* Warm white */
+  --muted: #A6B4AC;
+  --line: #284239;
+  --accent: #FF6A2B;      /* Sunset orange */
+  --ok: #2DBF8C;          /* Tropical green, aclarit per a fons fosc */
+  --rest: #FFC531;        /* Samba yellow */
+  --punt: #FFC531;
+  --display: "Nunito", Arial, sans-serif;
+  --body: "Nunito", Arial, sans-serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
-body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body); }
+body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body); }
+.lockup { display: block; height: auto; }
+.lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lockup .lk-g { stroke: var(--accent); stroke-width: 28; }
+.lockup .lk-t { stroke: var(--fg); stroke-width: 24; }
+.lockup .lk-p { fill: var(--punt); }
+
 [hidden] { display: none !important; }
-.num, h1, h2 { font-family: var(--display); margin: 0; letter-spacing: .01em; }
+.num, h1, h2 { font-family: var(--display); margin: 0; letter-spacing: -.01em; font-weight: 900; }
 .eyebrow { font-size: 1.15vw; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
 
 .pantalla { position: absolute; inset: 0; padding: 3.2vw 3.6vw; display: grid; }
 
 /* espera i resum */
 .centre { place-content: center; text-align: center; gap: 1.4vw; }
-.marca { font: 800 2.2vw/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.marca { width: 30vw; margin: 0 auto 1vw; }
+.marca.petita { width: 16vw; }
 .centre h1 { font-size: 6vw; line-height: 1; }
 .centre p { margin: 0; color: var(--muted); font-size: 2vw; }
 .resum { grid-template-rows: auto 1fr auto; gap: 2.4vw; }
@@ -66,21 +75,21 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
 .caixa .gran { font: 800 13vw/0.9 var(--display); font-variant-numeric: tabular-nums; }
 .caixa .unitat { font: 600 2.4vw var(--display); color: var(--muted); }
 .punts { display: flex; gap: 1vw; margin-top: .6vw; }
-.punts span { width: 1.4vw; height: 1.4vw; border-radius: 50%; border: .25vw solid var(--accent); }
-.punts span.fet { background: var(--accent); }
-.punts span.ara { box-shadow: 0 0 0 .35vw var(--panel), 0 0 0 .6vw var(--accent); }
+.punts span { width: 1.4vw; height: 1.4vw; border-radius: 50%; border: .25vw solid var(--ok); }
+.punts span.fet { background: var(--ok); }
+.punts span.ara { box-shadow: 0 0 0 .35vw var(--panel), 0 0 0 .6vw var(--ok); }
 .caixa.descans .gran { color: var(--rest); }
-.caixa.feina .gran { color: var(--accent); }
+.caixa.feina .gran { color: var(--ok); }
 .barra { width: 100%; height: .7vw; background: var(--line); border-radius: .35vw; overflow: hidden; }
 .barra > div { height: 100%; width: 100%; transform-origin: left; }
 .descans .barra > div { background: var(--rest); }
-.feina .barra > div { background: var(--accent); }
+.feina .barra > div { background: var(--ok); }
 .caixa .seguent { color: var(--muted); font-size: 1.7vw; }
 .tira { grid-column: 1 / -1; display: flex; gap: .8vw; }
 .tira div { flex: 1; min-width: 0; padding: .9vw 1vw .7vw; border-top: .45vw solid var(--line); color: var(--muted);
   font-size: 1.25vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tira div.fet { border-color: var(--accent); }
-.tira div.ara { border-color: var(--fg); color: var(--fg); }
+.tira div.fet { border-color: var(--ok); }
+.tira div.ara { border-color: var(--accent); color: var(--fg); }
 
 .ajuda { position: absolute; left: 3.6vw; right: 3.6vw; bottom: 1.2vw; display: flex; gap: 2.4vw;
   color: var(--muted); font-size: 1.1vw; }
@@ -94,8 +103,8 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
 </head>
 <body>
   <section class="pantalla centre" id="v-espera">
-    <div class="marca">Ginga · Força</div>
-    <h1>A punt</h1>
+    <svg class="lockup marca" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
+    <h1>A punt per a la força</h1>
     <p>Obre la sessió al mòbil i toca «Comença».</p>
   </section>
 
@@ -130,7 +139,7 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
   <div class="avis-boto" id="avis-boto" aria-live="polite"></div>
 
   <section class="pantalla centre final" id="v-final" hidden>
-    <div class="marca">Ginga · Força</div>
+    <svg class="lockup marca petita" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
     <div class="gran">Fet!</div>
     <p id="f-txt"></p>
   </section>
