@@ -58,6 +58,9 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
 .estat { display: grid; align-content: center; gap: 1.6vw; min-width: 0; }
 .estat h2 { font-size: 4.2vw; line-height: 1; text-wrap: balance; }
 .estat .det { color: var(--muted); font-size: 1.7vw; }
+.estat .instr { margin: 0; color: var(--muted); font: 500 1.25vw/1.45 var(--body);
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.estat .instr:empty { display: none; }
 .caixa { background: var(--panel); border-radius: 1.2vw; padding: 2vw; display: grid; gap: .6vw; justify-items: center; text-align: center; }
 .caixa .gran { font: 800 13vw/0.9 var(--display); font-variant-numeric: tabular-nums; }
 .caixa .unitat { font: 600 2.4vw var(--display); color: var(--muted); }
@@ -98,7 +101,8 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
     <div class="dalt"><span class="titol" id="e-sessio"></span><span class="eyebrow" id="e-comptador"></span></div>
     <div class="video" id="e-video"><div id="yt"></div></div>
     <div class="estat">
-      <div style="display:grid;gap:.6vw"><h2 id="e-nom"></h2><div class="det" id="e-det"></div></div>
+      <div style="display:grid;gap:.6vw"><h2 id="e-nom"></h2><div class="det" id="e-det"></div>
+        <p class="instr" id="e-instr"></p></div>
       <div class="caixa" id="e-caixa">
         <div class="eyebrow" id="e-etiqueta"></div>
         <div class="gran" id="e-gran"></div>
@@ -228,6 +232,7 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
     $("e-comptador").textContent = "Exercici " + (m.i + 1) + " de " + ses.e.length;
     $("e-nom").textContent = e.n;
     $("e-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
+    $("e-instr").textContent = e.i || "";
     posaVideo(e.v || "");
 
     var fetes = Math.min((m.fetes || [])[m.i] || 0, e.s), caixa = $("e-caixa");
@@ -265,10 +270,11 @@ body { background: var(--bg); color: var(--fg); font: 600 1.6vw/1.3 var(--body);
   // ---- prova sense Chromecast: tele.html#prova, tele.html#prova-descans
   if (/^#prova/.test(location.hash)) {
     var ses = { t: "S1 Dl - Forca A", d: "2026-10-19", e: [
-      { n: "Sentadilla", v: "-bJIpOq-LWk", s: 4, q: 6, u: "r", c: 0, d: 120, x: "" },
-      { n: "Pes mort romanès", v: "_oyxCn2iSjU", s: 3, q: 8, u: "r", c: 0, d: 90, x: "" },
+      { n: "Sentadilla", v: "JLy14eUhVYI", s: 4, q: 6, u: "r", c: 0, d: 120, x: "",
+        i: "Col·loca la barra a la part alta de l'esquena i agafa-la més ample que les espatlles. Peus a l'amplada de les espatlles, puntes una mica obertes. Tira els malucs enrere i baixa fins que les cuixes quedin paral·leles a terra, amb el pit amunt i l'esquena neutra. Empeny pels talons per tornar a pujar." },
+      { n: "Pes mort romanès", v: "DLidaP2nXf8", s: 3, q: 8, u: "r", c: 0, d: 90, x: "" },
       { n: "Step down excèntric", v: "SZXOPRVP1Oc", s: 3, q: 8, u: "r", c: 1, d: 60, x: "baixant en 3s" },
-      { n: "Elevació de talons", v: "KRJIKsY02nE", s: 3, q: 15, u: "r", c: 0, d: 45, x: "" },
+      { n: "Elevació de talons", v: "r_yKQwqiOxE", s: 3, q: 15, u: "r", c: 0, d: 45, x: "" },
       { n: "Core", v: "zY7t1OqE43Y", s: 1, q: 480, u: "s", c: 0, d: 0, x: "" }] };
     var h = location.hash;
     rebut(h === "#prova-resum" ? { tipus: "estat", sessio: ses, i: 0, fetes: [0, 0, 0, 0, 0], vista: "resum" }

@@ -126,6 +126,9 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   .serie .num { font-size: 6rem; }
   .descans .num { font-size: 6.5rem; }
 }
+.com { margin-top: 6px; }
+.com summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.com p { margin: 6px 0 0; color: var(--muted); font-size: .95rem; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .progres > div { transition: none; } }
 </style>
 </head>
@@ -177,6 +180,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     <div style="display:grid;gap:2px">
       <h2 id="ex-nom"></h2>
       <div class="muted" id="ex-det"></div>
+      <details class="com" id="ex-com" hidden><summary id="ex-com-t">Com es fa</summary><p id="ex-i"></p></details>
     </div>
 
     <div id="bloc-serie" class="card serie">
@@ -223,10 +227,10 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     t: "Força A (exemple)", d: "",
     m: "Primera setmana: càrrega moderada, deixa 3 reps al dipòsit.",
     e: [
-      { n: "Sentadilla", v: "-bJIpOq-LWk", s: 4, q: 6, u: "r", c: 0, d: 120, x: "" },
-      { n: "Pes mort romanès", v: "_oyxCn2iSjU", s: 3, q: 8, u: "r", c: 0, d: 90, x: "" },
+      { n: "Sentadilla", v: "JLy14eUhVYI", s: 4, q: 6, u: "r", c: 0, d: 120, x: "" },
+      { n: "Pes mort romanès", v: "DLidaP2nXf8", s: 3, q: 8, u: "r", c: 0, d: 90, x: "" },
       { n: "Step down excèntric", v: "SZXOPRVP1Oc", s: 3, q: 8, u: "r", c: 1, d: 60, x: "baixant en 3s" },
-      { n: "Planxa lateral", v: "44ND4bOB-T0", s: 3, q: 30, u: "s", c: 1, d: 30, x: "" }
+      { n: "Planxa lateral", v: "rrrxDvyfYN0", s: 3, q: 30, u: "s", c: 1, d: 30, x: "" }
     ]
   };
   var CANVI_COSTAT = 5;   // segons per canviar de costat en els exercicis de temps
@@ -435,6 +439,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     $("barra").style.width = Math.round(seriesFetes() / totalSeries() * 100) + "%";
     $("ex-nom").textContent = e.n;
     $("ex-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
+    $("ex-com").hidden = !e.i; $("ex-i").textContent = e.i || "";
+    $("ex-com-t").textContent = sessio.l === "en" ? "How to do it" : "Com es fa";
     $("enrere").disabled = i === 0;
     $("endavant").disabled = i === sessio.e.length - 1;
     faseSerie();
