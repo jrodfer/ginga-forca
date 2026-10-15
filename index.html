@@ -147,7 +147,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 <main>
   <header class="cap">
     <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
-    <button class="boto-tele" id="cast-boto" type="button" aria-label="Envia a la tele">
+    <button class="boto-tele" id="cast-boto" type="button" aria-label="Envia a la TV">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 18v3h3a3 3 0 0 0-3-3zm0-4v2a5 5 0 0 1 5 5h2a7 7 0 0 0-7-7zm0-4v2a9 9 0 0 1 9 9h2A11 11 0 0 0 1 10zm20-7H3a2 2 0 0 0-2 2v3h2V5h18v14h-7v2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/></svg>
       <span id="cast-txt">TV</span>
     </button>
@@ -158,7 +158,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   </div>
   <div class="avis-tele" id="avis-tele" hidden></div>
   <div class="a-la-tele" id="a-la-tele" hidden>
-    <span><strong>A la tele</strong> <span class="muted" id="tele-nom"></span> · el mòbil i el comandament de la tele fan de comandament</span>
+    <span><strong>A la TV</strong> <span class="muted" id="tele-nom"></span> · el mòbil i el comandament de la TV fan de comandament</span>
   </div>
 
   <div class="demo" id="avis-demo" hidden>Sessió d'exemple. Les teves arriben amb l'enllaç del correu setmanal de Ginga.</div>
@@ -449,16 +449,16 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   $("cast-boto").addEventListener("click", function () {
     if (!castLlest) {
       return avisTele(window.chrome && /Android|Windows|Mac|Linux|CrOS/.test(navigator.userAgent) && !/iPhone|iPad/.test(navigator.userAgent)
-        ? "Aquest navegador no carrega Google Cast. Obre l'enllaç amb Chrome (no dins de Gmail) i mira que el mòbil estigui a la mateixa wifi que la tele."
+        ? "Aquest navegador no carrega Google Cast. Obre l'enllaç amb Chrome (no dins de Gmail) i mira que el mòbil estigui a la mateixa wifi que la TV."
         : "Des d'aquest aparell no es pot fer Cast. Amb iPhone, duplica la pantalla amb AirPlay i gira el mòbil.");
     }
     var ctx = cast.framework.CastContext.getInstance();
     if (sessioCast()) { ctx.endCurrentSession(true); return; }
     if (ctx.getCastState() === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
-      avisTele("No trobo cap tele que pugui obrir Ginga. Mira que el Chromecast estigui a la mateixa wifi.");
+      avisTele("No trobo cap TV que pugui obrir Ginga. Mira que el Chromecast estigui a la mateixa wifi.");
     }
     ctx.requestSession().then(function () { avisTele(""); }, function (err) {
-      if (err !== "cancel" && err !== chrome.cast.ErrorCode.CANCEL) avisTele("No s'ha pogut connectar amb la tele (" + err + ").");
+      if (err !== "cancel" && err !== chrome.cast.ErrorCode.CANCEL) avisTele("No s'ha pogut connectar amb la TV (" + err + ").");
     });
   });
 
