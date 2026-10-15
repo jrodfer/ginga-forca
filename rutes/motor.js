@@ -94,6 +94,37 @@
     return { dolents, metres };
   }
 
+  // Carreteres principals (molt trànsit), que la bici de carretera evita: la referència del nom ho diu millor que
+  // el waytype d'openrouteservice, que marca la C-260 com a "carretera" igual que una GIV. Estat (N-, A-, AP-, E-)
+  // i xarxa bàsica de la Generalitat (C-); les de les diputacions (GI-, GIV-, BV-...) i els antics trams (C-260z),
+  // no. On no hi ha referència, el waytype 1 (carretera principal) d'openrouteservice.
+  const REF_PRINCIPAL = /\b(?:N|A|AP|E|C)-(?:\d+|[IVX]+)\b(?![a-z])/;
+  const TRAM_PRINCIPAL = 300;      // m seguits per una principal que ja es miren d'evitar (creuar-la o un tros curt, no)
+  const CADA_EVITA_PRINCIPAL = 400;  // per tallar una carretera n'hi ha prou amb un punt de tant en tant
+
+  /** Quins punts van per carretera principal; quants metres en fan; i quins són de trams llargs (> 300 m). */
+  function perPrincipal(coords, acc, passos, waytype) {
+    const total = acc[acc.length - 1];
+    const principal = new Array(coords.length).fill(false);
+    for (const pas of passos) {
+      if (pas.way_points && REF_PRINCIPAL.test(pas.name || "")) for (let i = pas.way_points[0]; i < pas.way_points[1]; i++) principal[i] = true;
+    }
+    for (const [ini, fi, valor] of (waytype && waytype.values) || []) if (valor === 1) for (let i = ini; i < fi; i++) principal[i] = true;
+    let metres = 0;
+    const llarg = new Array(coords.length).fill(false);
+    for (let i = 0; i < coords.length - 1;) {
+      if (!principal[i]) { i++; continue; }
+      let j = i;
+      while (j < coords.length - 1 && principal[j]) j++;
+      metres += acc[j] - acc[i];
+      if (acc[j] - acc[i] > TRAM_PRINCIPAL) {
+        for (let k = i; k < j; k++) if (acc[k] >= MARGE_SORTIDA && acc[k] <= total - MARGE_SORTIDA) llarg[k] = true;
+      }
+      i = j;
+    }
+    return { principal, metres, llarg };
+  }
+
   /** Punts de pas per tornar a fer el circuit per on anava, sempre sobre trams bons (per a la reparació). */
   function puntsDePas(r, n = 5) {
     const total = r.acc[r.acc.length - 1];
@@ -102,7 +133,7 @@
       const objectiu = (total * k) / (n + 1);
       let millor = -1;
       for (let i = 0; i < r.coords.length; i++) {
-        if (r.dolents[i]) continue;
+        if (r.dolents[i] || r.principalLlarg[i]) continue;
         if (millor < 0 || Math.abs(r.acc[i] - objectiu) < Math.abs(r.acc[millor] - objectiu)) millor = i;
       }
       if (millor >= 0) via.push([r.coords[millor][0], r.coords[millor][1]]);
@@ -110,12 +141,17 @@
     return via;
   }
 
-  /** Un punt cada `cada` metres sobre els trams fora de carretera: el proxy hi posa una zona a evitar. */
+  /**
+   * Punts on el proxy posa una zona a evitar: un cada `cada` metres sobre els trams fora de carretera, i un cada
+   * 400 m sobre els trams llargs per carretera principal. Primer els de terra, que són obligatoris.
+   */
   function puntsAEvitar(r, cada = 60) {
     const punts = [];
-    let ultim = -Infinity;
-    for (let i = 0; i < r.coords.length; i++) {
-      if (r.dolents[i] && r.acc[i] - ultim >= cada) { punts.push([r.coords[i][0], r.coords[i][1]]); ultim = r.acc[i]; }
+    for (const [mascara, pas] of [[r.dolents, cada], [r.principalLlarg || [], CADA_EVITA_PRINCIPAL]]) {
+      let ultim = -Infinity;
+      for (let i = 0; i < r.coords.length; i++) {
+        if (mascara[i] && r.acc[i] - ultim >= pas) { punts.push([r.coords[i][0], r.coords[i][1]]); ultim = r.acc[i]; }
+      }
     }
     return punts;
   }
@@ -148,9 +184,12 @@
     let senseAsfalt = 0;
     for (const [v, x] of Object.entries(surface)) if (SURFACE_SENSE_PAVIMENTAR.has(Number(v))) senseAsfalt += x;
     const fora = foraCarretera(coords, acc, extras);
+    const princ = perPrincipal(coords, acc, passos, extras.waytype || extras.waytypes);
     return {
       coords, acc, km,
       dolents: fora.dolents, foraCarretera: fora.metres,
+      principal: princ.metres / (acc[acc.length - 1] || 1), principalLlarg: princ.llarg,
+      tramsPrincipals: princ.llarg.some(Boolean),
       desnivell: p.ascent != null ? p.ascent : desnivellPositiu(coords),
       senseAsfalt,
       carretera: (waytype[1] || 0) + (waytype[2] || 0),
@@ -177,6 +216,7 @@
     let pena = 3 * errKm + fora / Math.max(dMax, 50);
     if (sessio.s === "ride") {
       pena += (sessio.o === "cycling-road" ? 3 : 0.5) * r.senseAsfalt + (sessio.o === "cycling-road" ? 1.5 : 0) * r.camins;
+      if (sessio.o === "cycling-road") pena += 4 * (r.principal || 0);   // millor per carreteres locals que per una C- o N-
     } else {
       pena += 0.8 * r.carretera + 2 * r.escales;        // córrer lluny del trànsit, i sense escales
     }
@@ -323,7 +363,7 @@ out center tags;`;
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
-    foraCarretera, puntsDePas, puntsAEvitar, esCarretera,
+    foraCarretera, perPrincipal, puntsDePas, puntsAEvitar, esCarretera,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;

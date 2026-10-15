@@ -229,6 +229,7 @@ const T = {
     capRuta: "No he trobat cap circuit des d'aquí. Prova un punt de sortida una mica diferent (un carrer o un camí).",
     capCarretera: "No he trobat cap circuit 100% per carretera des d'aquí. Torna a buscar (seran circuits nous) o tria un punt de sortida en una carretera.",
     carretera100: "100% per carretera",
+    principal: "{x}% per carretera principal (C-, N-)",
     errorProxy: "No he pogut calcular rutes ara mateix. Torna-ho a provar d'aquí a una estona.",
     errorPistes: "No he pogut buscar pistes ara mateix (el servei de mapes va saturat). Torna-ho a provar d'aquí a un minut.",
     senseProxy: "Els circuits encara no estan activats en aquesta pàgina.",
@@ -273,6 +274,7 @@ const T = {
     capRuta: "I couldn't find a loop from here. Try a slightly different start (a street or a path).",
     capCarretera: "I couldn't find a loop that's 100% on roads from here. Search again (you'll get new loops) or pick a start on a road.",
     carretera100: "100% on roads",
+    principal: "{x}% on main roads",
     errorProxy: "I couldn't work out routes right now. Please try again in a while.",
     errorPistes: "I couldn't search for tracks right now (the map service is busy). Please try again in a minute.",
     senseProxy: "Loops aren't switched on for this page yet.",
@@ -485,16 +487,18 @@ function diferents(cands) {
  * cada 10 circuits d'openrouteservice ja surt net; reparats, 3 de cada 4.
  */
 async function repara(c, sessio) {
-  let actual = c;
+  // també mira de treure els trams llargs per carretera principal (C-, N-): si no pot, en queda la millor neta
+  let actual = c, millor = c.r.foraCarretera ? null : c;
   const evita = [];
   for (let passada = 0; passada < REPARACIONS; passada++) {
     for (const p of Motor.puntsAEvitar(actual.r)) if (evita.length < MAX_EVITA) evita.push(p);
     const nou = await demana(c.seed, c.factor, Motor.puntsDePas(actual.r), evita);
-    if (!nou) return null;
+    if (!nou) break;
     actual = valora(nou, sessio);
-    if (!actual.r.foraCarretera) return actual;
+    if (!actual.r.foraCarretera && (!millor || actual.pena < millor.pena)) millor = actual;
+    if (!actual.r.foraCarretera && !actual.r.tramsPrincipals) break;
   }
-  return null;
+  return millor;
 }
 
 function valora(c, sessio) {
@@ -533,10 +537,10 @@ async function buscaCircuits(sessio) {
     cands.sort((a, b) => a.pena - b.pena);
     if (Motor.esCarretera(sessio)) {
       // 100% per carretera: els que ja ho són, i els millors dels altres, reparats
-      const nets = cands.filter((c) => !c.r.foraCarretera);
-      const reparats = await Promise.all(cands.filter((c) => c.r.foraCarretera).slice(0, Math.max(0, 3 - nets.length) + 1)
-        .map((c) => repara(c, sessio)));
-      cands = nets.concat(reparats.filter(Boolean)).sort((a, b) => a.pena - b.pena);
+      // els nets i per carreteres locals ja valen; els 3 millors dels altres es reparen
+      const bo = (c) => !c.r.foraCarretera && !c.r.tramsPrincipals;
+      const reparats = await Promise.all(cands.filter((c) => !bo(c)).slice(0, 3).map((c) => repara(c, sessio)));
+      cands = cands.filter(bo).concat(reparats.filter(Boolean)).sort((a, b) => a.pena - b.pena);
     }
     propostes = diferents(cands).slice(0, 3);
     if (!propostes.length) {
@@ -565,7 +569,10 @@ function pintaPropostes(sessio) {
     const div = document.createElement("div");
     div.className = "proposta" + (n === triada ? " triada" : "");
     const detalls = [];
-    if (Motor.esCarretera(sessio)) detalls.push(t.carretera100);
+    if (Motor.esCarretera(sessio)) {
+      detalls.push(t.carretera100);
+      if (r.principal > 0.03) detalls.push(omple(t.principal, { x: Math.round(100 * r.principal) }));
+    }
     else if (sessio.s === "ride" ? r.senseAsfalt > 0.05 : r.senseAsfalt > 0.2) detalls.push(omple(t.senseAsfalt, { x: Math.round(100 * r.senseAsfalt) }));
     if (sessio.s === "run" && r.carretera > 0.15) detalls.push(omple(t.carretera, { x: Math.round(100 * r.carretera) }));
     let pujada = "";
