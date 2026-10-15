@@ -107,6 +107,11 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .nav button:disabled { opacity: .3; cursor: default; }
 .final { text-align: center; display: grid; gap: 12px; padding-block: 24px; }
 .final .num { font-size: 3.4rem; font-weight: 900; color: var(--accent); }
+.valora { display: grid; gap: 10px; text-align: left; }
+.valora .tria { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.valora .tria button[aria-pressed="true"] { background: var(--ok); color: #fff; border-color: var(--ok); }
+.valora label { display: flex; gap: 10px; align-items: center; font-weight: 600; padding: 4px 0; }
+.valora input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--ok); }
 .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .lockup { display: block; height: auto; }
 .lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -225,7 +230,20 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   <section id="vista-final" class="card final" hidden>
     <div class="num">Fet!</div>
     <p id="final-txt" style="margin:0"></p>
-    <p class="muted" style="margin:0">Quan pugi a intervals.icu, posa-hi l'RPE de la sessió (de l'1 al 10).</p>
+    <p class="muted" style="margin:0" id="final-rpe">Quan pugi a intervals.icu, posa-hi l'RPE de la sessió (de l'1 al 10).</p>
+    <!-- Força 60+: com ha anat la sessió (només si l'enllaç porta la clau signada "f") -->
+    <div class="valora" id="valora" hidden>
+      <strong>Com t'ha anat?</strong>
+      <div class="tria" role="group" aria-label="Com t'ha anat">
+        <button class="btn sec" type="button" data-val="facil" aria-pressed="false">Fàcil</button>
+        <button class="btn sec" type="button" data-val="be" aria-pressed="false">Bé</button>
+        <button class="btn sec" type="button" data-val="dur" aria-pressed="false">Dur</button>
+      </div>
+      <label><input type="checkbox" id="val-dolor"> M'ha fet mal alguna cosa</label>
+      <label><input type="checkbox" id="val-mareig"> M'he marejat</label>
+      <button class="btn" type="button" id="val-envia" disabled>Envia</button>
+      <p class="muted" id="val-estat" style="margin:0" aria-live="polite"></p>
+    </div>
     <button class="btn sec" type="button" id="final-llista">Veure la sessió</button>
   </section>
 </main>
@@ -334,6 +352,47 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     }
   }
 
+  // ---- Força 60+: valoració del final de la sessió. L'enllaç porta f = { u: Worker, k: clau, g: signatura }.
+  var valora = sessio.f && sessio.f.u && sessio.f.k && sessio.f.g ? sessio.f : null, triat = null;
+  var clauValora = valora ? "ginga-valorat:" + valora.k : null;
+  function preparaValoracio() {
+    if (!valora) return;
+    $("final-rpe").hidden = true;
+    $("valora").hidden = false;
+    var ja = null;
+    try { ja = localStorage.getItem(clauValora); } catch (err) {}
+    if (ja) $("val-estat").textContent = "Ja ho has enviat. Si ho tornes a enviar, es queda l'última resposta.";
+  }
+  if (valora) {
+    Array.prototype.forEach.call(document.querySelectorAll("#valora .tria button"), function (b) {
+      b.addEventListener("click", function () {
+        triat = b.getAttribute("data-val");
+        Array.prototype.forEach.call(document.querySelectorAll("#valora .tria button"), function (x) {
+          x.setAttribute("aria-pressed", x === b ? "true" : "false");
+        });
+        $("val-envia").disabled = false;
+      });
+    });
+    $("val-envia").addEventListener("click", function () {
+      if (!triat) return;
+      $("val-envia").disabled = true;
+      $("val-estat").textContent = "Enviant…";
+      fetch(valora.u, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ k: valora.k, g: valora.g, val: triat,
+                               dolor: $("val-dolor").checked, mareig: $("val-mareig").checked })
+      }).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        try { localStorage.setItem(clauValora, triat); } catch (err) {}
+        $("val-estat").textContent = "Gràcies! L'entrenador ho veurà diumenge." +
+          ($("val-dolor").checked || $("val-mareig").checked ? " Si no et trobes bé, truca al metge." : "");
+      }).catch(function () {
+        $("val-envia").disabled = false;
+        $("val-estat").textContent = "No s'ha pogut enviar. Torna-ho a provar d'aquí a una estona.";
+      });
+    });
+  }
+
   // ---- pintar la foto de l'estat (vingui del motor del mòbil o de la tele)
   var foto = null, compte = null, vistaActual = null;
   function mostra(vista) {
@@ -348,6 +407,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     if (f.vista === "final") {
       mostra("vista-final"); compte = null;
       $("final-txt").textContent = suma(f.fetes) + " sèries de " + sessio.e.length + " exercicis.";
+      preparaValoracio();
       try { if (bloqueig && !remot) bloqueig.release(); } catch (err) {}
       return;
     }
