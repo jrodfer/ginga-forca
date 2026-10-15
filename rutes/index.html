@@ -200,7 +200,10 @@ async function overpass(consulta) {
 // d'un 1,0 a un 1,65. Per això es demana una mica menys (FACTOR) amb moltes llavors de cop, i es tria.
 const LLAVORS = 6;              // circuits que es demanen de cop; se n'ensenyen els 3 millors
 const FACTOR = { run: 0.9, ride: 0.75 };
-const REPARACIONS = 2;          // passades per deixar un circuit de bici de carretera 100% per carretera
+const MAX_ERR_KM = 0.3;         // cap proposta a més d'un 30% dels km de la sessió (36 km: de 25 a 47)
+const MAX_ERR_KM_PRINCIPALS = 0.2;  // treure les carreteres principals només val si el circuit es queda a un 20%
+const REPARACIONS = 2;
+const ESGLAO_MS = 700;          // entre reparacions que comencen alhora          // passades per deixar un circuit de bici de carretera 100% per carretera
 const MAX_EVITA = 80;           // el màxim de punts a evitar que accepta el proxy
 const MARGE_KM = 0.15;          // si cap no s'hi acosta tant, una segona tanda amb la llargada ajustada
 
@@ -226,9 +229,11 @@ const T = {
     km: "km", min: "min", dPos: "m D+", senseAsfalt: "{x}% sense asfalt", carretera: "{x}% per carretera",
     pujada: "Pujada al km {a}: {m} m al {g}%", senseAPujada: "Cap pujada clara del pendent que toca; la més semblant, al km {a}: {m} m al {g}%",
     pistaA: "a {d}", arribar: "Com hi arribo", accesPrivat: "accés restringit",
-    capRuta: "No he trobat cap circuit des d'aquí. Prova un punt de sortida una mica diferent (un carrer o un camí).",
-    capCarretera: "No he trobat cap circuit 100% per carretera des d'aquí. Torna a buscar (seran circuits nous) o tria un punt de sortida en una carretera.",
+    capRuta: "No he trobat cap circuit de ~{k} km des d'aquí. Torna a buscar (seran circuits nous) o prova un punt de sortida una mica diferent.",
+    capCarretera: "No he trobat cap circuit de ~{k} km 100% per carretera des d'aquí. Torna a buscar (seran circuits nous) o tria un punt de sortida en una carretera.",
     carretera100: "100% per carretera",
+    saturat: "Ara mateix hi ha massa cerques de rutes alhora. Torna-ho a provar d'aquí a un minut.",
+    quota: "Avui ja s'han fet totes les cerques de rutes que permet el servei de mapes. Torna-ho a provar demà.",
     principal: "{x}% per carretera principal (C-, N-)",
     errorProxy: "No he pogut calcular rutes ara mateix. Torna-ho a provar d'aquí a una estona.",
     errorPistes: "No he pogut buscar pistes ara mateix (el servei de mapes va saturat). Torna-ho a provar d'aquí a un minut.",
@@ -271,9 +276,11 @@ const T = {
     km: "km", min: "min", dPos: "m climbing", senseAsfalt: "{x}% unpaved", carretera: "{x}% on roads",
     pujada: "Climb at km {a}: {m} m at {g}%", senseAPujada: "No clear climb at the right gradient; the closest, at km {a}: {m} m at {g}%",
     pistaA: "{d} away", arribar: "Directions", accesPrivat: "restricted access",
-    capRuta: "I couldn't find a loop from here. Try a slightly different start (a street or a path).",
-    capCarretera: "I couldn't find a loop that's 100% on roads from here. Search again (you'll get new loops) or pick a start on a road.",
+    capRuta: "I couldn't find a ~{k} km loop from here. Search again (you'll get new loops) or try a slightly different start.",
+    capCarretera: "I couldn't find a ~{k} km loop that's 100% on roads from here. Search again (you'll get new loops) or pick a start on a road.",
     carretera100: "100% on roads",
+    saturat: "Too many route searches right now. Please try again in a minute.",
+    quota: "Today's route searches with the map service are used up. Please try again tomorrow.",
     principal: "{x}% on main roads",
     errorProxy: "I couldn't work out routes right now. Please try again in a while.",
     errorPistes: "I couldn't search for tracks right now (the map service is busy). Please try again in a minute.",
@@ -304,7 +311,7 @@ const S = lectura && lectura.sessio;
 const L = S && T[S.l] ? S.l : (navigator.language || "ca").startsWith("en") ? "en" : "ca";
 const t = T[L];
 document.documentElement.lang = L;
-let mapa, sortida, capes = [], propostes = [], triada = 0, llavor = 0;
+let mapa, sortida, capes = [], propostes = [], triada = 0, llavor = 0, saturat = false, quotaEsgotada = false;
 
 const fmt = (x, dec = 1) => x.toLocaleString(L === "en" ? "en-GB" : "ca-ES", { maximumFractionDigits: dec, minimumFractionDigits: 0 });
 const omple = (text, vars) => text.replace(/\{(\w+)\}/g, (_, k) => vars[k] != null ? vars[k] : "");
@@ -463,7 +470,14 @@ async function demana(seed, factor, via, evita) {
     body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, inici: sortida, seed, factor, via, evita }),
   });
   if (r.status === 410) throw new Error("caducat");
-  if (r.status === 403) throw new Error("signatura");
+  if (r.status === 403 || r.status === 429) {
+    // el 403 del proxy és la signatura; el d'openrouteservice ("Quota exceeded"), la quota del dia esgotada;
+    // el 429, el límit per minut. Tots dos d'openrouteservice són per a tots els atletes alhora.
+    const cos = await r.json().catch(() => ({}));
+    if (cos.error === "signatura") throw new Error("signatura");
+    if (r.status === 403) quotaEsgotada = true; else saturat = true;
+    return null;
+  }
   if (!r.ok) return null;                       // 404 de openrouteservice: cap circuit des d'aquí amb aquesta llavor
   const fc = await r.json();
   return fc.features && fc.features[0] ? { feature: fc.features[0], seed, factor } : null;
@@ -485,18 +499,30 @@ function diferents(cands) {
  * Bici de carretera: un circuit amb trams de terra, pista o camí es torna a demanar passant pels mateixos llocs
  * però evitant aquests trams, fins que és 100% per carretera (o es dona per perdut). Mesurat a l'Empordà: 1 de
  * cada 10 circuits d'openrouteservice ja surt net; reparats, 3 de cada 4.
+ *
+ * Per parts: primer la terra (obligatori) i després, si encara hi ha trams llargs per carretera principal, una
+ * passada més per treure'ls que només es queda si no allarga el circuit. Si l'única manera de passar un riu o
+ * l'autopista és un pont de la C-260, evitar-la fa fer voltes de 100 km (passava des de Llers).
  */
 async function repara(c, sessio) {
-  // també mira de treure els trams llargs per carretera principal (C-, N-): si no pot, en queda la millor neta
-  let actual = c, millor = c.r.foraCarretera ? null : c;
+  const k = Math.min(sessio.k, 100);
+  const err = (x) => Math.abs(x.r.km - k) / k;
+  const val = (x) => x && !x.r.foraCarretera && err(x) <= MAX_ERR_KM;
+  let millor = val(c) ? c : null, actual = c;
   const evita = [];
-  for (let passada = 0; passada < REPARACIONS; passada++) {
-    for (const p of Motor.puntsAEvitar(actual.r)) if (evita.length < MAX_EVITA) evita.push(p);
+  const afegeix = (punts) => { for (const p of punts) if (evita.length < MAX_EVITA) evita.push(p); };
+  for (let passada = 0; passada < REPARACIONS && actual.r.foraCarretera; passada++) {
+    afegeix(Motor.puntsAEvitar(actual.r, 60, false));
     const nou = await demana(c.seed, c.factor, Motor.puntsDePas(actual.r), evita);
     if (!nou) break;
     actual = valora(nou, sessio);
-    if (!actual.r.foraCarretera && (!millor || actual.pena < millor.pena)) millor = actual;
-    if (!actual.r.foraCarretera && !actual.r.tramsPrincipals) break;
+    if (val(actual) && (!millor || actual.pena < millor.pena)) millor = actual;
+  }
+  if (millor && millor.r.tramsPrincipals) {
+    afegeix(Motor.puntsAEvitar(millor.r, 60, true));
+    const nou = await demana(c.seed, c.factor, Motor.puntsDePas(millor.r), evita);
+    const x = nou && valora(nou, sessio);
+    if (val(x) && err(x) <= MAX_ERR_KM_PRINCIPALS && x.pena < millor.pena) millor = x;
   }
   return millor;
 }
@@ -518,6 +544,7 @@ async function buscaCircuits(sessio) {
   if (!lectura.sig) { res.innerHTML = `<p>${t.senseSignatura}</p>`; res.hidden = false; return; }
   const b = $("b-busca");
   b.disabled = true; b.textContent = t.buscant;
+  saturat = quotaEsgotada = false;
   try {
     const factor = FACTOR[sessio.s] || 0.9;
     const tanda = async (f, n) => {
@@ -539,12 +566,15 @@ async function buscaCircuits(sessio) {
       // 100% per carretera: els que ja ho són, i els millors dels altres, reparats
       // els nets i per carreteres locals ja valen; els 3 millors dels altres es reparen
       const bo = (c) => !c.r.foraCarretera && !c.r.tramsPrincipals;
-      const reparats = await Promise.all(cands.filter((c) => !bo(c)).slice(0, 3).map((c) => repara(c, sessio)));
+      // esglaonades, perquè no arribin totes alhora al límit per minut d'openrouteservice
+      const reparats = await Promise.all(cands.filter((c) => !bo(c)).slice(0, 3)
+        .map((c, i) => new Promise((ok) => setTimeout(ok, i * ESGLAO_MS)).then(() => repara(c, sessio))));
       cands = cands.filter(bo).concat(reparats.filter(Boolean)).sort((a, b) => a.pena - b.pena);
     }
-    propostes = diferents(cands).slice(0, 3);
+    // mai un circuit que s'allunyi massa dels km de la sessió (abans en sortien de 150 km per a una de 36)
+    propostes = diferents(cands.filter((c) => err(c) <= MAX_ERR_KM)).slice(0, 3);
     if (!propostes.length) {
-      res.innerHTML = `<p>${Motor.esCarretera(sessio) ? t.capCarretera : t.capRuta}</p>`;
+      res.innerHTML = `<p>${quotaEsgotada ? t.quota : saturat ? t.saturat : omple(Motor.esCarretera(sessio) ? t.capCarretera : t.capRuta, { k: fmt(kObjectiu, 0) })}</p>`;
       res.hidden = false; netejaCapes(); return;
     }
     pintaPropostes(sessio);

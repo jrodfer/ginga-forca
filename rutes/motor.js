@@ -145,9 +145,10 @@
    * Punts on el proxy posa una zona a evitar: un cada `cada` metres sobre els trams fora de carretera, i un cada
    * 400 m sobre els trams llargs per carretera principal. Primer els de terra, que són obligatoris.
    */
-  function puntsAEvitar(r, cada = 60) {
+  function puntsAEvitar(r, cada = 60, ambPrincipals = true) {
     const punts = [];
-    for (const [mascara, pas] of [[r.dolents, cada], [r.principalLlarg || [], CADA_EVITA_PRINCIPAL]]) {
+    const mascares = [[r.dolents, cada]].concat(ambPrincipals ? [[r.principalLlarg || [], CADA_EVITA_PRINCIPAL]] : []);
+    for (const [mascara, pas] of mascares) {
       let ultim = -Infinity;
       for (let i = 0; i < r.coords.length; i++) {
         if (mascara[i] && r.acc[i] - ultim >= pas) { punts.push([r.coords[i][0], r.coords[i][1]]); ultim = r.acc[i]; }
