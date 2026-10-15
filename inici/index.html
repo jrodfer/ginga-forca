@@ -10,7 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
 <style>
-/* Formulari d'inici de Força 60+: les preguntes de seguretat i els tests del primer dia.
+/* Formulari d'inici de Força 60+: com es mou la persona (prefiltre), les preguntes de seguretat i, només si no
+   passa el prefiltre, els tests del primer dia.
    La font és a jrodfer/ginga (forca60/web/inici/); aquí se'n publica la còpia. Lletra gran i botons grans. */
 :root {
   --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
@@ -62,7 +63,7 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   <header>
     <div class="marca">ginga</div>
     <h1 id="titol">Abans de començar</h1>
-    <p class="muted" style="margin:0">Unes preguntes de seguretat i tres tests senzills. Uns 10 minuts, amb una cadira sense braços i algú al costat.</p>
+    <p class="muted" style="margin:0">Unes preguntes curtes per ajustar el pla al teu nivell. Uns 3 minuts.</p>
   </header>
 
   <div id="sense-enllac" class="card" hidden>
@@ -71,14 +72,20 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
 
   <form id="formulari" hidden>
     <section class="card">
+      <h2>Com et mous ara</h2>
+      <p class="muted" style="margin:0 0 6px">Per saber per on començar.</p>
+      <div id="perfil"></div>
+    </section>
+
+    <section class="card">
       <h2>Preguntes de seguretat</h2>
       <p class="muted" style="margin:0 0 6px">Si alguna resposta és «sí», abans de començar ho parlaràs amb el metge.</p>
       <div id="preguntes"></div>
     </section>
 
-    <section class="card">
-      <h2>Els tests</h2>
-      <p class="muted" style="margin:0 0 6px">Fes-los amb calma i amb algú al costat. Si un et fa mal o et mareges, para i posa el que hagis fet.</p>
+    <section class="card" id="bloc-tests" hidden>
+      <h2>Uns tests senzills</h2>
+      <p class="muted" style="margin:0 0 6px">Amb les respostes d'abans, millor que facis aquests tests per triar bé el nivell. Uns 10 minuts, amb una cadira sense braços i algú al costat. Si un et fa mal o et mareges, para i posa el que hagis fet.</p>
 
       <div class="test">
         <p><strong>1. Aixecar-se de la cadira.</strong> Seu a la cadira amb els braços creuats al pit. Quantes vegades t'aixeques del tot i tornes a seure en 30 segons?</p>
@@ -161,40 +168,64 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   if (dades.n) $("titol").textContent = "Abans de començar, " + dades.n;
   $("formulari").hidden = false;
 
-  PREGUNTES.forEach(function (text, i) {
+  // Prefiltre: qui camina, s'aixeca sense mans i fa esport o corre no fa els tests (forca60/valoracio.py, actiu)
+  var PERFIL = [
+    ["camina", "Camines habitualment més de mitja hora seguida sense problemes?"],
+    ["esport", "Fas esport o exercici almenys dos dies a la setmana?"],
+    ["forca", "Fas exercicis de força (peses, gomes, màquines o similars)?"],
+    ["corre", "Pots córrer una estona, encara que sigui poc?"],
+    ["cadira_sense_mans", "T'aixeques d'una cadira sense ajudar-te amb les mans?"]
+  ];
+  function sino(contenidor, nom, text, ordre) {
     var div = document.createElement("div");
     div.className = "pregunta";
     var p = document.createElement("p");
-    p.textContent = (i + 1) + ". " + text;
-    var sino = document.createElement("div");
-    sino.className = "sino";
-    ["no", "si"].forEach(function (v) {
+    p.textContent = (ordre ? ordre + ". " : "") + text;
+    var fila = document.createElement("div");
+    fila.className = "sino";
+    ["si", "no"].forEach(function (v) {
       var l = document.createElement("label");
       var inp = document.createElement("input");
-      inp.type = "radio"; inp.name = "p" + i; inp.value = v;
+      inp.type = "radio"; inp.name = nom; inp.value = v;
       l.appendChild(inp);
       l.appendChild(document.createTextNode(v === "si" ? "Sí" : "No"));
-      sino.appendChild(l);
+      fila.appendChild(l);
     });
-    div.appendChild(p); div.appendChild(sino);
-    $("preguntes").appendChild(div);
-  });
+    div.appendChild(p); div.appendChild(fila);
+    contenidor.appendChild(div);
+  }
+  PERFIL.forEach(function (x) { sino($("perfil"), "perfil-" + x[0], x[1]); });
+  PREGUNTES.forEach(function (text, i) { sino($("preguntes"), "p" + i, text, i + 1); });
+
+  function tria(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value === "si" : null; }
+  function perfil() {
+    var r = {};
+    PERFIL.forEach(function (x) { r[x[0]] = tria("perfil-" + x[0]); });
+    return r;
+  }
+  function actiu(p) { return !!(p.camina && p.cadira_sense_mans && (p.esport || p.corre)); }
+  function calenTests() {
+    var p = perfil();
+    var complet = PERFIL.every(function (x) { return p[x[0]] !== null; });
+    return complet && !actiu(p);
+  }
+  $("perfil").addEventListener("change", function () { $("bloc-tests").hidden = !calenTests(); });
 
   // Cronòmetres: un botó per test omple el camp; el de la cadira és un compte enrere de 30 s
-  var actiu = null;
+  var enMarxa = null;
   Array.prototype.forEach.call(document.querySelectorAll("[data-crono]"), function (b) {
     b.addEventListener("click", function () {
       var camp = $(b.getAttribute("data-crono"));
-      if (actiu && actiu.boto === b) {
-        clearInterval(actiu.id);
-        camp.value = Math.round((Date.now() - actiu.inici) / 100) / 10;
+      if (enMarxa && enMarxa.boto === b) {
+        clearInterval(enMarxa.id);
+        camp.value = Math.round((Date.now() - enMarxa.inici) / 100) / 10;
         if (camp.max) camp.value = Math.min(Number(camp.value), Number(camp.max));
         if (camp.step === "1") camp.value = Math.floor(Number(camp.value));
-        b.textContent = "Cronometra"; actiu = null; return;
+        b.textContent = "Cronometra"; enMarxa = null; return;
       }
-      if (actiu) return;
+      if (enMarxa) return;
       var inici = Date.now();
-      actiu = { boto: b, inici: inici, id: setInterval(function () {
+      enMarxa = { boto: b, inici: inici, id: setInterval(function () {
         camp.value = Math.floor((Date.now() - inici) / 1000);
       }, 200) };
       b.textContent = "Para";
@@ -218,30 +249,34 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   $("formulari").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var respostes = [], falta = [];
+    var p = perfil();
+    var perfilFalta = PERFIL.some(function (x) { return p[x[0]] === null; });
     PREGUNTES.forEach(function (t, i) {
-      var tria = document.querySelector("input[name=p" + i + "]:checked");
-      if (!tria) falta.push(i + 1); else respostes.push(tria.value === "si");
+      var r = tria("p" + i);
+      if (r === null) falta.push(i + 1); else respostes.push(r);
     });
+    var ambTests = calenTests();
     var tests = { cadira: $("cadira").value, tug: $("tug").value, tandem: $("tandem").value, un_peu: $("un_peu").value };
-    var buits = Object.keys(tests).filter(function (k) { return tests[k] === ""; });
-    if (falta.length || buits.length) {
+    var buits = ambTests ? Object.keys(tests).filter(function (k) { return tests[k] === ""; }) : [];
+    if (perfilFalta || falta.length || buits.length) {
       $("error").hidden = false;
-      $("error").textContent = falta.length ? "Falta respondre la pregunta " + falta.join(", ") + "."
-                                            : "Falta algun resultat dels tests.";
+      $("error").textContent = perfilFalta ? "Falta respondre alguna pregunta de «Com et mous ara»."
+        : falta.length ? "Falta respondre la pregunta de seguretat " + falta.join(", ") + "."
+        : "Falta algun resultat dels tests.";
       return;
     }
     $("error").hidden = true;
     $("envia").disabled = true; $("envia").textContent = "Enviant…";
-    var cos = { k: dades.k, g: dades.g, respostes: respostes,
-                tests: { cadira: Number(tests.cadira), tug: Number(tests.tug), tandem: Number(tests.tandem),
-                         un_peu: Number(tests.un_peu), mans: $("mans").checked } };
+    var cos = { k: dades.k, g: dades.g, respostes: respostes, perfil: p,
+                tests: ambTests ? { cadira: Number(tests.cadira), tug: Number(tests.tug), tandem: Number(tests.tandem),
+                                    un_peu: Number(tests.un_peu), mans: $("mans").checked } : null };
     fetch(dades.u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cos) })
       .then(function (r) { if (!r.ok) throw new Error(r.status); })
       .then(function () {
         $("formulari").hidden = true; $("gracies").hidden = false;
         $("gracies-txt").textContent = respostes.some(Boolean)
           ? "Com que alguna resposta és «sí», abans de començar parla-ho amb el metge. El teu entrenador es posarà en contacte amb tu."
-          : "Amb els teus resultats ajustarem el pla. Rebràs les sessions per correu.";
+          : "Amb les teves respostes ajustarem el pla. Rebràs les sessions per correu.";
         window.scrollTo(0, 0);
       })
       .catch(function () {
