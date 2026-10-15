@@ -157,6 +157,17 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
         </div>
         <p class="ajuda" style="margin:8px 0 0">Si no en tens, t'enviarem els passos per obrir-lo.</p>
       </div>
+
+      <div class="pregunta camp-id" id="id-ginga" hidden>
+        <p>El teu ID d'atleta d'intervals.icu <span class="muted" style="font-weight:400">(si el tens a mà)</span></p>
+        <input type="text" class="intervals-id" maxlength="20" placeholder="i123456" autocomplete="off" autocapitalize="off">
+        <details style="margin-top:8px">
+          <summary>On el trobo?</summary>
+          <p style="margin:6px 0 0">A intervals.icu, obre <b>Settings</b> (la configuració) i baixa fins a baix de tot. L'ID
+            d'atleta comença per <b>i</b> i va seguit de números (per exemple, i123456). Al mòbil surt just a sota de les
+            notificacions; a l'ordinador, al costat.</p>
+        </details>
+      </div>
     </section>
     <section class="card" id="bloc-forca" hidden>
       <h2>intervals.icu <span class="etiqueta opc">opcional</span></h2>
@@ -169,6 +180,17 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
           <label><input type="radio" name="intervals_forca" value="si"> Sí</label>
           <label><input type="radio" name="intervals_forca" value="no"> No</label>
         </div>
+      </div>
+
+      <div class="pregunta camp-id" id="id-forca" hidden>
+        <p>El teu ID d'atleta d'intervals.icu <span class="muted" style="font-weight:400">(si el tens a mà)</span></p>
+        <input type="text" class="intervals-id" maxlength="20" placeholder="i123456" autocomplete="off" autocapitalize="off">
+        <details style="margin-top:8px">
+          <summary>On el trobo?</summary>
+          <p style="margin:6px 0 0">A intervals.icu, obre <b>Settings</b> (la configuració) i baixa fins a baix de tot. L'ID
+            d'atleta comença per <b>i</b> i va seguit de números (per exemple, i123456). Al mòbil surt just a sota de les
+            notificacions; a l'ordinador, al costat.</p>
+        </details>
       </div>
     </section>
 
@@ -214,11 +236,19 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
   if (params.get("p") === "forca" || params.get("p") === "ginga") {
     var pre = document.querySelector("input[name='programa'][value='" + params.get("p") + "']"); if (pre) pre.checked = true;
   }
+  function idIntervals() {               // el de la secció visible, en minúscules i sense espais
+    var bloc = valor("programa") === "ginga" ? $("id-ginga") : $("id-forca");
+    if (!bloc || bloc.hidden) return null;
+    var v = bloc.querySelector(".intervals-id").value.replace(/\s+/g, "").toLowerCase();
+    return v || null;
+  }
   function valor(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value : null; }
   function actualitza() {
     var p = valor("programa");
     $("bloc-intervals").hidden = p !== "ginga";
     $("bloc-forca").hidden = p !== "forca";
+    $("id-ginga").hidden = valor("intervals") !== "si";
+    $("id-forca").hidden = valor("intervals_forca") !== "si";
   }
   $("formulari").addEventListener("change", actualitza);
   actualitza();
@@ -226,10 +256,12 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
     ev.preventDefault();
     var cos = { programa: valor("programa"), nom: $("nom").value.trim(), email: $("email").value.trim(),
                 edat: valor("edat"), objectiu: $("objectiu").value.trim(),
-                intervals: valor("programa") === "ginga" ? valor("intervals") : valor("intervals_forca"), com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked };
+                intervals: valor("programa") === "ginga" ? valor("intervals") : valor("intervals_forca"),
+                intervals_id: idIntervals(), com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked };
     var falta = !cos.programa ? "Tria Ginga o Ginga Força." : !cos.nom ? "Falta el nom."
       : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cos.email) ? "Revisa el correu electrònic." : !cos.edat ? "Falta l'edat."
-      : cos.programa === "ginga" && !cos.intervals ? "Digues si tens compte d'intervals.icu." : !cos.privacitat ? "Cal acceptar la casella de privacitat." : "";
+      : cos.programa === "ginga" && !cos.intervals ? "Digues si tens compte d'intervals.icu."
+      : cos.intervals_id && !/^i\d{1,10}$/.test(cos.intervals_id) ? "L'ID d'intervals.icu comença per i i va seguit de números (per exemple, i123456)." : !cos.privacitat ? "Cal acceptar la casella de privacitat." : "";
     if (falta) { $("error").hidden = false; $("error").textContent = falta; return; }
     Object.keys(cos).forEach(function (k) { if (cos[k] === "" || cos[k] === null) delete cos[k]; });
     $("error").hidden = true; $("envia").disabled = true; $("envia").textContent = "Enviant…";
