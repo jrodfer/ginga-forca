@@ -72,6 +72,58 @@
   // 5 pista, 6 carril bici, 7 vorera/camí de vianants, 8 escales, 9 ferri. surface: 1 pavimentat, 2 sense
   // pavimentar, 3 asfalt, 4 formigó... 8 i més: terra, grava, sorra, herba.
   const SURFACE_SENSE_PAVIMENTAR = new Set([2, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18]);
+  // Bici de carretera: 100% per carretera. Ni pistes, ni camins, ni voreres, ni escales, ni res sense asfaltar.
+  const WAYTYPE_NO_CARRETERA = new Set([4, 5, 7, 8]);
+  const MARGE_SORTIDA = 300;       // m del principi i del final que no compten: el carrer d'on surts (pot ser de vianants)
+
+  /** Quins punts de la geometria són fora de carretera, i quants metres en fan (sense comptar la sortida). */
+  function foraCarretera(coords, acc, extras) {
+    const total = acc[acc.length - 1];
+    const dolents = new Array(coords.length).fill(false);
+    for (const [nom, dolent] of [["surface", SURFACE_SENSE_PAVIMENTAR], ["waytype", WAYTYPE_NO_CARRETERA]]) {
+      const extra = extras[nom] || (nom === "waytype" ? extras.waytypes : null);
+      for (const [ini, fi, valor] of (extra && extra.values) || []) {
+        if (dolent.has(valor)) for (let i = ini; i < fi; i++) dolents[i] = true;
+      }
+    }
+    let metres = 0;
+    for (let i = 0; i < coords.length - 1; i++) {
+      if (acc[i] < MARGE_SORTIDA || acc[i] > total - MARGE_SORTIDA) dolents[i] = false;
+      else if (dolents[i]) metres += acc[i + 1] - acc[i];
+    }
+    return { dolents, metres };
+  }
+
+  /** Punts de pas per tornar a fer el circuit per on anava, sempre sobre trams bons (per a la reparació). */
+  function puntsDePas(r, n = 5) {
+    const total = r.acc[r.acc.length - 1];
+    const via = [];
+    for (let k = 1; k <= n; k++) {
+      const objectiu = (total * k) / (n + 1);
+      let millor = -1;
+      for (let i = 0; i < r.coords.length; i++) {
+        if (r.dolents[i]) continue;
+        if (millor < 0 || Math.abs(r.acc[i] - objectiu) < Math.abs(r.acc[millor] - objectiu)) millor = i;
+      }
+      if (millor >= 0) via.push([r.coords[millor][0], r.coords[millor][1]]);
+    }
+    return via;
+  }
+
+  /** Un punt cada `cada` metres sobre els trams fora de carretera: el proxy hi posa una zona a evitar. */
+  function puntsAEvitar(r, cada = 60) {
+    const punts = [];
+    let ultim = -Infinity;
+    for (let i = 0; i < r.coords.length; i++) {
+      if (r.dolents[i] && r.acc[i] - ultim >= cada) { punts.push([r.coords[i][0], r.coords[i][1]]); ultim = r.acc[i]; }
+    }
+    return punts;
+  }
+
+  /** La sessió és de bici de carretera (i, per tant, el circuit ha de ser 100% per carretera). */
+  function esCarretera(sessio) {
+    return sessio.s === "ride" && sessio.o === "cycling-road";
+  }
 
   /** Fracció de la ruta (0-1) amb cada valor d'un extra d'openrouteservice. */
   function fraccions(extra, acc) {
@@ -95,8 +147,10 @@
     const passos = ((p.segments || [])[0] || {}).steps || [];
     let senseAsfalt = 0;
     for (const [v, x] of Object.entries(surface)) if (SURFACE_SENSE_PAVIMENTAR.has(Number(v))) senseAsfalt += x;
+    const fora = foraCarretera(coords, acc, extras);
     return {
       coords, acc, km,
+      dolents: fora.dolents, foraCarretera: fora.metres,
       desnivell: p.ascent != null ? p.ascent : desnivellPositiu(coords),
       senseAsfalt,
       carretera: (waytype[1] || 0) + (waytype[2] || 0),
@@ -269,6 +323,7 @@ out center tags;`;
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
+    foraCarretera, puntsDePas, puntsAEvitar, esCarretera,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;
