@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#10231D">
+<title>Ginga Rutes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Una columna de mòbil: la sessió, d'on surts (cerca o mapa), i les propostes amb el GPX. En seguir una ruta,
+   la pantalla és tota per al mapa i la pròxima indicació. Mateixa identitat que el reproductor de força. */
+:root {
+  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
+  --accent: #FF6A2B; --accent-fg: #10231D; --ok: #00996B; --warn: #D9541C; --warn-soft: #FFE4D3;
+  --ruta: #FF6A2B; --ruta-alt: #8A968F; --pujada: #00996B;
+  --display: "Nunito", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --warn: #FFC531; --warn-soft: #1D3A31;
+    --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+  --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --warn: #FFC531; --warn-soft: #1D3A31;
+  --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg); font: 16px/1.45 var(--display);
+  padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  -webkit-tap-highlight-color: transparent;
+}
+main { max-width: 560px; margin: 0 auto; display: grid; gap: 16px; padding-block: 16px; }
+[hidden] { display: none !important; }
+h1, h2 { letter-spacing: -.01em; text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; line-height: 1.1; font-weight: 900; }
+h2 { font-size: 1.2rem; line-height: 1.2; font-weight: 800; }
+p { margin: 0; }
+.eyebrow { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+.muted { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+.avis { background: var(--warn-soft); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
+.xifres { display: flex; flex-wrap: wrap; gap: 6px 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.xifres span { white-space: nowrap; }
+
+.btn { appearance: none; border: 0; border-radius: 14px; font: 800 1rem/1 var(--display); letter-spacing: .04em;
+  text-transform: uppercase; padding: 16px; width: 100%; cursor: pointer; background: var(--accent); color: var(--accent-fg);
+  text-decoration: none; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
+.btn.sec { background: transparent; color: var(--fg); border: 1.5px solid var(--line); }
+.btn.petit { padding: 12px; font-size: .85rem; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+form.cerca { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+input[type=search] { font: 600 1rem var(--display); padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--bg); color: var(--fg); min-width: 0; }
+form.cerca .btn { width: auto; padding-inline: 16px; }
+ul.llocs { list-style: none; margin: 0; padding: 0; display: grid; }
+ul.llocs button { all: unset; cursor: pointer; display: block; padding: 10px 0; border-top: 1px solid var(--line); font-size: .95rem; }
+ul.llocs li:first-child button { border-top: 0; }
+
+#mapa { height: 340px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); z-index: 0; }
+.leaflet-container { font-family: var(--display); background: var(--line); }
+
+.proposta { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 10px; }
+.proposta:first-child { border-top: 0; padding-top: 0; }
+.proposta.triada h2 { color: var(--accent); }
+.proposta .cap { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.proposta .cap button { all: unset; cursor: pointer; font-weight: 800; color: var(--muted); font-size: .9rem; }
+.etiqueta { display: inline-block; font-size: .78rem; font-weight: 800; padding: 2px 8px; border-radius: 99px;
+  background: var(--warn-soft); color: var(--fg); }
+
+details summary { cursor: pointer; font-weight: 700; }
+details[open] summary { margin-bottom: 8px; }
+details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; gap: 6px; }
+
+/* seguiment: pantalla completa */
+#segueix { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: grid; grid-template-rows: auto 1fr auto; }
+#segueix .dalt { padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px; display: grid; gap: 4px; background: var(--card);
+  border-bottom: 1px solid var(--line); }
+#segueix .gir { font-size: 1.5rem; font-weight: 900; line-height: 1.15; }
+#segueix .falta { font-size: 2.4rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+#segueix .fora { background: var(--warn); color: var(--accent-fg); font-weight: 800; padding: 8px 12px; border-radius: 10px; }
+#mapa-segueix { min-height: 0; }
+#segueix .baix { padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px); display: grid; gap: 10px; background: var(--card);
+  border-top: 1px solid var(--line); }
+#segueix .estat { display: flex; justify-content: space-between; font-weight: 800; font-variant-numeric: tabular-nums; }
+.jo { width: 18px; height: 18px; border-radius: 50%; background: #2F7DE1; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(0,0,0,.25); }
+</style>
+</head>
+<body>
+<main id="app">
+  <header>
+    <div class="eyebrow" id="quan"></div>
+    <h1 id="titol">Ginga Rutes</h1>
+  </header>
+
+  <section class="card" id="error" hidden><p id="error-text"></p></section>
+
+  <section class="card" id="sessio" hidden>
+    <div class="xifres" id="xifres"></div>
+    <p id="que-busquem"></p>
+    <p class="avis" id="avis" hidden></p>
+  </section>
+
+  <section class="card" id="sortida" hidden>
+    <h2 id="t-sortida"></h2>
+    <form class="cerca" id="cerca">
+      <input type="search" id="q" autocomplete="off" enterkeyhint="search">
+      <button class="btn" type="submit" id="b-cerca"></button>
+    </form>
+    <ul class="llocs" id="llocs" hidden></ul>
+    <button class="btn sec petit" type="button" id="b-aqui"></button>
+    <div id="mapa" role="application"></div>
+    <p class="muted" id="ajuda-mapa"></p>
+    <button class="btn" type="button" id="b-busca" disabled></button>
+  </section>
+
+  <section class="card" id="resultats" hidden aria-live="polite"></section>
+
+  <section class="card">
+    <details>
+      <summary id="t-rellotge"></summary>
+      <ul id="rellotges"></ul>
+    </details>
+  </section>
+</main>
+
+<section id="segueix" hidden>
+  <div class="dalt">
+    <div class="falta" id="s-falta"></div>
+    <div class="gir" id="s-gir"></div>
+    <div class="fora" id="s-fora" hidden></div>
+  </div>
+  <div id="mapa-segueix"></div>
+  <div class="baix">
+    <div class="estat"><span id="s-fet"></span><span id="s-queda"></span></div>
+    <div class="fila">
+      <button class="btn sec petit" type="button" id="s-veu"></button>
+      <button class="btn petit" type="button" id="s-atura"></button>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="motor.js"></script>
+<script>
+"use strict";
+// ---------- configuració ----------
+const PROXY = "https://ginga-rutes.jrodeja96.workers.dev/";   // el Worker de rutes (worker/README.md); buit = només pistes
+const TESSELES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const ATRIBUCIO = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · ' +
+  '<a href="https://openrouteservice.org/">openrouteservice</a> · <a href="https://www.openstreetmap.org/fixthemap">Informa d\'un error</a>';
+const NOMINATIM = "https://nominatim.openstreetmap.org/search";
+// Els servidors públics d'Overpass sovint van saturats (504): es proven per ordre, cadascun amb un temps màxim.
+const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter"];
+const OVERPASS_SEGONS = 12;
+
+async function overpass(consulta) {
+  for (const url of OVERPASS) {
+    try {
+      const r = await fetch(url, { method: "POST", body: "data=" + encodeURIComponent(consulta),
+        signal: AbortSignal.timeout ? AbortSignal.timeout(OVERPASS_SEGONS * 1000) : undefined });
+      if (r.ok) return await r.json();
+    } catch (e) { /* el següent */ }
+  }
+  throw new Error("overpass");
+}
+// openrouteservice no clava la llargada, i demanar-la ajustada canvia el circuit sencer (no corregeix res).
+// Mesurat des de Figueres (15/10/2026): a peu surt d'un 0,8 a un 1,35 del que es demana; en bici de carretera,
+// d'un 1,0 a un 1,65. Per això es demana una mica menys (FACTOR) amb moltes llavors de cop, i es tria.
+const LLAVORS = 6;              // circuits que es demanen de cop; se n'ensenyen els 3 millors
+const FACTOR = { run: 0.9, ride: 0.75 };
+const MARGE_KM = 0.15;          // si cap no s'hi acosta tant, una segona tanda amb la llargada ajustada
+
+const T = {
+  ca: {
+    dies: ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"],
+    run: "córrer", ride: "bici",
+    perfil: {
+      suau: "Un circuit tranquil, sense gaire desnivell.",
+      pla: "Un circuit pla i amb trams seguits, per anar a ritme sense aturar-te.",
+      desnivell: "Un circuit amb desnivell, com el que demana la sessió.",
+      pujades: "Un circuit que passi per una pujada de {m} m al {g}% per fer-hi les {n} repeticions.",
+      pista: "Les sèries ({n}x{q}) surten millor a una pista d'atletisme: ritme exacte i sense semàfors.",
+    },
+    desnivellM: "Uns {a} m de desnivell positiu.",
+    sortida: "D'on surts?", cerca: "Cerca", placeholder: "Ciutat, adreça o lloc",
+    aqui: "Surto d'on sóc ara", ajuda: "O toca el mapa per triar el punt de sortida. Pots moure'l arrossegant-lo.",
+    busca: "Busca rutes", buscaPistes: "Busca pistes a prop", buscant: "Buscant…",
+    tambePla: "O un circuit pla des d'aquí",
+    capLloc: "No he trobat aquest lloc. Prova amb el nom del poble o la ciutat.",
+    capPista: "No hi ha cap pista d'atletisme a menys de 20 km. Et busco un circuit pla?",
+    proposta: "Proposta {n}", veure: "Mostra-la", gpx: "GPX per al rellotge", segueix: "Segueix-la ara",
+    km: "km", min: "min", dPos: "m D+", senseAsfalt: "{x}% sense asfalt", carretera: "{x}% per carretera",
+    pujada: "Pujada al km {a}: {m} m al {g}%", senseAPujada: "Cap pujada clara del pendent que toca; la més semblant, al km {a}: {m} m al {g}%",
+    pistaA: "a {d}", arribar: "Com hi arribo", accesPrivat: "accés restringit",
+    capRuta: "No he trobat cap circuit des d'aquí. Prova un punt de sortida una mica diferent (un carrer o un camí).",
+    errorProxy: "No he pogut calcular rutes ara mateix. Torna-ho a provar d'aquí a una estona.",
+    errorPistes: "No he pogut buscar pistes ara mateix (el servei de mapes va saturat). Torna-ho a provar d'aquí a un minut.",
+    senseProxy: "Els circuits encara no estan activats en aquesta pàgina.",
+    senseSessio: "Aquest enllaç no porta cap sessió. Obre la pàgina des del botó del correu de Ginga.",
+    caducat: "Aquest enllaç era per a la sessió del {d} i ja ha caducat. El del correu d'aquesta setmana sí que funciona.",
+    senseSignatura: "Aquest enllaç no és vàlid per calcular circuits. Fes servir el del correu de Ginga.",
+    llarga: "La sessió fa més de 100 km: et proposo un circuit de 100 km; la resta, d'anada i tornada.",
+    rellotge: "Com la poso al rellotge o al comptador?",
+    rellotges: [
+      "<b>Garmin</b> (Forerunner, Fenix, Edge…): descarrega el GPX i obre'l amb Garmin Connect, o a connect.garmin.com > Entrenament > Recorreguts > Importa. Després, «Envia al dispositiu».",
+      "<b>Apple Watch</b>: obre el GPX amb una app que segueixi rutes, com WorkOutDoors o Footpath.",
+      "<b>Coros, Suunto, Polar, Wahoo</b>: la seva app importa el GPX com a ruta o recorregut.",
+      "<b>Sense rellotge de mapes</b>: «Segueix-la ara» t'ensenya on ets i et diu els girs en veu alta. La pantalla es queda encesa mentre la segueixes.",
+    ],
+    fet: "{x} km fets", queda: "{x} km per acabar", veuOn: "Veu: sí", veuOff: "Veu: no", atura: "Atura",
+    fora: "Te n'has sortit de la ruta", foraVeu: "Te n'has sortit de la ruta", recte: "Continua",
+    final: "Final del recorregut", enM: "D'aquí a {m} metres, ", senseGps: "Aquest mòbil no deixa saber la posició. Pots seguir-la amb el rellotge.",
+    esperantGps: "Buscant el GPS…",
+    gpsDenegat: "Cal que deixis que la pàgina sàpiga on ets per seguir la ruta. No es guarda enlloc.",
+  },
+  en: {
+    dies: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    run: "run", ride: "ride",
+    perfil: {
+      suau: "An easy loop without much climbing.",
+      pla: "A flat loop with long uninterrupted stretches, to hold your pace without stopping.",
+      desnivell: "A hilly loop, as the session asks for.",
+      pujades: "A loop that passes a {m} m climb at {g}% for your {n} repeats.",
+      pista: "The intervals ({n}x{q}) work best on an athletics track: exact pace and no traffic lights.",
+    },
+    desnivellM: "About {a} m of climbing.",
+    sortida: "Where are you starting from?", cerca: "Search", placeholder: "City, address or place",
+    aqui: "Start from where I am", ajuda: "Or tap the map to set the starting point. You can drag it.",
+    busca: "Find routes", buscaPistes: "Find tracks nearby", buscant: "Searching…",
+    tambePla: "Or a flat loop from here",
+    capLloc: "I couldn't find that place. Try the name of the town or city.",
+    capPista: "There's no athletics track within 20 km. Shall I find a flat loop?",
+    proposta: "Option {n}", veure: "Show it", gpx: "GPX for your watch", segueix: "Follow it now",
+    km: "km", min: "min", dPos: "m climbing", senseAsfalt: "{x}% unpaved", carretera: "{x}% on roads",
+    pujada: "Climb at km {a}: {m} m at {g}%", senseAPujada: "No clear climb at the right gradient; the closest, at km {a}: {m} m at {g}%",
+    pistaA: "{d} away", arribar: "Directions", accesPrivat: "restricted access",
+    capRuta: "I couldn't find a loop from here. Try a slightly different start (a street or a path).",
+    errorProxy: "I couldn't work out routes right now. Please try again in a while.",
+    errorPistes: "I couldn't search for tracks right now (the map service is busy). Please try again in a minute.",
+    senseProxy: "Loops aren't switched on for this page yet.",
+    senseSessio: "This link has no session. Open the page from the button in your Ginga email.",
+    caducat: "This link was for the session on {d} and has expired. This week's email has a working one.",
+    senseSignatura: "This link isn't valid for loops. Use the one in your Ginga email.",
+    llarga: "The session is over 100 km: here's a 100 km loop; add the rest as an out-and-back.",
+    rellotge: "How do I get it onto my watch or bike computer?",
+    rellotges: [
+      "<b>Garmin</b> (Forerunner, Fenix, Edge…): download the GPX and open it with Garmin Connect, or at connect.garmin.com > Training > Courses > Import. Then «Send to device».",
+      "<b>Apple Watch</b>: open the GPX with a route app such as WorkOutDoors or Footpath.",
+      "<b>Coros, Suunto, Polar, Wahoo</b>: their app imports the GPX as a route or course.",
+      "<b>No mapping watch</b>: «Follow it now» shows where you are and speaks the turns. The screen stays on while you follow it.",
+    ],
+    fet: "{x} km done", queda: "{x} km to go", veuOn: "Voice: on", veuOff: "Voice: off", atura: "Stop",
+    fora: "You're off the route", foraVeu: "You're off the route", recte: "Continue",
+    final: "End of the route", enM: "In {m} metres, ", senseGps: "This phone won't share its position. You can follow it on your watch.",
+    esperantGps: "Finding GPS…",
+    gpsDenegat: "Let the page know where you are to follow the route. It isn't stored anywhere.",
+  },
+};
+
+// ---------- estat ----------
+const $ = (id) => document.getElementById(id);
+const lectura = Motor.llegeixHash(location.hash);
+const S = lectura && lectura.sessio;
+const L = S && T[S.l] ? S.l : (navigator.language || "ca").startsWith("en") ? "en" : "ca";
+const t = T[L];
+document.documentElement.lang = L;
+let mapa, sortida, capes = [], propostes = [], triada = 0, llavor = 0;
+
+const fmt = (x, dec = 1) => x.toLocaleString(L === "en" ? "en-GB" : "ca-ES", { maximumFractionDigits: dec, minimumFractionDigits: 0 });
+const omple = (text, vars) => text.replace(/\{(\w+)\}/g, (_, k) => vars[k] != null ? vars[k] : "");
+const guarda = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const recupera = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const nomSessio = (nom) => String(nom || "").replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/, "Força");
+const durada = (s) => s % 60 === 0 && s >= 60 ? `${s / 60}'` : s >= 60 ? `${Math.floor(s / 60)}'${String(s % 60).padStart(2, "0")}"` : `${s}"`;
+
+function error(text) {
+  $("error-text").textContent = text;
+  $("error").hidden = false;
+}
+
+// ---------- la sessió ----------
+function pintaSessio() {
+  $("titol").textContent = nomSessio(S.t);
+  if (S.d) {
+    const d = new Date(S.d + "T12:00:00");
+    $("quan").textContent = `${t.dies[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1} · ${t[S.s] || ""}`;
+  }
+  const xifres = [`~${fmt(S.k)} ${t.km}`, S.m ? `~${S.m} ${t.min}` : ""].filter(Boolean);
+  $("xifres").innerHTML = xifres.map((x) => `<span>${x}</span>`).join("");
+  const r = S.r || {};
+  const q = r.u === "m" ? (r.q >= 1000 && r.q % 1000 === 0 ? `${r.q / 1000} km` : `${r.q} m`) : durada(r.q || 0);
+  const g = r.g ? (r.g[0] === r.g[1] ? r.g[0] : `${r.g[0]}-${r.g[1]}`) : "";
+  let que = omple(t.perfil[S.p] || t.perfil.suau, { n: r.n, q, m: r.m, g });
+  if (S.p === "desnivell" && S.a) que += " " + omple(t.desnivellM, { a: S.a[0] === S.a[1] ? S.a[0] : `${S.a[0]}-${S.a[1]}` });
+  $("que-busquem").textContent = que;
+  if (S.k > 100) { $("avis").textContent = t.llarga; $("avis").hidden = false; }
+  $("sessio").hidden = false;
+}
+
+// ---------- el punt de sortida ----------
+function iniciaMapa() {
+  $("t-sortida").textContent = t.sortida;
+  $("q").placeholder = t.placeholder;
+  $("b-cerca").textContent = t.cerca;
+  $("b-aqui").textContent = t.aqui;
+  $("ajuda-mapa").textContent = t.ajuda;
+  $("b-busca").textContent = S.p === "pista" ? t.buscaPistes : t.busca;
+  $("sortida").hidden = false;
+
+  const darrer = recupera("ginga-rutes-sortida");
+  mapa = L_.map("mapa", { zoomControl: true }).setView(darrer ? [darrer[1], darrer[0]] : [41.6, 2.2], darrer ? 14 : 8);
+  L_.tileLayer(TESSELES, { maxZoom: 19, attribution: ATRIBUCIO }).addTo(mapa);
+  if (darrer) posaSortida(darrer, false);
+  mapa.on("click", (e) => posaSortida([e.latlng.lng, e.latlng.lat]));
+
+  $("cerca").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const q = $("q").value.trim();
+    if (!q) return;
+    const llista = $("llocs");
+    llista.hidden = true;
+    try {
+      const url = `${NOMINATIM}?format=jsonv2&limit=5&q=${encodeURIComponent(q)}&accept-language=${L}`;
+      const llocs = await (await fetch(url)).json();
+      if (!llocs.length) { llista.innerHTML = `<li class="muted">${t.capLloc}</li>`; llista.hidden = false; return; }
+      if (llocs.length === 1) return triaLloc(llocs[0]);
+      llista.innerHTML = "";
+      for (const lloc of llocs) {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = lloc.display_name;
+        b.addEventListener("click", () => { llista.hidden = true; triaLloc(lloc); });
+        li.append(b);
+        llista.append(li);
+      }
+      llista.hidden = false;
+    } catch (err) {
+      llista.innerHTML = `<li class="muted">${t.capLloc}</li>`;
+      llista.hidden = false;
+    }
+  });
+
+  $("b-aqui").addEventListener("click", () => {
+    if (!navigator.geolocation) return error(t.senseGps);
+    navigator.geolocation.getCurrentPosition(
+      (p) => { posaSortida([p.coords.longitude, p.coords.latitude]); mapa.setView([p.coords.latitude, p.coords.longitude], 15); },
+      () => error(t.gpsDenegat), { enableHighAccuracy: true, timeout: 15000 });
+  });
+
+  $("b-busca").addEventListener("click", () => {
+    llavor = 0;
+    S.p === "pista" ? buscaPistes() : buscaCircuits(S);
+  });
+}
+
+function triaLloc(lloc) {
+  const p = [Number(lloc.lon), Number(lloc.lat)];
+  mapa.setView([p[1], p[0]], 15);
+  posaSortida(p);
+}
+
+let marcaSortida;
+function posaSortida(p, desa = true) {
+  sortida = p;
+  if (desa) guarda("ginga-rutes-sortida", p);
+  if (!marcaSortida) {
+    marcaSortida = L_.marker([p[1], p[0]], { draggable: true }).addTo(mapa);
+    marcaSortida.on("dragend", () => { const ll = marcaSortida.getLatLng(); posaSortida([ll.lng, ll.lat]); });
+  } else {
+    marcaSortida.setLatLng([p[1], p[0]]);
+  }
+  $("b-busca").disabled = false;
+}
+
+// ---------- pistes ----------
+async function buscaPistes() {
+  const b = $("b-busca");
+  b.disabled = true; b.textContent = t.buscant;
+  const res = $("resultats");
+  try {
+    const resposta = await overpass(Motor.consultaPistes(sortida[1], sortida[0]));
+    const llista = Motor.pistes(resposta, sortida[1], sortida[0], L).slice(0, 5);
+    netejaCapes();
+    res.innerHTML = "";
+    if (!llista.length) res.innerHTML = `<p>${t.capPista}</p>`;
+    llista.forEach((p, n) => {
+      const div = document.createElement("div");
+      div.className = "proposta";
+      const d = p.m < 1000 ? `${Math.round(p.m / 10) * 10} m` : `${fmt(p.m / 1000)} km`;
+      const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      const com = iOS ? `https://maps.apple.com/?daddr=${p.lat},${p.lon}` : `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`;
+      div.innerHTML = `<div class="cap"><h2></h2><span class="muted">${omple(t.pistaA, { d })}</span></div>
+        ${p.acces && /private|no|customers|members/.test(p.acces) ? `<span class="etiqueta">${t.accesPrivat}</span>` : ""}
+        <a class="btn sec petit" target="_blank" rel="noopener" href="${com}">${t.arribar}</a>`;
+      div.querySelector("h2").textContent = p.nom;
+      res.append(div);
+      const m = L_.circleMarker([p.lat, p.lon], { radius: 9, color: getVar("--ruta"), weight: 3, fillOpacity: .8 }).addTo(mapa)
+        .bindTooltip(p.nom);
+      capes.push(m);
+    });
+    if (llista.length) mapa.fitBounds(L_.latLngBounds([[sortida[1], sortida[0]], ...llista.map((p) => [p.lat, p.lon])]).pad(0.15));
+    const pla = document.createElement("button");
+    pla.className = "btn sec";
+    pla.type = "button";
+    pla.textContent = t.tambePla;
+    pla.addEventListener("click", () => buscaCircuits({ ...S, p: "pla" }));
+    res.append(pla);
+    res.hidden = false;
+  } catch (e) {
+    console.error(e);
+    res.innerHTML = `<p>${t.errorPistes}</p>`;
+    res.hidden = false;
+  } finally {
+    b.disabled = false; b.textContent = t.buscaPistes;
+  }
+}
+
+// ---------- circuits ----------
+async function demana(seed, factor) {
+  const r = await fetch(PROXY, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, inici: sortida, seed, factor }),
+  });
+  if (r.status === 410) throw new Error("caducat");
+  if (r.status === 403) throw new Error("signatura");
+  if (!r.ok) return null;                       // 404 de openrouteservice: cap circuit des d'aquí amb aquesta llavor
+  const fc = await r.json();
+  return fc.features && fc.features[0] ? { feature: fc.features[0], seed, factor } : null;
+}
+
+/** La millor de cada llavor, i fora les que són pràcticament el mateix circuit (mateixos km i mateix punt més llunyà). */
+function diferents(cands) {
+  const triats = [];
+  for (const c of cands) {                                   // ja venen ordenats, de millor a pitjor
+    const lluny = c.r.coords[Math.floor(c.r.coords.length / 2)];
+    const igual = triats.some((x) => x.seed === c.seed || (Math.abs(x.r.km - c.r.km) / c.r.km < 0.03
+      && Motor.dist(lluny, x.r.coords[Math.floor(x.r.coords.length / 2)]) < 150));
+    if (!igual) triats.push(c);
+  }
+  return triats;
+}
+
+function valora(c, sessio) {
+  const r = Motor.resumeix(c.feature);
+  let pena = Motor.penalitza(r, sessio);
+  let pujada = null;
+  if (sessio.p === "pujades") {
+    pujada = Motor.millorPujada(r.coords, r.acc, sessio.r);
+    pena += pujada ? pujada.pena : 5;
+  }
+  return { ...c, r, pena, pujada };
+}
+
+async function buscaCircuits(sessio) {
+  const res = $("resultats");
+  if (!PROXY) { res.innerHTML = `<p>${t.senseProxy}</p>`; res.hidden = false; return; }
+  if (!lectura.sig) { res.innerHTML = `<p>${t.senseSignatura}</p>`; res.hidden = false; return; }
+  const b = $("b-busca");
+  b.disabled = true; b.textContent = t.buscant;
+  try {
+    const factor = FACTOR[sessio.s] || 0.9;
+    const tanda = async (f, n) => {
+      const llavors = Array.from({ length: n }, (_, i) => llavor + i);
+      llavor += n;
+      return (await Promise.all(llavors.map((s) => demana(s, f)))).filter(Boolean).map((c) => valora(c, sessio));
+    };
+    let cands = await tanda(factor, LLAVORS);
+    const kObjectiu = Math.min(sessio.k, 100);
+    const err = (c) => Math.abs(c.r.km - kObjectiu) / kObjectiu;
+    if (cands.length && !cands.some((c) => err(c) <= MARGE_KM)) {
+      // tots massa llargs o massa curts: una tanda més, amb la llargada corregida per la mediana del que ha sortit
+      const ratis = cands.map((c) => c.r.km / (kObjectiu * factor)).sort((a, b) => a - b);
+      const mediana = ratis[Math.floor(ratis.length / 2)];
+      cands = cands.concat(await tanda(Math.max(0.6, Math.min(1.5, 1 / mediana)), 4));
+    }
+    cands.sort((a, b) => a.pena - b.pena);
+    propostes = diferents(cands).slice(0, 3);
+    if (!propostes.length) { res.innerHTML = `<p>${t.capRuta}</p>`; res.hidden = false; netejaCapes(); return; }
+    pintaPropostes(sessio);
+  } catch (e) {
+    console.error(e);
+    res.innerHTML = `<p>${e.message === "caducat" ? omple(t.caducat, { d: S.d }) : e.message === "signatura" ? t.senseSignatura : t.errorProxy}</p>`;
+    res.hidden = false;
+  } finally {
+    b.disabled = false; b.textContent = S.p === "pista" ? t.buscaPistes : t.busca;
+  }
+}
+
+function getVar(nom) { return getComputedStyle(document.documentElement).getPropertyValue(nom).trim(); }
+
+function netejaCapes() { capes.forEach((c) => c.remove()); capes = []; }
+
+function pintaPropostes(sessio) {
+  const res = $("resultats");
+  res.innerHTML = "";
+  propostes.forEach((p, n) => {
+    const r = p.r;
+    const div = document.createElement("div");
+    div.className = "proposta" + (n === triada ? " triada" : "");
+    const detalls = [];
+    if (sessio.s === "ride" ? r.senseAsfalt > 0.05 : r.senseAsfalt > 0.2) detalls.push(omple(t.senseAsfalt, { x: Math.round(100 * r.senseAsfalt) }));
+    if (sessio.s === "run" && r.carretera > 0.15) detalls.push(omple(t.carretera, { x: Math.round(100 * r.carretera) }));
+    let pujada = "";
+    if (p.pujada) {
+      const g = sessio.r.g, encaixa = p.pujada.pendent >= g[0] - 0.5 && p.pujada.pendent <= g[1] + 0.5;
+      pujada = omple(encaixa ? t.pujada : t.senseAPujada, { a: fmt(p.pujada.aKm), m: Math.round(p.pujada.llarg / 10) * 10, g: fmt(p.pujada.pendent) });
+    }
+    div.innerHTML = `<div class="cap"><h2>${omple(t.proposta, { n: n + 1 })}</h2><button type="button" data-veure>${t.veure}</button></div>
+      <div class="xifres"><span>${fmt(r.km)} ${t.km}</span><span>${Math.round(r.desnivell)} ${t.dPos}</span></div>
+      ${detalls.length ? `<p class="muted">${detalls.join(" · ")}</p>` : ""}
+      ${pujada ? `<p>${pujada}</p>` : ""}
+      <div class="fila"><button class="btn sec petit" type="button" data-gpx>${t.gpx}</button>
+      <button class="btn petit" type="button" data-segueix>${t.segueix}</button></div>`;
+    div.querySelector("[data-veure]").addEventListener("click", () => { triada = n; pintaPropostes(sessio); });
+    div.querySelector("[data-gpx]").addEventListener("click", () => descarregaGpx(p, n));
+    div.querySelector("[data-segueix]").addEventListener("click", () => segueix(p));
+    res.append(div);
+  });
+  const mes = document.createElement("button");
+  mes.className = "btn sec petit";
+  mes.type = "button";
+  mes.textContent = L === "en" ? "More options" : "Més opcions";
+  mes.addEventListener("click", () => { triada = 0; buscaCircuits(sessio); });
+  res.append(mes);
+  res.hidden = false;
+  dibuixa();
+}
+
+function dibuixa() {
+  netejaCapes();
+  propostes.forEach((p, n) => {
+    if (n === triada) return;
+    capes.push(L_.polyline(p.r.coords.map((c) => [c[1], c[0]]), { color: getVar("--ruta-alt"), weight: 3, opacity: .7 }).addTo(mapa));
+  });
+  const p = propostes[triada];
+  const linia = L_.polyline(p.r.coords.map((c) => [c[1], c[0]]), { color: getVar("--ruta"), weight: 5 }).addTo(mapa);
+  capes.push(linia);
+  if (p.pujada) {
+    capes.push(L_.polyline(p.r.coords.slice(p.pujada.ini, p.pujada.fi + 1).map((c) => [c[1], c[0]]),
+      { color: getVar("--pujada"), weight: 8 }).addTo(mapa));
+  }
+  mapa.fitBounds(linia.getBounds().pad(0.08));
+}
+
+// ---------- GPX ----------
+async function descarregaGpx(p, n) {
+  const nom = `${nomSessio(S.t)}${propostes.length > 1 ? ` (${n + 1})` : ""}`;
+  const fitxer = `ginga-${S.d || "ruta"}-${n + 1}.gpx`;
+  const blob = new Blob([Motor.gpx(nom, p.r.coords)], { type: "application/gpx+xml" });
+  // al mòbil, el full de compartir porta el GPX directament a Garmin Connect, WorkOutDoors...
+  const file = new File([blob], fitxer, { type: "application/gpx+xml" });
+  if (navigator.canShare && navigator.canShare({ files: [file] }) && /Android|iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    try { await navigator.share({ files: [file], title: nom }); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = fitxer;
+  document.body.append(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+// ---------- seguiment ----------
+let seg = null;
+let mapaSegueix = null;       // Leaflet no deixa crear dos mapes al mateix element: es fa un cop i es reaprofita
+
+async function segueix(p) {
+  if (!navigator.geolocation) return error(t.senseGps);
+  const veu = recupera("ginga-rutes-veu") !== false;
+  seg = { p, i: 0, fora: 0, anunciat: {}, veu, wake: null, vigila: null, jo: null, mapa: mapaSegueix, linia: null };
+  $("segueix").hidden = false;
+  document.body.style.overflow = "hidden";
+  $("s-atura").textContent = t.atura;
+  $("s-veu").textContent = veu ? t.veuOn : t.veuOff;
+  $("s-falta").textContent = "";
+  $("s-gir").textContent = t.esperantGps;
+  $("s-fet").textContent = omple(t.fet, { x: "0" });
+  $("s-queda").textContent = omple(t.queda, { x: fmt(p.r.acc[p.r.acc.length - 1] / 1000) });
+  if (!seg.mapa) {
+    seg.mapa = mapaSegueix = L_.map("mapa-segueix", { zoomControl: false, attributionControl: true });
+    L_.tileLayer(TESSELES, { maxZoom: 19, attribution: ATRIBUCIO }).addTo(seg.mapa);
+  }
+  seg.linia = L_.polyline(p.r.coords.map((c) => [c[1], c[0]]), { color: getVar("--ruta"), weight: 6 }).addTo(seg.mapa);
+  seg.mapa.fitBounds(seg.linia.getBounds());
+  setTimeout(() => seg && seg.mapa.invalidateSize(), 50);
+  if (veu) parla(L === "en" ? "Let's go" : "Som-hi");      // a iOS, la veu s'ha d'engegar amb un toc
+  await mantenEncesa();
+  seg.vigila = navigator.geolocation.watchPosition(posicio, (e) => {
+    if (e.code === 1) { atura(); error(t.gpsDenegat); }
+  }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 });
+}
+
+async function mantenEncesa() {
+  try { if ("wakeLock" in navigator && seg) seg.wake = await navigator.wakeLock.request("screen"); } catch (e) {}
+}
+document.addEventListener("visibilitychange", () => { if (seg && document.visibilityState === "visible") mantenEncesa(); });
+
+function parla(text) {
+  if (!seg || !seg.veu || !("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = L === "en" ? "en-GB" : "ca-ES";
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+function posicio(pos) {
+  if (!seg) return;
+  const r = seg.p.r;
+  const aqui = [pos.coords.longitude, pos.coords.latitude];
+  const lloc = Motor.situa(aqui, r.coords, r.acc, seg.i);
+  const total = r.acc[r.acc.length - 1];
+  if (!seg.jo) seg.jo = L_.marker([aqui[1], aqui[0]], { icon: L_.divIcon({ className: "", html: '<div class="jo"></div>', iconSize: [18, 18] }) }).addTo(seg.mapa);
+  seg.jo.setLatLng([aqui[1], aqui[0]]);
+  seg.mapa.setView([aqui[1], aqui[0]], Math.max(seg.mapa.getZoom(), 16), { animate: true });
+
+  // fora de la ruta: més de 40 m (més la precisió del GPS) tres lectures seguides
+  const marge = 40 + Math.min(pos.coords.accuracy || 0, 30);
+  seg.fora = lloc.fora > marge ? seg.fora + 1 : 0;
+  $("s-fora").hidden = seg.fora < 3;
+  $("s-fora").textContent = t.fora;
+  if (seg.fora === 3) { parla(t.foraVeu); if (navigator.vibrate) navigator.vibrate([200, 100, 200]); }
+  if (seg.fora) return;
+
+  seg.i = lloc.i;
+  $("s-fet").textContent = omple(t.fet, { x: fmt(lloc.fet / 1000) });
+  $("s-queda").textContent = omple(t.queda, { x: fmt(Math.max(0, total - lloc.fet) / 1000) });
+  const m = Motor.properaManiobra(r.passos, r.acc, lloc.i, lloc.fet);
+  if (!m) { $("s-falta").textContent = ""; $("s-gir").textContent = t.final; return; }
+  const text = Motor.indicacio(m.pas, L);
+  $("s-falta").textContent = m.falten < 1000 ? `${Math.max(0, Math.round(m.falten / 10) * 10)} m` : `${fmt(m.falten / 1000)} km`;
+  $("s-gir").textContent = text;
+  const clau = m.pas.way_points ? m.pas.way_points[0] : 0;
+  if (m.falten < 200 && m.falten > 60 && !seg.anunciat[clau + "a"]) {
+    seg.anunciat[clau + "a"] = true;
+    parla(omple(t.enM, { m: Math.round(m.falten / 50) * 50 }) + text.charAt(0).toLowerCase() + text.slice(1));
+  } else if (m.falten <= 30 && !seg.anunciat[clau + "b"]) {
+    seg.anunciat[clau + "b"] = true;
+    parla(text);
+    if (navigator.vibrate) navigator.vibrate(150);
+  }
+}
+
+function atura() {
+  if (!seg) return;
+  if (seg.vigila != null) navigator.geolocation.clearWatch(seg.vigila);
+  if (seg.wake) seg.wake.release().catch(() => {});
+  if (seg.linia) seg.linia.remove();
+  if (seg.jo) seg.jo.remove();
+  seg = null;
+  $("segueix").hidden = true;
+  document.body.style.overflow = "";
+}
+
+$("s-atura").addEventListener("click", atura);
+$("s-veu").addEventListener("click", () => {
+  if (!seg) return;
+  seg.veu = !seg.veu;
+  guarda("ginga-rutes-veu", seg.veu);
+  $("s-veu").textContent = seg.veu ? t.veuOn : t.veuOff;
+  if (seg.veu) parla(L === "en" ? "Voice on" : "Veu activada");
+});
+
+// ---------- engega ----------
+const L_ = window.L;
+$("t-rellotge").textContent = t.rellotge;
+$("rellotges").innerHTML = t.rellotges.map((x) => `<li>${x}</li>`).join("");
+if (!S) {
+  error(t.senseSessio);
+} else if (Motor.caducada(S, new Date().toISOString().slice(0, 10))) {
+  pintaSessio();
+  error(omple(t.caducat, { d: S.d }));
+} else {
+  pintaSessio();
+  iniciaMapa();
+}
+</script>
+</body>
+</html>
