@@ -116,7 +116,10 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
           <ul>
             <li>Un pla per setmanes cap al teu objectiu: sessions al calendari i al rellotge.</li>
             <li>Cada setmana es mira com has entrenat, com dorms i com estàs, i el pla s'ajusta.</li>
-            <li>Força inclosa, pensada per al teu esport.</li>
+            <li>Força inclosa, pensada per al teu esport, amb un vídeo per exercici que pots veure al mòbil o a la tele
+              (Chromecast).</li>
+            <li>Rutes per a les sessions de córrer i de bici a l'aire lliure: tries d'on surts i et proposa circuits que
+              encaixen amb la sessió, amb el fitxer per al rellotge. <i>En proves.</i></li>
             <li>Un correu cada diumenge amb com ha anat i què ve.</li>
           </ul>
           <span class="cal">Cal: rellotge esportiu i intervals.icu (gratuït).</span>
@@ -126,7 +129,8 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
           <span class="sub">Per guanyar força, os i equilibri, a qualsevol edat a partir dels 18 anys.</span>
           <ul>
             <li>Tres sessions curtes per setmana (de 15 a 40 minuts), a casa o al gimnàs.</li>
-            <li>Cada sessió amb un vídeo per exercici, al mòbil o a la tele.</li>
+            <li>Cada sessió s'obre amb un botó: un vídeo per exercici, les sèries i el descans, al mòbil o a la tele amb
+              Chromecast.</li>
             <li>Comença al teu nivell i puja a poc a poc; si una sessió costa massa, el pla s'adapta.</li>
             <li>Un correu cada diumenge amb les sessions de la setmana.</li>
           </ul>
@@ -174,6 +178,17 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
       <p style="margin:0 0 8px">Per a Ginga Força només et cal el mòbil: les sessions arriben per correu, amb vídeos. Però si
         tens un rellotge connectat a <b>intervals.icu</b> (una plataforma web gratuïta), les sessions també t'arribaran al
         calendari i veurem si les fas, com t'han anat les pulsacions i l'esforç que hi apuntis.</p>
+      <details>
+        <summary>Més detalls</summary>
+        <ul style="margin:6px 0">
+          <li>intervals.icu recull sol el que registra el teu rellotge esportiu (Garmin, Coros, Polar, Suunto, Wahoo...) o
+            Strava. Sense rellotge no aporta res: n'hi ha prou amb el correu i el mòbil.</li>
+          <li>Les sessions de força t'apareixen al calendari i, si el rellotge ho permet, al rellotge.</li>
+          <li>Veiem quines sessions has fet, quant han durat, les pulsacions i l'esforç (de l'1 al 10) que hi apuntis, i
+            el pla s'ajusta amb més dades.</li>
+          <li>Obrir el compte i connectar-hi el rellotge són 5 minuts. Amb un Apple Watch cal una app intermèdia.</li>
+        </ul>
+      </details>
       <div class="pregunta" style="border-top:0">
         <p>Tens compte d'intervals.icu?</p>
         <div class="tria">
@@ -233,6 +248,7 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
   var config = params.get("u") ? Promise.resolve(params.get("u"))      // proves: ?u=<worker>/solicitud
     : fetch("../config.json", { cache: "no-store" }).then(function (r) { return r.json(); })
         .then(function (c) { return c.worker.replace(/\/$/, "") + "/solicitud"; });
+  config.catch(function () {});           // si falla, es diu en enviar
   if (params.get("p") === "forca" || params.get("p") === "ginga") {
     var pre = document.querySelector("input[name='programa'][value='" + params.get("p") + "']"); if (pre) pre.checked = true;
   }
