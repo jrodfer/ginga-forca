@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#10231D">
+<title>Ginga · Comencem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<style>
+/* Formulari d'alta d'un atleta nou de Ginga. Només surten les preguntes que intervals.icu no respon (les tria
+   coach/alta_formulari.py i venen a l'enllaç). La font és a jrodfer/ginga (web/alta/); aquí se'n publica la còpia. */
+:root {
+  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
+  --accent: #FF6A2B; --ok: #00996B; --avis: #B3261E;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --accent: #FF6A2B; --ok: #2DBF8C; --avis: #FF8A80; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 "Nunito", "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 640px; margin: 0 auto; padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
+header { padding: 20px 0 8px; }
+.marca { font-weight: 900; font-size: 26px; color: var(--accent); letter-spacing: .02em; }
+h1 { font-size: 28px; line-height: 1.2; margin: 8px 0 4px; }
+h2 { font-size: 22px; margin: 0 0 6px; }
+.muted { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; }
+.pregunta { padding: 12px 0; border-top: 1px solid var(--line); }
+.pregunta:first-of-type { border-top: 0; }
+.pregunta p { margin: 0 0 10px; font-weight: 700; }
+.sino { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sino label { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border: 2px solid var(--line);
+  border-radius: 12px; font-weight: 800; cursor: pointer; }
+.sino input { width: 22px; height: 22px; accent-color: var(--ok); }
+.sino label:has(input:checked) { border-color: var(--ok); }
+.test { padding: 14px 0; border-top: 1px solid var(--line); }
+.test:first-of-type { border-top: 0; }
+.test p { margin: 0 0 10px; }
+.fila { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 130px; padding: 10px 12px; border-radius: 12px;
+  border: 2px solid var(--line); background: var(--card); color: var(--fg); }
+.btn { appearance: none; border: 0; border-radius: 14px; font: 800 18px/1 "Nunito", sans-serif; padding: 16px 20px; cursor: pointer;
+  background: var(--accent); color: #10231D; min-height: 56px; }
+.btn.sec { background: transparent; color: var(--fg); border: 2px solid var(--line); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn:focus-visible, input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+.check { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-weight: 600; }
+.check input { width: 22px; height: 22px; accent-color: var(--ok); }
+.check.gran { align-items: flex-start; font-weight: 500; border: 2px solid var(--linia, #EBDCC8); border-radius: 12px; padding: 12px; }
+.check.gran input { width: 30px; height: 30px; flex: none; margin: 0; }
+.avis { color: var(--avis); font-weight: 700; }
+.ok { color: var(--ok); font-weight: 800; font-size: 22px; }
+.tria { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tria.u { grid-template-columns: 1fr; }
+.tria label { display: flex; align-items: center; gap: 10px; min-height: 52px; border: 2px solid var(--line); border-radius: 12px;
+  font-weight: 700; padding: 8px 12px; cursor: pointer; }
+.tria input { width: 22px; height: 22px; accent-color: var(--ok); flex: none; }
+.tria label:has(input:checked) { border-color: var(--ok); }
+.dies { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.dies label { flex-direction: column; justify-content: center; padding: 6px 0; gap: 4px; font-size: 15px; }
+input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100%; padding: 12px; border-radius: 12px;
+  border: 2px solid var(--line); background: var(--card); color: var(--fg); }
+.avis { color: var(--avis); font-weight: 700; }
+.ok { color: var(--ok); font-weight: 800; font-size: 22px; }
+.ajuda { color: var(--muted); font-size: 15px; margin: -4px 0 10px; font-weight: 400; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="marca">ginga</div>
+    <h1 id="titol">Comencem</h1>
+    <p class="muted" style="margin:0">Unes poques preguntes: el que ja diu el teu intervals.icu no te'l preguntem.</p>
+  </header>
+
+  <div id="sense-enllac" class="card" hidden>
+    <p style="margin:0">Aquesta pàgina s'obre amb l'enllaç personal que t'ha enviat el teu entrenador. Si no funciona, digues-l'hi.</p>
+  </div>
+
+  <form id="formulari" hidden>
+    <section class="card" id="preguntes"></section>
+    <section class="card" id="bloc-declaracio">
+      <h2>Per començar</h2>
+      <label class="check gran"><input type="checkbox" id="declaracio"> Confirmo que no tinc cap problema de cor ni de
+        pressió arterial, ni dolor al pit, marejos o desmais quan faig esforç; o que, si en tinc, el metge m'ha dit
+        que puc fer exercici. Si mai en tinc durant un entrenament, pararé i ho diré.</label>
+      <p class="muted" style="margin:8px 0 0">Si no ho pots confirmar, no t'hi encallis: digues-ho al teu entrenador i en parlem.</p>
+    </section>
+    <p class="avis" id="error" hidden></p>
+    <button class="btn" type="submit" id="envia" style="width:100%">Envia</button>
+  </form>
+
+  <section id="gracies" class="card" hidden>
+    <p class="ok" style="margin:0 0 8px">Gràcies!</p>
+    <p style="margin:0">Amb això el teu entrenador prepara el pla. T'avisarà quan el tinguis al calendari.</p>
+  </section>
+</main>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  function llegeixHash() {
+    var codi = (location.hash || "").slice(1);
+    if (!codi) return null;
+    try {
+      var b64 = codi.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      var bin = atob(b64), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var d = JSON.parse(new TextDecoder("utf-8").decode(bytes));
+      return d && d.u && d.k && d.g && Array.isArray(d.p) ? d : null;
+    } catch (err) { return null; }
+  }
+  var dades = llegeixHash();
+  if (!dades) { $("sense-enllac").hidden = false; return; }
+  if (dades.n) $("titol").textContent = "Comencem, " + dades.n;
+  $("formulari").hidden = false;
+  var demana = {};
+  dades.p.forEach(function (p) { demana[p] = true; });
+  var P = $("preguntes");
+
+  function bloc(id, text, ajuda) {
+    var div = document.createElement("div");
+    div.className = "pregunta"; div.id = "q-" + id;
+    var p = document.createElement("p"); p.textContent = text; div.appendChild(p);
+    if (ajuda) { var a = document.createElement("p"); a.className = "ajuda"; a.textContent = ajuda; div.appendChild(a); }
+    P.appendChild(div);
+    return div;
+  }
+  function opcions(id, text, llista, una, ajuda) {
+    var div = bloc(id, text, ajuda), fila = document.createElement("div");
+    fila.className = "tria" + (una ? " u" : "");
+    llista.forEach(function (o) {
+      var l = document.createElement("label"), inp = document.createElement("input");
+      inp.type = "radio"; inp.name = id; inp.value = o[0];
+      l.appendChild(inp); l.appendChild(document.createTextNode(o[1])); fila.appendChild(l);
+    });
+    div.appendChild(fila);
+    return div;
+  }
+  function camp(id, tipus, text, ajuda, placeholder) {
+    var div = bloc(id, text, ajuda), inp = document.createElement("input");
+    inp.type = tipus; inp.id = "c-" + id; inp.maxLength = 40;
+    if (placeholder) inp.placeholder = placeholder;
+    div.appendChild(inp);
+    return div;
+  }
+  function valor(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value : null; }
+
+  var obligatoris = [];
+  if (demana.objectiu) {
+    opcions("esport", "Per a què entrenes?", [["triatlo", "Triatló"], ["correr", "Córrer"], ["bici", "Bici"],
+      ["natacio", "Natació"], ["duatlo", "Duatló o aquatló"], ["altre", "Un altre"]]);
+    camp("distancia", "text", "Quina cursa o distància?", "Per exemple: marató, 70.3, una marxa de 120 km. Si no en tens cap, deixa-ho buit.", "Marató de Barcelona");
+    camp("data_objectiu", "date", "Quan és?", "Si no tens cap cursa, deixa-ho buit: farem un bloc de base.");
+    obligatoris.push("esport");
+  }
+  if (demana.disponibilitat) {
+    opcions("hores", "Quantes hores a la setmana pots entrenar?", [["<5", "Menys de 5"], ["5-8", "5 a 8"],
+      ["8-12", "8 a 12"], [">12", "Més de 12"]], false, "Les d'una setmana normal dolenta, no les de la millor de l'any.");
+    opcions("dies", "Quants dies a la setmana?", [["3", "3 o menys"], ["4", "4"], ["5", "5"], ["6-7", "6 o 7"]]);
+    var dImp = bloc("dies_impossibles", "Hi ha algun dia que no pots entrenar mai?", "Marca'ls; si no n'hi ha cap, deixa-ho així.");
+    var fila = document.createElement("div"); fila.className = "tria dies";
+    ["dl", "dt", "dc", "dj", "dv", "ds", "dg"].forEach(function (d) {
+      var l = document.createElement("label"), inp = document.createElement("input");
+      inp.type = "checkbox"; inp.name = "dies_impossibles"; inp.value = d;
+      l.appendChild(inp); l.appendChild(document.createTextNode(d.charAt(0).toUpperCase() + d.slice(1))); fila.appendChild(l);
+    });
+    dImp.appendChild(fila);
+    obligatoris.push("hores", "dies");
+  }
+  if (demana.temporades) {
+    opcions("temporades", "Quantes temporades portes entrenant amb un pla?", [["cap", "Cap, començo ara"], ["1-2", "1 o 2"],
+      ["3+", "3 o més"], ["altre_esport", "Vinc d'un altre esport de resistència"]], true);
+    obligatoris.push("temporades");
+  }
+  if (demana.volum) {
+    camp("volum", "number", "Quantes hores a la setmana has entrenat les últimes 4 setmanes, de mitjana?", "Un número aproximat val.");
+    obligatoris.push("volum");
+  }
+  if (demana.llindars && (dades.l || []).length) {
+    var noms = { ftp: ["FTP de bici (W)", "230"], ritme_llindar: ["Ritme llindar corrent (min/km)", "4:45"], css: ["CSS de natació (min/100 m)", "1:50"] };
+    bloc("llindars", "Saps algun d'aquests valors?", "Si no els saps o són de fa més de 6 mesos, deixa-ho buit: farem un test.");
+    dades.l.forEach(function (c) { if (noms[c]) { var d = camp("ll-" + c, "text", noms[c][0], null, noms[c][1]); d.style.borderTop = "0"; d.style.paddingTop = "0"; } });
+  }
+  if (demana.lesio) {
+    opcions("lesio", "Ara mateix tens alguna molèstia o lesió?", [["cap", "Cap"], ["lleu", "Una molèstia lleu que va i ve"],
+      ["en_curs", "Una lesió ara"], ["torno", "Torno d'una lesió recent"]], true);
+    opcions("lesio_zona", "On?", [["peu_turmell", "Peu o turmell"], ["tibia_bessons", "Tíbia o bessons"], ["genoll", "Genoll"],
+      ["maluc", "Maluc"], ["esquena", "Esquena"], ["espatlla", "Espatlla"], ["altra", "Una altra"]]);
+    obligatoris.push("lesio");
+  }
+  if (demana.forca) {
+    opcions("forca", "Has fet força (peses, gomes, màquines)?", [["mai", "Mai"], ["poc", "Una mica"], ["regular", "Sí, de manera regular"]], true);
+    obligatoris.push("forca");
+  }
+  if (demana.material) {
+    opcions("material", "On faràs la força?", [["gimnas", "Al gimnàs"], ["casa_pes", "A casa, amb manuelles o gomes"],
+      ["casa_res", "A casa, sense material"]], true);
+    obligatoris.push("material");
+  }
+  if (demana.edat) {
+    opcions("edat", "Quants anys tens?", [["menor", "Menys de 18"], ["18-39", "18 a 39"], ["40-49", "40 a 49"], ["50-59", "50 a 59"], ["60+", "60 o més"]]);
+    obligatoris.push("edat");
+  }
+  if (demana.sexe) {
+    opcions("sexe", "Ets…", [["dona", "Dona"], ["home", "Home"]]);
+    obligatoris.push("sexe");
+  }
+  if (demana.postpart) {
+    opcions("maternitat", "Estàs embarassada o has tingut un fill fa menys d'un any?", [["no", "No"],
+      ["embaras", "Estic embarassada"], ["postpart", "He tingut un fill fa menys d'un any"]], true);
+    opcions("postpart_setmanes", "Quantes setmanes fa del part?", [["<6", "Menys de 6"], ["6-12", "De 6 a 12"], ["12-26", "De 12 a 26"], ["26-52", "De 26 a 52"]]);
+  }
+  var avisMenor = document.createElement("p");
+  avisMenor.className = "avis"; avisMenor.hidden = true;
+  avisMenor.textContent = "Ginga és per a majors de 18 anys. Parla-ho amb el teu entrenador.";
+  P.appendChild(avisMenor);
+
+  function sexe() { return demana.sexe ? valor("sexe") : (dades.s || null); }
+  function actualitza() {
+    var zona = $("q-lesio_zona"); if (zona) zona.hidden = !valor("lesio") || valor("lesio") === "cap";
+    var mat = $("q-maternitat"); if (mat) mat.hidden = sexe() === "home" || valor("edat") === "60+";
+    var pp = $("q-postpart_setmanes"); if (pp) pp.hidden = !mat || mat.hidden || valor("maternitat") !== "postpart";
+    var menor = valor("edat") === "menor";
+    avisMenor.hidden = !menor; $("envia").disabled = menor;
+  }
+  P.addEventListener("change", actualitza);
+  actualitza();
+
+  $("formulari").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var r = {};
+    ["esport", "hores", "dies", "temporades", "lesio", "forca", "material", "edat", "sexe", "maternitat", "postpart_setmanes"].forEach(function (k) {
+      var q = $("q-" + k); if (q && !q.hidden && valor(k)) r[k] = valor(k);
+    });
+    if (r.lesio && r.lesio !== "cap" && valor("lesio_zona")) r.lesio_zona = valor("lesio_zona");
+    ["distancia", "data_objectiu"].forEach(function (k) { var c = $("c-" + k); if (c && c.value.trim()) r[k] = c.value.trim(); });
+    if ($("c-volum") && $("c-volum").value !== "") r.volum = Number($("c-volum").value);
+    var imp = Array.prototype.map.call(document.querySelectorAll("input[name='dies_impossibles']:checked"), function (x) { return x.value; });
+    if (imp.length) r.dies_impossibles = imp;
+    var ll = {};
+    (dades.l || []).forEach(function (c) { var x = $("c-ll-" + c); if (x && x.value.trim()) ll[c] = x.value.trim(); });
+    if (Object.keys(ll).length) r.llindars = ll;
+    var falta = obligatoris.filter(function (k) { return k === "volum" ? r.volum === undefined : !r[k]; });
+    if (r.maternitat === "postpart" && !r.postpart_setmanes) falta.push("postpart_setmanes");
+    if ($("q-maternitat") && !$("q-maternitat").hidden && !r.maternitat) falta.push("maternitat");
+    if (falta.length || !$("declaracio").checked) {
+      $("error").hidden = false;
+      $("error").textContent = falta.length ? "Falta respondre alguna pregunta." : "Per començar, cal marcar la casella de «Per començar».";
+      var q = falta.length && $("q-" + falta[0]); if (q) q.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    $("error").hidden = true;
+    $("envia").disabled = true; $("envia").textContent = "Enviant…";
+    fetch(dades.u, { method: "POST", headers: { "content-type": "application/json" },
+                     body: JSON.stringify({ k: dades.k, g: dades.g, declaracio: true, r: r }) })
+      .then(function (x) { if (!x.ok) throw new Error(x.status); })
+      .then(function () { $("formulari").hidden = true; $("gracies").hidden = false; window.scrollTo(0, 0); })
+      .catch(function () {
+        $("envia").disabled = false; $("envia").textContent = "Envia";
+        $("error").hidden = false; $("error").textContent = "No s'ha pogut enviar. Torna-ho a provar d'aquí a una estona.";
+      });
+  });
+})();
+</script>
+</body>
+</html>
