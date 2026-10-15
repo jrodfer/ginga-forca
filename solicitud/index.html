@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#10231D">
+<title>Ginga · Vull entrenar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<style>
+/* Sol·licitud pública per entrar a Ginga o a Ginga Força. L'entrenador rep un correu i decideix si dona d'alta.
+   La font és a jrodfer/ginga (web/solicitud/); aquí se'n publica la còpia. */
+:root {
+  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
+  --accent: #FF6A2B; --ok: #00996B; --avis: #B3261E;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --accent: #FF6A2B; --ok: #2DBF8C; --avis: #FF8A80; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 "Nunito", "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 640px; margin: 0 auto; padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
+header { padding: 20px 0 8px; }
+.marca { font-weight: 900; font-size: 26px; color: var(--accent); letter-spacing: .02em; }
+h1 { font-size: 28px; line-height: 1.2; margin: 8px 0 4px; }
+h2 { font-size: 22px; margin: 0 0 6px; }
+.muted { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; }
+.pregunta { padding: 12px 0; border-top: 1px solid var(--line); }
+.pregunta:first-of-type { border-top: 0; }
+.pregunta p { margin: 0 0 10px; font-weight: 700; }
+.sino { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sino label { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border: 2px solid var(--line);
+  border-radius: 12px; font-weight: 800; cursor: pointer; }
+.sino input { width: 22px; height: 22px; accent-color: var(--ok); }
+.sino label:has(input:checked) { border-color: var(--ok); }
+.test { padding: 14px 0; border-top: 1px solid var(--line); }
+.test:first-of-type { border-top: 0; }
+.test p { margin: 0 0 10px; }
+.fila { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 130px; padding: 10px 12px; border-radius: 12px;
+  border: 2px solid var(--line); background: var(--card); color: var(--fg); }
+.btn { appearance: none; border: 0; border-radius: 14px; font: 800 18px/1 "Nunito", sans-serif; padding: 16px 20px; cursor: pointer;
+  background: var(--accent); color: #10231D; min-height: 56px; }
+.btn.sec { background: transparent; color: var(--fg); border: 2px solid var(--line); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn:focus-visible, input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+.check { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-weight: 600; }
+.check input { width: 22px; height: 22px; accent-color: var(--ok); }
+.check.gran { align-items: flex-start; font-weight: 500; border: 2px solid var(--linia, #EBDCC8); border-radius: 12px; padding: 12px; }
+.check.gran input { width: 30px; height: 30px; flex: none; margin: 0; }
+.avis { color: var(--avis); font-weight: 700; }
+.ok { color: var(--ok); font-weight: 800; font-size: 22px; }
+.tria { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tria.u { grid-template-columns: 1fr; }
+.tria label { display: flex; align-items: center; gap: 10px; min-height: 52px; border: 2px solid var(--line); border-radius: 12px;
+  font-weight: 700; padding: 8px 12px; cursor: pointer; }
+.tria input { width: 22px; height: 22px; accent-color: var(--ok); flex: none; }
+.tria label:has(input:checked) { border-color: var(--ok); }
+.dies { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.dies label { flex-direction: column; justify-content: center; padding: 6px 0; gap: 4px; font-size: 15px; }
+input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100%; padding: 12px; border-radius: 12px;
+  border: 2px solid var(--line); background: var(--card); color: var(--fg); }
+.avis { color: var(--avis); font-weight: 700; }
+.ok { color: var(--ok); font-weight: 800; font-size: 22px; }
+.ajuda { color: var(--muted); font-size: 15px; margin: -4px 0 10px; font-weight: 400; }
+details { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: 10px 0; }
+summary { font-weight: 800; cursor: pointer; }
+.etiqueta { display: inline-block; font-size: 13px; font-weight: 800; border-radius: 999px; padding: 2px 10px; margin-left: 6px; }
+.oblig { background: var(--accent); color: #10231D; }
+.opc { border: 2px solid var(--line); }
+textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-radius: 12px; border: 2px solid var(--line);
+  background: var(--card); color: var(--fg); }
+[hidden] { display: none !important; }
+.parany { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="marca">ginga</div>
+    <h1>Vull entrenar amb Ginga</h1>
+    <p class="muted" style="margin:0">Deixa'ns les teves dades i què busques. L'entrenador ho mira i et respon per correu.</p>
+  </header>
+
+  <form id="formulari" novalidate>
+    <section class="card">
+      <h2>Què t'interessa?</h2>
+      <div class="tria u" id="q-programa">
+        <label><input type="radio" name="programa" value="ginga"> <span><b>Ginga</b>: pla de córrer, bici, natació o triatló, ajustat cada setmana</span></label>
+        <label><input type="radio" name="programa" value="forca"> <span><b>Ginga Força</b>: força i equilibri a casa, amb vídeos, 2-3 sessions curtes per setmana</span></label>
+      </div>
+    </section>
+
+    <section class="card" id="bloc-intervals">
+      <h2>intervals.icu <span class="etiqueta oblig" id="et-oblig" hidden>imprescindible per a Ginga</span><span class="etiqueta opc" id="et-opc" hidden>opcional per a Ginga Força</span></h2>
+      <p style="margin:0 0 8px">És una plataforma web gratuïta on queden tots els teus entrenaments. Ginga la fa servir per veure com
+        entrenes i ajustar-te el pla.</p>
+      <details>
+        <summary>Què és i què necessito?</summary>
+        <p>intervals.icu recull automàticament les activitats del teu <b>rellotge esportiu</b> (Garmin, Coros, Polar, Suunto,
+          Wahoo...) o de Strava, i també les dades del matí si el rellotge les mesura: pulsacions en repòs, variabilitat
+          cardíaca (HRV) i son. Amb un Apple Watch cal una app intermèdia que hi pugi els entrenaments.</p>
+        <p>Per fer-lo servir necessites: un rellotge o dispositiu que registri els entrenaments, un compte gratuït a
+          intervals.icu (5 minuts) i connectar-hi el rellotge.</p>
+      </details>
+      <details>
+        <summary>En què millora el pla?</summary>
+        <ul style="margin:6px 0">
+          <li>Les sessions arriben soles al calendari i, si el rellotge ho permet, al rellotge.</li>
+          <li>Cada setmana es compara el que has fet amb el que tocava, i el pla s'ajusta.</li>
+          <li>Si dorms malament o estàs carregat (pulsacions en repòs altes, HRV baixa), aquell dia la sessió es rebaixa.</li>
+          <li>Les zones (ritmes, potència, pulsacions) surten de les teves dades, no d'una taula genèrica.</li>
+        </ul>
+      </details>
+      <p id="nota-ginga" class="muted" style="margin:6px 0 0" hidden><b>Per a Ginga és bàsic i obligatori</b>: sense
+        les teves dades, el pla no es pot ajustar. Si encara no el tens, et direm com fer-ho.</p>
+      <p id="nota-forca" class="muted" style="margin:6px 0 0" hidden><b>Per a Ginga Força no cal</b>: les sessions arriben
+        per correu i es valoren des del mòbil. Si el tens, ajuda (també veiem l'esforç que hi apuntis).</p>
+      <div class="pregunta" style="border-top:0">
+        <p>Tens intervals.icu?</p>
+        <div class="tria u">
+          <label><input type="radio" name="intervals" value="si"> Sí, ja el tinc</label>
+          <label><input type="radio" name="intervals" value="no"> No</label>
+          <label><input type="radio" name="intervals" value="no_se"> No ho sé</label>
+        </div>
+      </div>
+      <div class="pregunta">
+        <p>Tens rellotge esportiu?</p>
+        <div class="tria"><label><input type="radio" name="rellotge" value="si"> Sí</label><label><input type="radio" name="rellotge" value="no"> No</label></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Sobre tu</h2>
+      <div class="pregunta" style="border-top:0"><p>Nom</p><input type="text" id="nom" maxlength="60" autocomplete="name"></div>
+      <div class="pregunta"><p>Correu electrònic</p><input type="text" id="email" maxlength="120" inputmode="email" autocomplete="email"></div>
+      <div class="pregunta"><p>Quants anys tens?</p>
+        <div class="tria">
+          <label><input type="radio" name="edat" value="18-39"> 18 a 39</label><label><input type="radio" name="edat" value="40-49"> 40 a 49</label>
+          <label><input type="radio" name="edat" value="50-59"> 50 a 59</label><label><input type="radio" name="edat" value="60+"> 60 o més</label>
+        </div>
+        <p class="ajuda" style="margin:8px 0 0">Ginga és per a majors de 18 anys.</p>
+      </div>
+      <div class="pregunta"><p>Què vols aconseguir?</p>
+        <textarea id="objectiu" maxlength="300" placeholder="Per exemple: la marató de Barcelona al març, o guanyar força i equilibri"></textarea></div>
+      <div class="pregunta"><p>Com ens has conegut? <span class="muted" style="font-weight:400">(opcional)</span></p><input type="text" id="com" maxlength="120"></div>
+      <div class="parany" aria-hidden="true"><label>Web <input type="text" id="web" tabindex="-1" autocomplete="off"></label></div>
+    </section>
+
+    <section class="card">
+      <label class="check gran"><input type="checkbox" id="privacitat"> Accepto que Ginga desi aquestes dades per respondre
+        la meva sol·licitud. Només les veu l'entrenador i s'esborren soles al cap de 90 dies si no començo.</label>
+    </section>
+    <p class="avis" id="error" hidden></p>
+    <button class="btn" type="submit" id="envia" style="width:100%">Envia la sol·licitud</button>
+  </form>
+
+  <section id="gracies" class="card" hidden>
+    <p class="ok" style="margin:0 0 8px">Rebut!</p>
+    <p style="margin:0" id="gracies-txt">L'entrenador ho mirarà i et respondrà per correu en pocs dies.</p>
+  </section>
+</main>
+<script>
+(function () {
+  "use strict";
+  // L'adreça del Worker és a ../config.json ({"worker": "https://..."}), al mateix lloc que la pàgina.
+  var $ = function (id) { return document.getElementById(id); };
+  var params = new URLSearchParams(location.search);
+  var config = params.get("u") ? Promise.resolve(params.get("u"))      // proves: ?u=<worker>/solicitud
+    : fetch("../config.json", { cache: "no-store" }).then(function (r) { return r.json(); })
+        .then(function (c) { return c.worker.replace(/\/$/, "") + "/solicitud"; });
+  if (params.get("p") === "forca" || params.get("p") === "ginga") {
+    var pre = document.querySelector("input[name='programa'][value='" + params.get("p") + "']"); if (pre) pre.checked = true;
+  }
+  function valor(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value : null; }
+  function actualitza() {
+    var p = valor("programa");
+    $("et-oblig").hidden = $("nota-ginga").hidden = p !== "ginga";
+    $("et-opc").hidden = $("nota-forca").hidden = p !== "forca";
+  }
+  $("formulari").addEventListener("change", actualitza);
+  actualitza();
+  $("formulari").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var cos = { programa: valor("programa"), nom: $("nom").value.trim(), email: $("email").value.trim(),
+                edat: valor("edat"), objectiu: $("objectiu").value.trim(), intervals: valor("intervals"),
+                rellotge: valor("rellotge"), com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked };
+    var falta = !cos.programa ? "Tria Ginga o Ginga Força." : !cos.nom ? "Falta el nom."
+      : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cos.email) ? "Revisa el correu electrònic." : !cos.edat ? "Falta l'edat."
+      : !cos.intervals ? "Digues si tens intervals.icu." : !cos.privacitat ? "Cal acceptar la casella de privacitat." : "";
+    if (falta) { $("error").hidden = false; $("error").textContent = falta; return; }
+    Object.keys(cos).forEach(function (k) { if (cos[k] === "" || cos[k] === null) delete cos[k]; });
+    $("error").hidden = true; $("envia").disabled = true; $("envia").textContent = "Enviant…";
+    config.then(function (u) { return fetch(u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cos) }); })
+      .then(function (r) { if (r.status === 429) throw new Error("massa"); if (!r.ok) throw new Error(r.status); })
+      .then(function () {
+        $("formulari").hidden = true; $("gracies").hidden = false;
+        if (cos.programa === "ginga" && cos.intervals !== "si")
+          $("gracies-txt").textContent = "L'entrenador ho mirarà i et respondrà per correu en pocs dies, amb els passos per obrir el compte d'intervals.icu.";
+        window.scrollTo(0, 0);
+      })
+      .catch(function (err) {
+        $("envia").disabled = false; $("envia").textContent = "Envia la sol·licitud";
+        $("error").hidden = false;
+        $("error").textContent = err.message === "massa" ? "Avui ja s'han enviat moltes sol·licituds des d'aquí. Torna-ho a provar demà."
+          : "No s'ha pogut enviar. Torna-ho a provar d'aquí a una estona.";
+      });
+  });
+})();
+</script>
+</body>
+</html>
