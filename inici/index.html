@@ -203,7 +203,8 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   sino(qMobilitat, "camina", "Camines habitualment més de mitja hora seguida sense problemes?");
   sino(qMobilitat, "cadira_sense_mans", "T'aixeques d'una cadira sense ajudar-te amb les mans?");
   P.appendChild(qMobilitat);
-  opcions(P, "maternitat", "Estàs embarassada o has tingut un fill fa menys d'un any?",
+  opcions(P, "sexe", "Ets…", [["dona", "Dona"], ["home", "Home"]]);
+  var qMaternitat = opcions(P, "maternitat", "Estàs embarassada o has tingut un fill fa menys d'un any?",
     [["no", "No"], ["embaras", "Estic embarassada"], ["postpart", "He tingut un fill fa menys d'un any"]], 1);
   var qPostpart = document.createElement("div");
   qPostpart.id = "q-postpart";
@@ -224,7 +225,8 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
 
   function esports() { return ["correr", "bici", "natacio"].filter(function (e) { return $("e-" + e).checked; }); }
   function perfil() {
-    var r = { franja: valor("franja"), forca: tria("forca"), maternitat: valor("maternitat") };
+    var r = { franja: valor("franja"), sexe: valor("sexe"), forca: tria("forca"),
+              maternitat: valor("sexe") === "dona" ? valor("maternitat") : "no" };
     esports().forEach(function (e) { r[e] = true; });
     r.dies = esports().length && valor("dies") ? Number(valor("dies")) : 0;
     if (r.franja === "60+") { r.camina = tria("camina"); r.cadira_sense_mans = tria("cadira_sense_mans"); }
@@ -236,7 +238,7 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
     return r;
   }
   function falta(p) {                                    // alguna pregunta que toca i no s'ha respost
-    if (!p.franja || p.franja === "menor" || p.forca === null || !p.maternitat) return true;
+    if (!p.franja || p.franja === "menor" || !p.sexe || p.forca === null || !p.maternitat) return true;
     if (esports().length && !valor("dies")) return true;
     if (p.franja === "60+" && (p.camina === null || p.cadira_sense_mans === null)) return true;
     if (p.maternitat === "postpart" && (!p.postpart_setmanes || p.alta === null || p.cesaria === null || p.simptomes === null ||
@@ -254,6 +256,7 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
     var p = perfil();
     qDies.hidden = !esports().length;
     qMobilitat.hidden = p.franja !== "60+";
+    qMaternitat.hidden = p.sexe !== "dona";
     qPostpart.hidden = p.maternitat !== "postpart";
     qImpacte.hidden = !(p.postpart_setmanes === "12-26" || p.postpart_setmanes === "26-52");
     avisMenor.hidden = p.franja !== "menor";
