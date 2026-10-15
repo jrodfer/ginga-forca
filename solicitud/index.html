@@ -135,44 +135,32 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
       </div>
     </section>
 
-    <section class="card" id="bloc-intervals">
-      <h2>intervals.icu <span class="etiqueta oblig" id="et-oblig" hidden>imprescindible per a Ginga</span><span class="etiqueta opc" id="et-opc" hidden>opcional per a Ginga Força</span></h2>
-      <p style="margin:0 0 8px">És una plataforma web gratuïta on queden tots els teus entrenaments. Ginga la fa servir per veure com
-        entrenes i ajustar-te el pla.</p>
+    <section class="card" id="bloc-intervals" hidden>
+      <h2>Rellotge i intervals.icu</h2>
+      <p style="margin:0 0 8px">Per a Ginga calen un <b>rellotge esportiu</b> (Garmin, Coros, Polar, Suunto, Wahoo...) i
+        <b>intervals.icu</b>, una plataforma web gratuïta on arriben sols els teus entrenaments. Ginga hi veu com entrenes,
+        com dorms i com estàs, i t'ajusta el pla cada setmana.</p>
       <details>
-        <summary>Què és i què necessito?</summary>
-        <p>intervals.icu recull automàticament les activitats del teu <b>rellotge esportiu</b> (Garmin, Coros, Polar, Suunto,
-          Wahoo...) o de Strava, i també les dades del matí si el rellotge les mesura: pulsacions en repòs, variabilitat
-          cardíaca (HRV) i son. Amb un Apple Watch cal una app intermèdia que hi pugi els entrenaments.</p>
-        <p>Per fer-lo servir necessites: un rellotge o dispositiu que registri els entrenaments, un compte gratuït a
-          intervals.icu (5 minuts) i connectar-hi el rellotge.</p>
-      </details>
-      <details>
-        <summary>En què millora el pla?</summary>
+        <summary>Més detalls</summary>
         <ul style="margin:6px 0">
-          <li>Les sessions arriben soles al calendari i, si el rellotge ho permet, al rellotge.</li>
-          <li>Cada setmana es compara el que has fet amb el que tocava, i el pla s'ajusta.</li>
+          <li>Les sessions t'arriben al calendari i, si el rellotge ho permet, al rellotge.</li>
           <li>Si dorms malament o estàs carregat (pulsacions en repòs altes, HRV baixa), aquell dia la sessió es rebaixa.</li>
           <li>Les zones (ritmes, potència, pulsacions) surten de les teves dades, no d'una taula genèrica.</li>
+          <li>Obrir el compte i connectar-hi el rellotge (o Strava) són 5 minuts; si no el tens, t'enviarem els passos.
+            Amb un Apple Watch cal una app intermèdia.</li>
         </ul>
       </details>
-      <p id="nota-ginga" class="muted" style="margin:6px 0 0" hidden><b>Per a Ginga és bàsic i obligatori</b>: sense
-        les teves dades, el pla no es pot ajustar. Si encara no el tens, et direm com fer-ho.</p>
-      <p id="nota-forca" class="muted" style="margin:6px 0 0" hidden><b>Per a Ginga Força no cal</b>: les sessions arriben
-        per correu i es valoren des del mòbil. Si el tens, ajuda (també veiem l'esforç que hi apuntis).</p>
       <div class="pregunta" style="border-top:0">
-        <p>Tens intervals.icu?</p>
+        <p>Què tens?</p>
         <div class="tria u">
-          <label><input type="radio" name="intervals" value="si"> Sí, ja el tinc</label>
-          <label><input type="radio" name="intervals" value="no"> No</label>
-          <label><input type="radio" name="intervals" value="no_se"> No ho sé</label>
+          <label><input type="radio" name="equip" value="rellotge_intervals"> Rellotge i compte d'intervals.icu</label>
+          <label><input type="radio" name="equip" value="rellotge"> Rellotge, però encara no intervals.icu</label>
+          <label><input type="radio" name="equip" value="res"> No tinc rellotge esportiu</label>
         </div>
       </div>
-      <div class="pregunta">
-        <p>Tens rellotge esportiu?</p>
-        <div class="tria"><label><input type="radio" name="rellotge" value="si"> Sí</label><label><input type="radio" name="rellotge" value="no"> No</label></div>
-      </div>
     </section>
+    <p class="muted" id="nota-forca" style="margin:0 4px 16px" hidden>Per a Ginga Força només et cal el mòbil: les sessions
+      arriben per correu, amb vídeos.</p>
 
     <section class="card">
       <h2>Sobre tu</h2>
@@ -219,19 +207,19 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
   function valor(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value : null; }
   function actualitza() {
     var p = valor("programa");
-    $("et-oblig").hidden = $("nota-ginga").hidden = p !== "ginga";
-    $("et-opc").hidden = $("nota-forca").hidden = p !== "forca";
+    $("bloc-intervals").hidden = p !== "ginga";
+    $("nota-forca").hidden = p !== "forca";
   }
   $("formulari").addEventListener("change", actualitza);
   actualitza();
   $("formulari").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var cos = { programa: valor("programa"), nom: $("nom").value.trim(), email: $("email").value.trim(),
-                edat: valor("edat"), objectiu: $("objectiu").value.trim(), intervals: valor("intervals"),
-                rellotge: valor("rellotge"), com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked };
+                edat: valor("edat"), objectiu: $("objectiu").value.trim(),
+                equip: valor("programa") === "ginga" ? valor("equip") : null, com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked };
     var falta = !cos.programa ? "Tria Ginga o Ginga Força." : !cos.nom ? "Falta el nom."
       : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cos.email) ? "Revisa el correu electrònic." : !cos.edat ? "Falta l'edat."
-      : !cos.intervals ? "Digues si tens intervals.icu." : !cos.privacitat ? "Cal acceptar la casella de privacitat." : "";
+      : cos.programa === "ginga" && !cos.equip ? "Digues si tens rellotge i intervals.icu." : !cos.privacitat ? "Cal acceptar la casella de privacitat." : "";
     if (falta) { $("error").hidden = false; $("error").textContent = falta; return; }
     Object.keys(cos).forEach(function (k) { if (cos[k] === "" || cos[k] === null) delete cos[k]; });
     $("error").hidden = true; $("envia").disabled = true; $("envia").textContent = "Enviant…";
@@ -239,7 +227,7 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
       .then(function (r) { if (r.status === 429) throw new Error("massa"); if (!r.ok) throw new Error(r.status); })
       .then(function () {
         $("formulari").hidden = true; $("gracies").hidden = false;
-        if (cos.programa === "ginga" && cos.intervals !== "si")
+        if (cos.programa === "ginga" && cos.equip === "rellotge")
           $("gracies-txt").textContent = "L'entrenador ho mirarà i et respondrà per correu en pocs dies, amb els passos per obrir el compte d'intervals.icu.";
         window.scrollTo(0, 0);
       })
