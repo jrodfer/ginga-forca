@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#10231D">
+<title>Ginga · Abans de començar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<style>
+/* Formulari d'inici de Força 60+: les preguntes de seguretat i els tests del primer dia.
+   La font és a jrodfer/ginga (forca60/web/inici/); aquí se'n publica la còpia. Lletra gran i botons grans. */
+:root {
+  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
+  --accent: #FF6A2B; --ok: #00996B; --avis: #B3261E;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --accent: #FF6A2B; --ok: #2DBF8C; --avis: #FF8A80; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 "Nunito", "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 640px; margin: 0 auto; padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
+header { padding: 20px 0 8px; }
+.marca { font-weight: 900; font-size: 26px; color: var(--accent); letter-spacing: .02em; }
+h1 { font-size: 28px; line-height: 1.2; margin: 8px 0 4px; }
+h2 { font-size: 22px; margin: 0 0 6px; }
+.muted { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; }
+.pregunta { padding: 12px 0; border-top: 1px solid var(--line); }
+.pregunta:first-of-type { border-top: 0; }
+.pregunta p { margin: 0 0 10px; font-weight: 700; }
+.sino { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sino label { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border: 2px solid var(--line);
+  border-radius: 12px; font-weight: 800; cursor: pointer; }
+.sino input { width: 22px; height: 22px; accent-color: var(--ok); }
+.sino label:has(input:checked) { border-color: var(--ok); }
+.test { padding: 14px 0; border-top: 1px solid var(--line); }
+.test:first-of-type { border-top: 0; }
+.test p { margin: 0 0 10px; }
+.fila { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 130px; padding: 10px 12px; border-radius: 12px;
+  border: 2px solid var(--line); background: var(--card); color: var(--fg); }
+.btn { appearance: none; border: 0; border-radius: 14px; font: 800 18px/1 "Nunito", sans-serif; padding: 16px 20px; cursor: pointer;
+  background: var(--accent); color: #10231D; min-height: 56px; }
+.btn.sec { background: transparent; color: var(--fg); border: 2px solid var(--line); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn:focus-visible, input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+.check { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-weight: 600; }
+.check input { width: 22px; height: 22px; accent-color: var(--ok); }
+.avis { color: var(--avis); font-weight: 700; }
+.ok { color: var(--ok); font-weight: 800; font-size: 22px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="marca">ginga</div>
+    <h1 id="titol">Abans de començar</h1>
+    <p class="muted" style="margin:0">Unes preguntes de seguretat i tres tests senzills. Uns 10 minuts, amb una cadira sense braços i algú al costat.</p>
+  </header>
+
+  <div id="sense-enllac" class="card" hidden>
+    <p style="margin:0">Aquesta pàgina s'obre amb l'enllaç del correu de Ginga. Si te l'han reenviat o no funciona, respon el correu i te'n tornarem a enviar un.</p>
+  </div>
+
+  <form id="formulari" hidden>
+    <section class="card">
+      <h2>Preguntes de seguretat</h2>
+      <p class="muted" style="margin:0 0 6px">Si alguna resposta és «sí», abans de començar ho parlaràs amb el metge.</p>
+      <div id="preguntes"></div>
+    </section>
+
+    <section class="card">
+      <h2>Els tests</h2>
+      <p class="muted" style="margin:0 0 6px">Fes-los amb calma i amb algú al costat. Si un et fa mal o et mareges, para i posa el que hagis fet.</p>
+
+      <div class="test">
+        <p><strong>1. Aixecar-se de la cadira.</strong> Seu a la cadira amb els braços creuats al pit. Quantes vegades t'aixeques del tot i tornes a seure en 30 segons?</p>
+        <div class="fila">
+          <input type="number" id="cadira" min="0" max="60" step="1" inputmode="numeric" aria-label="Vegades en 30 segons">
+          <span>vegades</span>
+          <button class="btn sec" type="button" id="crono-cadira">Compte enrere de 30 s</button>
+        </div>
+        <label class="check"><input type="checkbox" id="mans"> No m'he pogut aixecar sense les mans</label>
+      </div>
+
+      <div class="test">
+        <p><strong>2. Aixecar-se i caminar.</strong> Des de la cadira: aixeca't, camina 3 metres al teu ritme, dona la volta, torna i seu. Quants segons?</p>
+        <div class="fila">
+          <input type="number" id="tug" min="0" max="120" step="0.1" inputmode="decimal" aria-label="Segons">
+          <span>segons</span>
+          <button class="btn sec" type="button" data-crono="tug">Cronometra</button>
+        </div>
+      </div>
+
+      <div class="test">
+        <p><strong>3. Equilibri en tàndem.</strong> Un peu just davant de l'altre, el taló tocant la punta, sense agafar-te (amb la cadira a l'abast). Quants segons aguantes? Si arribes a 10, para i posa 10.</p>
+        <div class="fila">
+          <input type="number" id="tandem" min="0" max="10" step="1" inputmode="numeric" aria-label="Segons en tàndem">
+          <span>segons</span>
+          <button class="btn sec" type="button" data-crono="tandem">Cronometra</button>
+        </div>
+      </div>
+
+      <div class="test">
+        <p><strong>4. Sobre un peu.</strong> Sense agafar-te, amb la cadira a l'abast. Quants segons aguantes? Si arribes a 30, para i posa 30.</p>
+        <div class="fila">
+          <input type="number" id="un_peu" min="0" max="30" step="1" inputmode="numeric" aria-label="Segons sobre un peu">
+          <span>segons</span>
+          <button class="btn sec" type="button" data-crono="un_peu">Cronometra</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="avis" id="error" hidden></p>
+    <button class="btn" type="submit" id="envia" style="width:100%">Envia</button>
+  </form>
+
+  <section id="gracies" class="card" hidden>
+    <p class="ok" style="margin:0 0 8px">Gràcies!</p>
+    <p id="gracies-txt" style="margin:0"></p>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var PREGUNTES = [
+    "T'ha dit algun metge que tens un problema de cor o de pressió arterial?",
+    "Tens dolor al pit quan fas esforços, o en repòs?",
+    "T'has marejat fins a perdre l'equilibri, o t'has desmaiat, l'últim any?",
+    "T'han operat o has tingut una fractura els últims 6 mesos?",
+    "Tens osteoporosi, una pròtesi o algun problema d'ossos o articulacions que empitjori amb l'exercici?",
+    "Has caigut dues vegades o més l'últim any, o tens por de caure?",
+    "Prens alguna medicació que et maregi o et faci baixar la pressió?",
+    "Hi ha alguna altra raó per la qual no hauries de fer exercici?"
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+
+  // L'enllaç del correu porta, després del #, { u: adreça del Worker, k: clau signada, g: signatura, n: nom }
+  function llegeixHash() {
+    var codi = (location.hash || "").slice(1);
+    if (!codi) return null;
+    try {
+      var b64 = codi.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      var bin = atob(b64), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var d = JSON.parse(new TextDecoder("utf-8").decode(bytes));
+      return d && d.u && d.k && d.g ? d : null;
+    } catch (err) { return null; }
+  }
+  var dades = llegeixHash();
+  if (!dades) { $("sense-enllac").hidden = false; return; }
+  if (dades.n) $("titol").textContent = "Abans de començar, " + dades.n;
+  $("formulari").hidden = false;
+
+  PREGUNTES.forEach(function (text, i) {
+    var div = document.createElement("div");
+    div.className = "pregunta";
+    var p = document.createElement("p");
+    p.textContent = (i + 1) + ". " + text;
+    var sino = document.createElement("div");
+    sino.className = "sino";
+    ["no", "si"].forEach(function (v) {
+      var l = document.createElement("label");
+      var inp = document.createElement("input");
+      inp.type = "radio"; inp.name = "p" + i; inp.value = v;
+      l.appendChild(inp);
+      l.appendChild(document.createTextNode(v === "si" ? "Sí" : "No"));
+      sino.appendChild(l);
+    });
+    div.appendChild(p); div.appendChild(sino);
+    $("preguntes").appendChild(div);
+  });
+
+  // Cronòmetres: un botó per test omple el camp; el de la cadira és un compte enrere de 30 s
+  var actiu = null;
+  Array.prototype.forEach.call(document.querySelectorAll("[data-crono]"), function (b) {
+    b.addEventListener("click", function () {
+      var camp = $(b.getAttribute("data-crono"));
+      if (actiu && actiu.boto === b) {
+        clearInterval(actiu.id);
+        camp.value = Math.round((Date.now() - actiu.inici) / 100) / 10;
+        if (camp.max) camp.value = Math.min(Number(camp.value), Number(camp.max));
+        if (camp.step === "1") camp.value = Math.floor(Number(camp.value));
+        b.textContent = "Cronometra"; actiu = null; return;
+      }
+      if (actiu) return;
+      var inici = Date.now();
+      actiu = { boto: b, inici: inici, id: setInterval(function () {
+        camp.value = Math.floor((Date.now() - inici) / 1000);
+      }, 200) };
+      b.textContent = "Para";
+    });
+  });
+  $("crono-cadira").addEventListener("click", function () {
+    var b = this, queda = 30;
+    if (b.disabled) return;
+    b.disabled = true; b.textContent = "Comença! 30";
+    var id = setInterval(function () {
+      queda--;
+      b.textContent = queda > 0 ? "Queden " + queda + " s" : "Temps! Apunta-ho";
+      if (queda <= 0) {
+        clearInterval(id);
+        try { navigator.vibrate && navigator.vibrate(400); } catch (err) {}
+        setTimeout(function () { b.disabled = false; b.textContent = "Compte enrere de 30 s"; }, 3000);
+      }
+    }, 1000);
+  });
+
+  $("formulari").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var respostes = [], falta = [];
+    PREGUNTES.forEach(function (t, i) {
+      var tria = document.querySelector("input[name=p" + i + "]:checked");
+      if (!tria) falta.push(i + 1); else respostes.push(tria.value === "si");
+    });
+    var tests = { cadira: $("cadira").value, tug: $("tug").value, tandem: $("tandem").value, un_peu: $("un_peu").value };
+    var buits = Object.keys(tests).filter(function (k) { return tests[k] === ""; });
+    if (falta.length || buits.length) {
+      $("error").hidden = false;
+      $("error").textContent = falta.length ? "Falta respondre la pregunta " + falta.join(", ") + "."
+                                            : "Falta algun resultat dels tests.";
+      return;
+    }
+    $("error").hidden = true;
+    $("envia").disabled = true; $("envia").textContent = "Enviant…";
+    var cos = { k: dades.k, g: dades.g, respostes: respostes,
+                tests: { cadira: Number(tests.cadira), tug: Number(tests.tug), tandem: Number(tests.tandem),
+                         un_peu: Number(tests.un_peu), mans: $("mans").checked } };
+    fetch(dades.u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cos) })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); })
+      .then(function () {
+        $("formulari").hidden = true; $("gracies").hidden = false;
+        $("gracies-txt").textContent = respostes.some(Boolean)
+          ? "Com que alguna resposta és «sí», abans de començar parla-ho amb el metge. El teu entrenador es posarà en contacte amb tu."
+          : "Amb els teus resultats ajustarem el pla. Rebràs les sessions per correu.";
+        window.scrollTo(0, 0);
+      })
+      .catch(function () {
+        $("envia").disabled = false; $("envia").textContent = "Envia";
+        $("error").hidden = false; $("error").textContent = "No s'ha pogut enviar. Torna-ho a provar d'aquí a una estona.";
+      });
+  });
+})();
+</script>
+</body>
+</html>
