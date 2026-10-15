@@ -516,7 +516,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     var ctx = cast.framework.CastContext.getInstance();
     if (sessioCast()) { ctx.endCurrentSession(true); return; }
     if (ctx.getCastState() === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
-      avisTele("No trobo cap TV que pugui obrir Ginga. Mira que el Chromecast estigui a la mateixa wifi.");
+      avisTele("No trobo cap TV que pugui obrir Ginga. Mira que la Smart TV estigui encesa i a la mateixa wifi.");
     }
     ctx.requestSession().then(function () { avisTele(""); }, function (err) {
       if (err !== "cancel" && err !== chrome.cast.ErrorCode.CANCEL) avisTele("No s'ha pogut connectar amb la TV (" + err + ").");
