@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
 <style>
-/* Formulari d'inici de Força 60+: com es mou la persona (prefiltre), les preguntes de seguretat i, només si no
-   passa el prefiltre, els tests del primer dia.
+/* Formulari d'inici de Ginga Força: com es mou la persona (prefiltre), els tests del primer dia (només si no passa
+   el prefiltre) i una declaració de salut d'una casella. Es respon abans de rebre cap sessió.
    La font és a jrodfer/ginga (forca60/web/inici/); aquí se'n publica la còpia. Lletra gran i botons grans. */
 :root {
   --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
@@ -54,6 +54,8 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
 .btn:focus-visible, input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
 .check { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-weight: 600; }
 .check input { width: 22px; height: 22px; accent-color: var(--ok); }
+.check.gran { align-items: flex-start; font-weight: 500; border: 2px solid var(--linia, #EBDCC8); border-radius: 12px; padding: 12px; }
+.check.gran input { width: 30px; height: 30px; flex: none; margin: 0; }
 .avis { color: var(--avis); font-weight: 700; }
 .ok { color: var(--ok); font-weight: 800; font-size: 22px; }
 </style>
@@ -63,7 +65,7 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   <header>
     <div class="marca">ginga</div>
     <h1 id="titol">Abans de començar</h1>
-    <p class="muted" style="margin:0">Unes preguntes curtes per ajustar el pla al teu nivell. Uns 3 minuts.</p>
+    <p class="muted" style="margin:0">Unes preguntes per ajustar el pla a tu. Un parell de minuts, i després t'enviarem les sessions.</p>
   </header>
 
   <div id="sense-enllac" class="card" hidden>
@@ -72,15 +74,9 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
 
   <form id="formulari" hidden>
     <section class="card">
-      <h2>Com et mous ara</h2>
+      <h2>Sobre tu</h2>
       <p class="muted" style="margin:0 0 6px">Per saber per on començar.</p>
       <div id="perfil"></div>
-    </section>
-
-    <section class="card">
-      <h2>Preguntes de seguretat</h2>
-      <p class="muted" style="margin:0 0 6px">Si alguna resposta és «sí», abans de començar ho parlaràs amb el metge.</p>
-      <div id="preguntes"></div>
     </section>
 
     <section class="card" id="bloc-tests" hidden>
@@ -125,6 +121,14 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
       </div>
     </section>
 
+    <section class="card">
+      <h2>Per començar</h2>
+      <label class="check gran"><input type="checkbox" id="declaracio"> Confirmo que no tinc cap problema de cor ni de
+        pressió arterial, ni dolor al pit, marejos o desmais quan faig esforç; o que, si en tinc, el metge m'ha dit
+        que puc fer exercici. Si mai en tinc durant una sessió, pararé i ho diré.</label>
+      <p class="muted" style="margin:8px 0 0">Si no ho pots confirmar, no t'hi encallis: respon el correu i en parlem.</p>
+    </section>
+
     <p class="avis" id="error" hidden></p>
     <button class="btn" type="submit" id="envia" style="width:100%">Envia</button>
   </form>
@@ -138,16 +142,6 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
 <script>
 (function () {
   "use strict";
-  var PREGUNTES = [
-    "T'ha dit algun metge que tens un problema de cor o de pressió arterial?",
-    "Tens dolor al pit quan fas esforços, o en repòs?",
-    "T'has marejat fins a perdre l'equilibri, o t'has desmaiat, l'últim any?",
-    "T'han operat o has tingut una fractura els últims 6 mesos?",
-    "Tens osteoporosi, una pròtesi o algun problema d'ossos o articulacions que empitjori amb l'exercici?",
-    "Has caigut dues vegades o més l'últim any, o tens por de caure?",
-    "Prens alguna medicació que et maregi o et faci baixar la pressió?",
-    "Hi ha alguna altra raó per la qual no hauries de fer exercici?"
-  ];
   var $ = function (id) { return document.getElementById(id); };
 
   // L'enllaç del correu porta, després del #, { u: adreça del Worker, k: clau signada, g: signatura, n: nom }
@@ -168,48 +162,107 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   if (dades.n) $("titol").textContent = "Abans de començar, " + dades.n;
   $("formulari").hidden = false;
 
-  // Prefiltre: qui camina, s'aixeca sense mans i fa esport o corre no fa els tests (forca60/valoracio.py, actiu)
-  var PERFIL = [
-    ["camina", "Camines habitualment més de mitja hora seguida sense problemes?"],
-    ["esport", "Fas esport o exercici almenys dos dies a la setmana?"],
-    ["forca", "Fas exercicis de força (peses, gomes, màquines o similars)?"],
-    ["corre", "Pots córrer una estona, encara que sigui poc?"],
-    ["cadira_sense_mans", "T'aixeques d'una cadira sense ajudar-te amb les mans?"]
-  ];
-  function sino(contenidor, nom, text, ordre) {
+  // Perfil (forca60/valoracio.py, per_perfil): edat, esports, força, mobilitat (només a partir de 60), postpart
+  function opcions(contenidor, nom, text, llista, columnes) {
     var div = document.createElement("div");
-    div.className = "pregunta";
+    div.className = "pregunta"; div.id = "q-" + nom;
     var p = document.createElement("p");
-    p.textContent = (ordre ? ordre + ". " : "") + text;
+    p.textContent = text;
     var fila = document.createElement("div");
     fila.className = "sino";
-    ["si", "no"].forEach(function (v) {
+    fila.style.gridTemplateColumns = columnes === 1 ? "1fr" : "1fr 1fr";
+    llista.forEach(function (o) {
       var l = document.createElement("label");
       var inp = document.createElement("input");
-      inp.type = "radio"; inp.name = nom; inp.value = v;
+      inp.type = "radio"; inp.name = nom; inp.value = o[0];
       l.appendChild(inp);
-      l.appendChild(document.createTextNode(v === "si" ? "Sí" : "No"));
+      l.appendChild(document.createTextNode(o[1]));
       fila.appendChild(l);
     });
     div.appendChild(p); div.appendChild(fila);
     contenidor.appendChild(div);
+    return div;
   }
-  PERFIL.forEach(function (x) { sino($("perfil"), "perfil-" + x[0], x[1]); });
-  PREGUNTES.forEach(function (text, i) { sino($("preguntes"), "p" + i, text, i + 1); });
+  function sino(contenidor, nom, text) { return opcions(contenidor, nom, text, [["si", "Sí"], ["no", "No"]]); }
+  function valor(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value : null; }
+  function tria(nom) { var v = valor(nom); return v === null ? null : v === "si"; }
 
-  function tria(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value === "si" : null; }
+  var P = $("perfil");
+  opcions(P, "franja", "Quants anys tens?", [["menor", "Menys de 18"], ["18-39", "18 a 39"], ["40-59", "40 a 59"], ["60+", "60 o més"]]);
+  var qEsports = document.createElement("div");
+  qEsports.className = "pregunta"; qEsports.id = "q-esports";
+  qEsports.innerHTML = "<p>Fas algun d'aquests esports?</p>" +
+    "<label class='check'><input type='checkbox' id='e-correr'> Córrer</label>" +
+    "<label class='check'><input type='checkbox' id='e-bici'> Bici</label>" +
+    "<label class='check'><input type='checkbox' id='e-natacio'> Natació</label>";
+  P.appendChild(qEsports);
+  var qDies = opcions(P, "dies", "Quants dies a la setmana fas aquest esport?", [["1", "1 dia"], ["2", "2 dies"], ["3", "3 dies"], ["4", "4 dies o més"]]);
+  sino(P, "forca", "Has fet mai exercicis de força (peses, gomes, màquines o similars)?");
+  var qMobilitat = document.createElement("div");
+  qMobilitat.id = "q-mobilitat";
+  sino(qMobilitat, "camina", "Camines habitualment més de mitja hora seguida sense problemes?");
+  sino(qMobilitat, "cadira_sense_mans", "T'aixeques d'una cadira sense ajudar-te amb les mans?");
+  P.appendChild(qMobilitat);
+  opcions(P, "maternitat", "Estàs embarassada o has tingut un fill fa menys d'un any?",
+    [["no", "No"], ["embaras", "Estic embarassada"], ["postpart", "He tingut un fill fa menys d'un any"]], 1);
+  var qPostpart = document.createElement("div");
+  qPostpart.id = "q-postpart";
+  opcions(qPostpart, "postpart_setmanes", "Quantes setmanes fa del part?", [["<6", "Menys de 6"], ["6-12", "De 6 a 12"], ["12-26", "De 12 a 26"], ["26-52", "De 26 a 52"]]);
+  sino(qPostpart, "alta", "T'han donat l'alta a la revisió postpart?");
+  sino(qPostpart, "cesaria", "Va ser cesària?");
+  sino(qPostpart, "simptomes", "Tens pèrdues d'orina, sensació de pesadesa a la pelvis o dolor (a la cicatriu, la pelvis o l'esquena)?");
+  var qImpacte = sino(qPostpart, "impacte_ok", "Pots fer 10 salts petits sobre el lloc, sobre cada peu, sense pèrdues, pesadesa ni dolor?");
+  P.appendChild(qPostpart);
+  var avisMenor = document.createElement("p");
+  avisMenor.className = "avis"; avisMenor.hidden = true;
+  avisMenor.textContent = "Aquest programa és per a majors de 18 anys. Parla amb el teu entrenador.";
+  P.appendChild(avisMenor);
+  var avisEmbaras = document.createElement("p");
+  avisEmbaras.className = "avis"; avisEmbaras.hidden = true;
+  avisEmbaras.textContent = "Encara no tenim un pla per a l'embaràs. Envia el formulari igualment i el teu entrenador parlarà amb tu.";
+  P.appendChild(avisEmbaras);
+
+  function esports() { return ["correr", "bici", "natacio"].filter(function (e) { return $("e-" + e).checked; }); }
   function perfil() {
-    var r = {};
-    PERFIL.forEach(function (x) { r[x[0]] = tria("perfil-" + x[0]); });
+    var r = { franja: valor("franja"), forca: tria("forca"), maternitat: valor("maternitat") };
+    esports().forEach(function (e) { r[e] = true; });
+    r.dies = esports().length && valor("dies") ? Number(valor("dies")) : 0;
+    if (r.franja === "60+") { r.camina = tria("camina"); r.cadira_sense_mans = tria("cadira_sense_mans"); }
+    if (r.maternitat === "postpart") {
+      r.postpart_setmanes = valor("postpart_setmanes"); r.alta = tria("alta"); r.cesaria = tria("cesaria");
+      r.simptomes = tria("simptomes");
+      r.impacte_ok = (r.postpart_setmanes === "12-26" || r.postpart_setmanes === "26-52") ? tria("impacte_ok") : false;
+    }
     return r;
   }
-  function actiu(p) { return !!(p.camina && p.cadira_sense_mans && (p.esport || p.corre)); }
+  function falta(p) {                                    // alguna pregunta que toca i no s'ha respost
+    if (!p.franja || p.franja === "menor" || p.forca === null || !p.maternitat) return true;
+    if (esports().length && !valor("dies")) return true;
+    if (p.franja === "60+" && (p.camina === null || p.cadira_sense_mans === null)) return true;
+    if (p.maternitat === "postpart" && (!p.postpart_setmanes || p.alta === null || p.cesaria === null || p.simptomes === null ||
+        (qImpacte.hidden === false && p.impacte_ok === null))) return true;
+    return false;
+  }
+  function actiu(p) {
+    return !!(p.camina && p.cadira_sense_mans && ((p.dies || 0) >= 2 || p.correr || p.forca));
+  }
   function calenTests() {
     var p = perfil();
-    var complet = PERFIL.every(function (x) { return p[x[0]] !== null; });
-    return complet && !actiu(p);
+    return p.franja === "60+" && p.maternitat === "no" && !falta(p) && !actiu(p);
   }
-  $("perfil").addEventListener("change", function () { $("bloc-tests").hidden = !calenTests(); });
+  function actualitza() {
+    var p = perfil();
+    qDies.hidden = !esports().length;
+    qMobilitat.hidden = p.franja !== "60+";
+    qPostpart.hidden = p.maternitat !== "postpart";
+    qImpacte.hidden = !(p.postpart_setmanes === "12-26" || p.postpart_setmanes === "26-52");
+    avisMenor.hidden = p.franja !== "menor";
+    avisEmbaras.hidden = p.maternitat !== "embaras";
+    $("bloc-tests").hidden = !calenTests();
+    $("envia").disabled = p.franja === "menor";
+  }
+  P.addEventListener("change", actualitza);
+  actualitza();
 
   // Cronòmetres: un botó per test omple el camp; el de la cadira és un compte enrere de 30 s
   var enMarxa = null;
@@ -248,35 +301,30 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
 
   $("formulari").addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var respostes = [], falta = [];
     var p = perfil();
-    var perfilFalta = PERFIL.some(function (x) { return p[x[0]] === null; });
-    PREGUNTES.forEach(function (t, i) {
-      var r = tria("p" + i);
-      if (r === null) falta.push(i + 1); else respostes.push(r);
-    });
+    var perfilFalta = falta(p);
     var ambTests = calenTests();
     var tests = { cadira: $("cadira").value, tug: $("tug").value, tandem: $("tandem").value, un_peu: $("un_peu").value };
     var buits = ambTests ? Object.keys(tests).filter(function (k) { return tests[k] === ""; }) : [];
-    if (perfilFalta || falta.length || buits.length) {
+    var declara = $("declaracio").checked;
+    if (perfilFalta || buits.length || !declara) {
       $("error").hidden = false;
-      $("error").textContent = perfilFalta ? "Falta respondre alguna pregunta de «Com et mous ara»."
-        : falta.length ? "Falta respondre la pregunta de seguretat " + falta.join(", ") + "."
-        : "Falta algun resultat dels tests.";
+      $("error").textContent = perfilFalta ? "Falta respondre alguna pregunta de «Sobre tu»."
+        : buits.length ? "Falta algun resultat dels tests."
+        : "Per començar, cal marcar la casella de «Per començar» (o respondre el correu si no la pots marcar).";
       return;
     }
     $("error").hidden = true;
     $("envia").disabled = true; $("envia").textContent = "Enviant…";
-    var cos = { k: dades.k, g: dades.g, respostes: respostes, perfil: p,
+    var cos = { k: dades.k, g: dades.g, declaracio: true, perfil: p,
                 tests: ambTests ? { cadira: Number(tests.cadira), tug: Number(tests.tug), tandem: Number(tests.tandem),
                                     un_peu: Number(tests.un_peu), mans: $("mans").checked } : null };
     fetch(dades.u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cos) })
       .then(function (r) { if (!r.ok) throw new Error(r.status); })
       .then(function () {
         $("formulari").hidden = true; $("gracies").hidden = false;
-        $("gracies-txt").textContent = respostes.some(Boolean)
-          ? "Com que alguna resposta és «sí», abans de començar parla-ho amb el metge. El teu entrenador es posarà en contacte amb tu."
-          : "Amb les teves respostes ajustarem el pla. Rebràs les sessions per correu.";
+        $("gracies-txt").textContent = "Amb les teves respostes preparem el pla. Diumenge rebràs per correu les " +
+          "sessions de la primera setmana.";
         window.scrollTo(0, 0);
       })
       .catch(function () {
