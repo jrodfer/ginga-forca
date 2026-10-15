@@ -17,7 +17,7 @@
 :root {
   --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #00996B; --warn: #D9541C; --warn-soft: #FFE4D3;
-  --ruta: #FF6A2B; --ruta-alt: #8A968F; --pujada: #00996B; --punt: #00996B;
+  --ruta: #FF6A2B; --ruta-alt: #8A968F; --pujada: #00996B; --punt: #00996B; --gent: #6B4FD8;
   --display: "Nunito", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }
@@ -25,14 +25,14 @@
   :root:not([data-theme="light"]) {
     --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
     --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --warn: #FFC531; --warn-soft: #1D3A31;
-    --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --punt: #FFC531;
+    --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --punt: #FFC531; --gent: #B7A6FF;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --warn: #FFC531; --warn-soft: #1D3A31;
-  --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --punt: #FFC531;
+  --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --punt: #FFC531; --gent: #B7A6FF;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -90,6 +90,8 @@ ul.llocs li:first-child button { border-top: 0; }
 .proposta.triada h2 { color: var(--accent); }
 .proposta .cap { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .proposta .cap button { all: unset; cursor: pointer; font-weight: 800; color: var(--muted); font-size: .9rem; }
+.llegenda { font-size: .9rem; color: var(--muted); }
+.llegenda i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; background: var(--gent); vertical-align: middle; margin-right: 6px; }
 .etiqueta { display: inline-block; font-size: .78rem; font-weight: 800; padding: 2px 8px; border-radius: 99px;
   background: var(--warn-soft); color: var(--fg); }
 
@@ -184,12 +186,15 @@ const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
   "https://overpass.private.coffee/api/interpreter"];
 const OVERPASS_SEGONS = 12;
+const GENT_SEGONS = 10;         // per on va la gent: el que s'espera Overpass; si no arriba, els circuits surten igual
+const GENT_MARGE = 1000;        // m de més en el radi, perquè moure una mica la sortida no torni a demanar res
+const GENT_DIES = 60;           // dies que es guarden al mòbil (les rutes senyalitzades canvien poc)
 
-async function overpass(consulta) {
+async function overpass(consulta, segons = OVERPASS_SEGONS) {
   for (const url of OVERPASS) {
     try {
       const r = await fetch(url, { method: "POST", body: "data=" + encodeURIComponent(consulta),
-        signal: AbortSignal.timeout ? AbortSignal.timeout(OVERPASS_SEGONS * 1000) : undefined });
+        signal: AbortSignal.timeout ? AbortSignal.timeout(segons * 1000) : undefined });
       if (r.ok) return await r.json();
     } catch (e) { /* el següent */ }
   }
@@ -235,6 +240,9 @@ const T = {
     saturat: "Ara mateix hi ha massa cerques de rutes alhora. Torna-ho a provar d'aquí a un minut.",
     quota: "Avui ja s'han fet totes les cerques de rutes que permet el servei de mapes. Torna-ho a provar demà.",
     principal: "{x}% per carretera principal (C-, N-)",
+    gent: "{x}% per on va la gent",
+    llegendaRun: "En lila, per on sol anar la gent: rutes senyalitzades, vies verdes, parcs i passejos. Les propostes hi passen tant com poden.",
+    llegendaRide: "En lila, per on sol anar la gent: rutes ciclistes senyalitzades i vies verdes. Les propostes hi passen tant com poden.",
     errorProxy: "No he pogut calcular rutes ara mateix. Torna-ho a provar d'aquí a una estona.",
     errorPistes: "No he pogut buscar pistes ara mateix (el servei de mapes va saturat). Torna-ho a provar d'aquí a un minut.",
     senseProxy: "Els circuits encara no estan activats en aquesta pàgina.",
@@ -282,6 +290,9 @@ const T = {
     saturat: "Too many route searches right now. Please try again in a minute.",
     quota: "Today's route searches with the map service are used up. Please try again tomorrow.",
     principal: "{x}% on main roads",
+    gent: "{x}% where people usually go",
+    llegendaRun: "In purple, where people usually go: waymarked routes, greenways, parks and promenades. The options use them as much as they can.",
+    llegendaRide: "In purple, where people usually go: waymarked cycle routes and greenways. The options use them as much as they can.",
     errorProxy: "I couldn't work out routes right now. Please try again in a while.",
     errorPistes: "I couldn't search for tracks right now (the map service is busy). Please try again in a minute.",
     senseProxy: "Loops aren't switched on for this page yet.",
@@ -312,6 +323,8 @@ const L = S && T[S.l] ? S.l : (navigator.language || "ca").startsWith("en") ? "e
 const t = T[L];
 document.documentElement.lang = L;
 let mapa, sortida, capes = [], propostes = [], triada = 0, llavor = 0, saturat = false, quotaEsgotada = false;
+let gent = null;                // per on va la gent a la zona: {clau, c, r, t, dades, idx}
+let gentZona = null;            // la que s'ha fet servir per a les propostes d'ara (null: no ha arribat)
 
 const fmt = (x, dec = 1) => x.toLocaleString(L === "en" ? "en-GB" : "ca-ES", { maximumFractionDigits: dec, minimumFractionDigits: 0 });
 const omple = (text, vars) => text.replace(/\{(\w+)\}/g, (_, k) => vars[k] != null ? vars[k] : "");
@@ -463,6 +476,35 @@ async function buscaPistes() {
   }
 }
 
+// ---------- per on va la gent ----------
+// Rutes senyalitzades, vies verdes, parcs i passejos d'OpenStreetMap al voltant de la sortida. Es guarda al mòbil
+// per no tornar-ho a demanar cada cop: Overpass sovint va saturat. Si no arriba a temps, els circuits surten igual.
+const tipusGent = (sessio) => sessio.s === "run" ? "run" : sessio.o === "cycling-road" ? "road" : "ride";
+const serveix = (g, clau, p, radi) => Boolean(g) && g.clau === clau && Motor.dist(g.c, p) + radi <= g.r;
+
+async function carregaGent(sessio, p) {
+  const clau = tipusGent(sessio), radi = Motor.radiGent(sessio);
+  if (serveix(gent, clau, p, radi)) return gent;
+  const desat = recupera("ginga-rutes-gent");
+  if (serveix(desat, clau, p, radi) && Date.now() - desat.t < GENT_DIES * 864e5) {
+    return (gent = { ...desat, idx: Motor.indexGent(desat.dades) });
+  }
+  const r = radi + GENT_MARGE;
+  const consulta = Motor.consultaGent(p[1], p[0], r, sessio);
+  // els servidors saturats sovint diuen que no de seguida: una segona volta al cap d'un moment
+  const resposta = await overpass(consulta, 25).catch(() => new Promise((ok) => setTimeout(ok, 2000)).then(() => overpass(consulta, 25)));
+  const dades = Motor.llegeixGent(resposta);
+  const nou = { clau, c: p, r, t: Date.now(), dades };
+  if (JSON.stringify(dades).length < 2e6) guarda("ginga-rutes-gent", nou);    // el mòbil en guarda uns 5 MB per pàgina
+  return (gent = { ...nou, idx: Motor.indexGent(dades) });
+}
+
+/** La gent de la zona, o null si Overpass no respon en GENT_SEGONS (llavors els circuits es trien com sempre). */
+function gentATemps(sessio, p) {
+  const carrega = carregaGent(sessio, p).catch((e) => { console.warn("gent", e); return null; });
+  return Promise.race([carrega, new Promise((ok) => setTimeout(() => ok(null), GENT_SEGONS * 1000))]);
+}
+
 // ---------- circuits ----------
 async function demana(seed, factor, via, evita) {
   const r = await fetch(PROXY, {
@@ -529,6 +571,7 @@ async function repara(c, sessio) {
 
 function valora(c, sessio) {
   const r = Motor.resumeix(c.feature);
+  r.gent = gentZona && !gentZona.idx.buit ? Motor.perOnVaLaGent(r.coords, r.acc, gentZona.idx) : null;
   let pena = Motor.penalitza(r, sessio);
   let pujada = null;
   if (sessio.p === "pujades") {
@@ -547,10 +590,13 @@ async function buscaCircuits(sessio) {
   saturat = quotaEsgotada = false;
   try {
     const factor = FACTOR[sessio.s] || 0.9;
+    const esperaGent = gentATemps(sessio, sortida);             // alhora que els circuits
     const tanda = async (f, n) => {
       const llavors = Array.from({ length: n }, (_, i) => llavor + i);
       llavor += n;
-      return (await Promise.all(llavors.map((s) => demana(s, f)))).filter(Boolean).map((c) => valora(c, sessio));
+      const crus = (await Promise.all(llavors.map((s) => demana(s, f)))).filter(Boolean);
+      gentZona = await esperaGent;
+      return crus.map((c) => valora(c, sessio));
     };
     let cands = await tanda(factor, LLAVORS);
     const kObjectiu = Math.min(sessio.k, 100);
@@ -605,6 +651,7 @@ function pintaPropostes(sessio) {
     }
     else if (sessio.s === "ride" ? r.senseAsfalt > 0.05 : r.senseAsfalt > 0.2) detalls.push(omple(t.senseAsfalt, { x: Math.round(100 * r.senseAsfalt) }));
     if (sessio.s === "run" && r.carretera > 0.15) detalls.push(omple(t.carretera, { x: Math.round(100 * r.carretera) }));
+    if (r.gent != null && r.gent >= 0.05) detalls.push(omple(t.gent, { x: Math.round(100 * r.gent) }));
     let pujada = "";
     if (p.pujada) {
       const g = sessio.r.g, encaixa = p.pujada.pendent >= g[0] - 0.5 && p.pujada.pendent <= g[1] + 0.5;
@@ -621,6 +668,13 @@ function pintaPropostes(sessio) {
     div.querySelector("[data-segueix]").addEventListener("click", () => segueix(p));
     res.append(div);
   });
+  if (gentZona && !gentZona.idx.buit) {
+    const llegenda = document.createElement("p");
+    llegenda.className = "llegenda";
+    llegenda.innerHTML = "<i></i>";
+    llegenda.append(sessio.s === "run" ? t.llegendaRun : t.llegendaRide);
+    res.append(llegenda);
+  }
   const mes = document.createElement("button");
   mes.className = "btn sec petit";
   mes.type = "button";
@@ -631,8 +685,21 @@ function pintaPropostes(sessio) {
   dibuixa();
 }
 
+let pintorGent;
 function dibuixa() {
   netejaCapes();
+  if (gentZona && !gentZona.idx.buit) {
+    if (!pintorGent) {              // per sota de les rutes, en canvas perquè poden ser milers de trams
+      mapa.createPane("gent").style.zIndex = 350;
+      pintorGent = L_.canvas({ pane: "gent", padding: 0.3 });
+    }
+    const ll = (pla) => { const x = []; for (let i = 0; i + 1 < pla.length; i += 2) x.push([pla[i + 1], pla[i]]); return x; };
+    const color = getVar("--gent");
+    if (gentZona.dades.p.length) capes.push(L_.polygon(gentZona.dades.p.map(ll),
+      { renderer: pintorGent, stroke: false, fillColor: color, fillOpacity: .12, interactive: false }).addTo(mapa));
+    if (gentZona.dades.l.length) capes.push(L_.polyline(gentZona.dades.l.map(ll),
+      { renderer: pintorGent, color, weight: 2.5, opacity: .7, interactive: false }).addTo(mapa));
+  }
   propostes.forEach((p, n) => {
     if (n === triada) return;
     capes.push(L_.polyline(p.r.coords.map((c) => [c[1], c[0]]), { color: getVar("--ruta-alt"), weight: 3, opacity: .7 }).addTo(mapa));

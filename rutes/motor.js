@@ -222,6 +222,9 @@
       pena += 0.8 * r.carretera + 2 * r.escales;        // córrer lluny del trànsit, i sense escales
     }
     if (sessio.p === "pla" || sessio.p === "pista") pena += 0.05 * r.girsPerKm;   // trams seguits, pocs girs
+    // per on va la gent: a peu, cada 10% més de circuit per rutes, parcs i passejos compensa un 3% de desviació
+    // dels km; en bici de carretera, un 2% (allà mana més no anar per carreteres principals)
+    if (r.gent != null) pena += (sessio.s === "run" ? 1 : sessio.o === "cycling-road" ? 0.6 : 0.8) * (1 - r.gent);
     return pena;
   }
 
@@ -361,10 +364,122 @@ out center tags;`;
     return vistes.sort((a, b) => a.m - b.m);
   }
 
+  // ---------- per on va la gent (Overpass) ----------
+  // Strava i Garmin no deixen fer servir els seus mapes de calor. El més semblant en dades obertes: rutes
+  // senyalitzades (vies verdes, rutes ciclistes, senders), i per córrer, també parcs i passejos. Els carrers de
+  // vianants i els carrils bici de ciutat no: a Barcelona en són milers (8 MB) i no és on es corre.
+
+  /** Radi (m) on buscar per on va la gent: fins on s'allunya un circuit de k km (~k/π), amb un límit. */
+  function radiGent(sessio) {
+    return Math.round(Math.min(sessio.k * 1000 / 3, sessio.s === "ride" ? 25000 : 8000));
+  }
+
+  function consultaGent(lat, lon, radi, sessio) {
+    const a = `(around:${radi},${lat},${lon})`;
+    if (sessio.s === "ride") {
+      const rutes = sessio.o === "cycling-road" ? "bicycle" : "bicycle|mtb";
+      return `[out:json][timeout:25];
+relation["route"~"^(${rutes})$"]${a}->.rutes;
+way(r.rutes)${a};
+out ids geom qt;`;
+    }
+    // A peu, de les rutes ciclistes només els trams que no són carrer (vies verdes, Pirinexus), i dels carrers
+    // només els que es diuen passeig, rambla... sense les voreres. Barcelona passa de 4,5 MB a menys de la meitat.
+    return `[out:json][timeout:25];
+relation["route"~"^(foot|hiking|running|fitness_trail)$"]${a}->.senders;
+relation["route"="bicycle"]["network"~"^(icn|ncn|rcn)$"]${a}->.bici;
+(
+  way(r.senders)${a};
+  way(r.bici)["highway"~"^(path|track|cycleway|footway)$"]${a};
+  way["highway"~"^(pedestrian|footway|path|cycleway)$"]["name"~"^(Passeig|Rambla|Via Verda|Ruta|Sender|Paseo|Senda)",i]["footway"!~"^(sidewalk|crossing)$"]${a};
+  way["leisure"="track"]${a};
+);
+out ids geom qt;
+way["leisure"="park"]${a};
+out tags geom qt;`;
+  }
+
+  /** {l: línies, p: parcs}, cadascun una llista de [lon, lat, lon, lat...] (compacte, per desar-lo). */
+  function llegeixGent(resposta) {
+    const gent = { l: [], p: [] };
+    for (const el of (resposta && resposta.elements) || []) {
+      if (!el.geometry || el.geometry.length < 2) continue;
+      const pla = [];
+      for (const g of el.geometry) if (g) pla.push(Math.round(g.lon * 1e5) / 1e5, Math.round(g.lat * 1e5) / 1e5);
+      (el.tags && el.tags.leisure === "park" && el.geometry.length >= 4 ? gent.p : gent.l).push(pla);
+    }
+    return gent;
+  }
+
+  const CEL = 0.002;               // graus: cel·les d'uns 200 m per trobar ràpid els trams a prop d'un punt
+
+  /** Índex per cel·les dels trams i parcs, per a perOnVaLaGent. */
+  function indexGent(gent) {
+    const cel = new Map();
+    for (const l of gent.l) {
+      for (let i = 0; i + 3 < l.length; i += 2) {
+        const tram = [l[i], l[i + 1], l[i + 2], l[i + 3]];
+        const x0 = Math.floor(Math.min(tram[0], tram[2]) / CEL), x1 = Math.floor(Math.max(tram[0], tram[2]) / CEL);
+        const y0 = Math.floor(Math.min(tram[1], tram[3]) / CEL), y1 = Math.floor(Math.max(tram[1], tram[3]) / CEL);
+        for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+          const k = x + "," + y;
+          if (!cel.has(k)) cel.set(k, []);
+          cel.get(k).push(tram);
+        }
+      }
+    }
+    const parcs = gent.p.map((p) => {
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (let i = 0; i < p.length; i += 2) { x0 = Math.min(x0, p[i]); x1 = Math.max(x1, p[i]); y0 = Math.min(y0, p[i + 1]); y1 = Math.max(y1, p[i + 1]); }
+      return { p, x0, x1, y0, y1 };
+    });
+    return { cel, parcs, buit: !gent.l.length && !gent.p.length };
+  }
+
+  function dinsParc(pt, parc) {
+    if (pt[0] < parc.x0 || pt[0] > parc.x1 || pt[1] < parc.y0 || pt[1] > parc.y1) return false;
+    let dins = false;
+    const p = parc.p;
+    for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) {
+      if ((p[i + 1] > pt[1]) !== (p[j + 1] > pt[1]) && pt[0] < ((p[j] - p[i]) * (pt[1] - p[i + 1])) / (p[j + 1] - p[i + 1]) + p[i]) dins = !dins;
+    }
+    return dins;
+  }
+
+  const A_PROP_GENT = 15;          // m: la ruta i el tram surten del mateix mapa, o sigui que coincideixen
+  const CADA_GENT = 25;            // m entre punts de mostra
+
+  /** Fracció de la ruta (0-1) que passa per on va la gent, o null si no hi ha dades. */
+  function perOnVaLaGent(coords, acc, idx) {
+    if (!idx || coords.length < 2) return null;
+    const total = acc[acc.length - 1];
+    if (!total) return null;
+    let mostres = 0, si = 0;
+    for (let i = 0, m = 0; m <= total; m += CADA_GENT) {
+      while (i < coords.length - 2 && acc[i + 1] < m) i++;
+      const f = acc[i + 1] > acc[i] ? (m - acc[i]) / (acc[i + 1] - acc[i]) : 0;
+      const pt = [coords[i][0] + f * (coords[i + 1][0] - coords[i][0]), coords[i][1] + f * (coords[i + 1][1] - coords[i][1])];
+      mostres++;
+      if (aPropDeGent(pt, idx)) si++;
+    }
+    return si / mostres;
+  }
+
+  function aPropDeGent(pt, idx) {
+    const cx = Math.floor(pt[0] / CEL), cy = Math.floor(pt[1] / CEL);
+    for (let x = cx - 1; x <= cx + 1; x++) for (let y = cy - 1; y <= cy + 1; y++) {
+      for (const t of idx.cel.get(x + "," + y) || []) {
+        if (projecta(pt, [t[0], t[1]], [t[2], t[3]]).d <= A_PROP_GENT) return true;
+      }
+    }
+    return idx.parcs.some((parc) => dinsParc(pt, parc));
+  }
+
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, perPrincipal, puntsDePas, puntsAEvitar, esCarretera,
+    radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;
