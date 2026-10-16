@@ -105,7 +105,7 @@ input[type=text], select { font: inherit; font-weight: 700; width: 100%; padding
   <header>
     <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
     <h1 id="titol">Sol·licitud</h1>
-    <p class="muted" style="margin:0">Decideix si la dones d'alta i com. Ginga ho fa i t'envia un correu quan estigui fet.</p>
+    <p class="muted" style="margin:0">Acceptes o rebutges. Ginga fa la resta i t'envia un correu quan estigui fet.</p>
   </header>
 
   <div id="sense-enllac" class="card" hidden>
@@ -127,35 +127,7 @@ input[type=text], select { font: inherit; font-weight: 700; width: 100%; padding
     </section>
 
     <section class="card" id="bloc-accepta" hidden>
-      <h2>Com la donem d'alta</h2>
-      <div class="pregunta" style="border-top:0"><p>Nom per a la salutació</p><input type="text" id="nom" maxlength="30"></div>
-      <div class="pregunta"><p>ID d'intervals.icu <span class="muted" style="font-weight:400">(si en té)</span></p>
-        <input type="text" id="intervals_id" maxlength="12" placeholder="i123456" autocomplete="off" autocapitalize="off">
-        <p class="ajuda" id="ajuda-intervals"></p></div>
-      <div id="nomes-forca">
-        <div class="pregunta"><p>Quin dilluns comença?</p><select id="inici"></select></div>
-        <div class="pregunta"><p>Quins dies (força A, equilibri, força B)?</p>
-          <div class="tria u">
-            <label><input type="radio" name="dies" value="0,2,4" checked> Dilluns, dimecres i divendres</label>
-            <label><input type="radio" name="dies" value="1,3,5"> Dimarts, dijous i dissabte</label>
-            <label><input type="radio" name="dies" value="0,3,5"> Dilluns, dijous i dissabte</label>
-            <label><input type="radio" name="dies" value="2,4,6"> Dimecres, divendres i diumenge</label>
-          </div>
-          <p class="ajuda">Sempre amb 48 hores entre les dues sessions de força.</p></div>
-        <div class="pregunta"><p>Material que té</p>
-          <div class="tria">
-            <label><input type="checkbox" name="material" value="manuelles" checked> Manuelles</label>
-            <label><input type="checkbox" name="material" value="gomes" checked> Gomes</label>
-            <label><input type="checkbox" name="material" value="banc"> Banc</label>
-            <label><input type="checkbox" name="material" value="barra"> Barra</label>
-            <label><input type="checkbox" name="material" value="terra" checked> Estora</label>
-          </div>
-          <p class="ajuda">El nivell i el pla definitiu surten del formulari d'inici que respondrà.</p></div>
-      </div>
-      <div id="nomes-ginga" hidden>
-        <p class="ajuda" style="margin:12px 0 0">Li enviarem els passos per obrir intervals.icu i acceptar-te com a entrenador.
-          El pla de Ginga el prepares després.</p>
-      </div>
+      <p style="margin:0" id="que-passa"></p>
       <label class="check gran" style="margin-top:14px"><input type="checkbox" id="revisar" checked> Primer a mi: els
         correus que li toquin m'arriben a mi per revisar-los abans.</label>
     </section>
@@ -207,21 +179,9 @@ input[type=text], select { font: inherit; font-weight: 700; width: 100%; padding
     dt.textContent = x[0]; dd.textContent = x[1];
     $("dades").appendChild(dt); $("dades").appendChild(dd);
   });
-  $("nom").value = (s.nom || "").trim().split(" ")[0];
-  $("intervals_id").value = s.intervals_id || "";
-  $("ajuda-intervals").textContent = forca ? "Opcional: amb l'ID, també veurem si fa les sessions."
-    : "Imprescindible per a Ginga. Si no el té, li demanaran els passos.";
-  $("nomes-forca").hidden = !forca; $("nomes-ginga").hidden = forca;
-  // els quatre dilluns vinents
-  var avui = new Date(); avui.setHours(12, 0, 0, 0);
-  var dl = new Date(avui); dl.setDate(avui.getDate() + ((8 - avui.getDay()) % 7 || 7));
-  for (var i = 0; i < 4; i++) {
-    var x = new Date(dl); x.setDate(dl.getDate() + 7 * i);
-    var o = document.createElement("option");
-    o.value = x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0");
-    o.textContent = x.toLocaleDateString("ca", { weekday: "long", day: "numeric", month: "long" });
-    $("inici").appendChild(o);
-  }
+  $("que-passa").textContent = forca
+    ? "Li enviarem la benvinguda amb el formulari d'inici: hi dirà quins dies li van bé, quin material té i com es mou. El pla comença el dilluns després que el respongui."
+    : "Li enviarem els passos per obrir intervals.icu i acceptar-te com a entrenador. El pla de Ginga el prepares després.";
   function valor(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value : null; }
   document.querySelectorAll("input[name=accio]").forEach(function (r) {
     r.addEventListener("change", function () {
@@ -233,19 +193,8 @@ input[type=text], select { font: inherit; font-weight: 700; width: 100%; padding
   });
   $("formulari").addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var accio = valor("accio"), params;
-    if (accio === "accepta") {
-      var iid = $("intervals_id").value.replace(/\s+/g, "").toLowerCase();
-      if (iid && !/^i\d{1,10}$/.test(iid)) { $("error").hidden = false; $("error").textContent = "L'ID d'intervals.icu és una i i números (i123456)."; return; }
-      params = { revisar: $("revisar").checked, nom: $("nom").value.trim() };
-      if (iid) params.intervals_id = iid;
-      if (forca) {
-        params.inici = $("inici").value; params.dies = valor("dies");
-        params.material = Array.prototype.map.call(document.querySelectorAll("input[name=material]:checked"), function (x) { return x.value; });
-      }
-    } else {
-      params = { avisa: $("avisa").checked };
-    }
+    var accio = valor("accio");
+    var params = accio === "accepta" ? { revisar: $("revisar").checked } : { avisa: $("avisa").checked };
     $("error").hidden = true; $("envia").disabled = true; $("envia").textContent = "Desant…";
     fetch(d.u, { method: "POST", headers: { "content-type": "application/json" },
                  body: JSON.stringify({ id: d.id, g: d.g, accio: accio, params: params }) })
