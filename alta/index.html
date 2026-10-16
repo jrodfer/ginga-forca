@@ -76,6 +76,11 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
 .fila-esport { margin-top: 10px; }
 .fila-dia { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0;
   border-bottom: 1px solid var(--line); font-weight: 700; }
+.fila-dia .hores-dia { width: 70px; font: inherit; font-weight: 700; padding: 8px 10px; border-radius: 10px;
+  border: 2px solid var(--line); background: var(--card); color: var(--fg); text-align: center; margin-left: auto; }
+.fila-dia .hores-dia:disabled { opacity: .35; }
+.no-puc { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 15px; }
+.no-puc input { width: 20px; height: 20px; accent-color: var(--ok); }
 .fila-dia select { font: inherit; font-weight: 700; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--line);
   background: var(--card); color: var(--fg); min-width: 50%; }
 .nom-esport { margin: 0 0 6px; font-weight: 800; }
@@ -159,6 +164,31 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     div.appendChild(fila);
     return div;
   }
+  function text(id, pregunta, ajuda, placeholder, max) {
+    var div = bloc(id, pregunta, ajuda), t = document.createElement("textarea");
+    t.id = "c-" + id; t.maxLength = max || 300; t.rows = 3; if (placeholder) t.placeholder = placeholder;
+    t.style.cssText = "width:100%;font:inherit;padding:10px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--fg)";
+    div.appendChild(t);
+    return div;
+  }
+  function caselles(id, pregunta, llista, ajuda) {
+    var div = bloc(id, pregunta, ajuda), fila = document.createElement("div");
+    fila.className = "tria";
+    llista.forEach(function (o) {
+      var l = document.createElement("label"), inp = document.createElement("input");
+      inp.type = "checkbox"; inp.name = id; inp.value = o[0];
+      l.appendChild(inp); l.appendChild(document.createTextNode(o[1])); fila.appendChild(l);
+    });
+    div.appendChild(fila);
+    return div;
+  }
+  function hores(v) {                    // "1,5", "1.5", "1:30" o "90'" -> hores
+    v = String(v || "").trim().replace(",", ".");
+    if (!v) return 0;
+    var m = v.match(/^(\d+):(\d{1,2})$/); if (m) return +m[1] + +m[2] / 60;
+    m = v.match(/^(\d+)\s*(min|')$/); if (m) return +m[1] / 60;
+    return isFinite(+v) && +v > 0 ? +v : 0;
+  }
   function camp(id, tipus, text, ajuda, placeholder) {
     var div = bloc(id, text, ajuda), inp = document.createElement("input");
     inp.type = tipus; inp.id = "c-" + id; inp.maxLength = 40;
@@ -172,7 +202,8 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
   // L'objectiu. Si ja va dir l'esport i el tipus a la sol·licitud (dades.o), no es tornen a preguntar: només el detall.
   var DETALL = {
     cursa: [["distancia", "Quina cursa o prova? Nom i distància", "Per exemple: la Behobia (20 km), o la travessia de Calella (3 km)", "Behobia, 20 km"],
-            ["data_objectiu", "Quan és?", "Si encara no saps el dia exacte, posa'n un d'aproximat."]],
+            ["data_objectiu", "Quan és?", "Si encara no saps el dia exacte, posa'n un d'aproximat."],
+            ["marca", "Si ja l'has feta, quina marca hi tens?", "Opcional.", "1:58:30"]],
     marca: [["distancia", "En quina distància vols millorar la marca?", null, "10 km"],
             ["marca", "Quina marca hi tens ara?", "Si no la saps, deixa-ho buit.", "52:30"]],
     distancia: [["distancia", "Quina distància vols arribar a fer?", null, "Córrer 10 km seguits"]],
@@ -192,41 +223,45 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     obligatoris.push("esport");
   }
   if (demana.disponibilitat) {
-    // Les hores, amb terra i sostre: planifiquem sobre el que es pot repetir, i les setmanes bones s'aprofiten
+    // Les hores, amb terra i sostre, escrites: planifiquem sobre el que es pot repetir, i les setmanes bones s'aprofiten
     // amb més volum fàcil (no ens quedem limitats a la setmana dolenta).
-    var HORES = [["<5", "Menys de 5"], ["5-8", "5 a 8"], ["8-12", "8 a 12"], [">12", "Més de 12"]];
-    opcions("hores", "En una setmana normal, quantes hores pots entrenar segur?", HORES, false,
-      "Les que pots complir fins i tot una setmana complicada.");
-    opcions("hores_sostre", "I en una setmana bona, fins a quantes?", HORES, false,
-      "El pla es fa sobre el que es pot repetir; les setmanes que tinguis més temps, s'hi afegeix volum fàcil.");
-    opcions("dies", "Quants dies a la setmana?", [["3", "3 o menys"], ["4", "4"], ["5", "5"], ["6-7", "6 o 7"]]);
-    // Els dies que no pot mai i, opcional, quins dies pot fer cada cosa (la piscina o la bici no sempre es poden fer
-    // qualsevol dia). Les files depenen de l'esport de l'objectiu; la força, sempre.
+    camp("hores", "text", "En una setmana normal, quantes hores pots entrenar segur?",
+      "Les que pots complir fins i tot una setmana complicada. Per exemple: 5, o 6,5.", "5");
+    camp("hores_sostre", "text", "I en una setmana bona, fins a quantes?",
+      "El pla es fa sobre el que es pot repetir; les setmanes que tinguis més temps, s'hi afegeix volum fàcil.", "8");
+    ["hores", "hores_sostre"].forEach(function (k) { $("c-" + k).inputMode = "decimal"; $("c-" + k).maxLength = 5; });
+    opcions("dies", "Quants dies a la setmana vols entrenar?", [["3", "3 o menys"], ["4", "4"], ["5", "5"], ["6-7", "6 o 7"]]);
     var DIES = ["dl", "dt", "dc", "dj", "dv", "ds", "dg"];
-    // Quant temps té cada dia (com a molt). «No puc» és un dia que no pot entrenar mai.
+    // Quant temps té cada dia (com a molt), escrit; «no puc» és un dia que no pot entrenar mai.
     var NOMS_DIES = { dl: "Dilluns", dt: "Dimarts", dc: "Dimecres", dj: "Dijous", dv: "Divendres", ds: "Dissabte", dg: "Diumenge" };
-    var TEMPS = [["", "No ho sé"], ["no", "No puc"], ["30", "Fins a 30 min"], ["45", "Fins a 45 min"], ["60", "Fins a 1 h"],
-                 ["90", "Fins a 1 h 30"], ["120", "Fins a 2 h"], ["180", "Fins a 3 h"], ["mes", "Més de 3 h"]];
-    var dTemps = bloc("temps_dia", "Quant temps tens cada dia, com a molt?",
-      "Pensa en una setmana normal. Si un dia no pots entrenar mai, tria «No puc».");
+    var dTemps = bloc("temps_dia", "Quantes hores tens cada dia, com a molt?",
+      "En una setmana normal. Per exemple: 1, 1,5 o 0,75. Si un dia no pots entrenar mai, marca «No puc». Si no ho saps, deixa-ho buit.");
     DIES.forEach(function (d) {
-      var fila = document.createElement("label"); fila.className = "fila-dia";
+      var fila = document.createElement("div"); fila.className = "fila-dia";
       var nom = document.createElement("span"); nom.textContent = NOMS_DIES[d];
-      var sel = document.createElement("select"); sel.id = "t-" + d;
-      TEMPS.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sel.appendChild(op); });
-      fila.appendChild(nom); fila.appendChild(sel); dTemps.appendChild(fila);
+      var inp = document.createElement("input"); inp.type = "text"; inp.id = "t-" + d; inp.inputMode = "decimal";
+      inp.maxLength = 5; inp.placeholder = "h"; inp.className = "hores-dia";
+      var no = document.createElement("label"); no.className = "no-puc";
+      var c = document.createElement("input"); c.type = "checkbox"; c.id = "no-" + d;
+      no.appendChild(c); no.appendChild(document.createTextNode("No puc"));
+      fila.appendChild(nom); fila.appendChild(inp); fila.appendChild(no); dTemps.appendChild(fila);
+      inp.addEventListener("input", function () { actualitza(); });
     });
-    var dEsp = bloc("dies_esport", "Quins dies pots fer cada cosa?",
-      "Marca tots els dies que de veritat pots fer cada cosa, encara que no vulguis entrenar-los tots: com més marge, "
-      + "millor es reparteix el pla, i no vol dir que entrenis cada dia que marquis. Si una fila la deixes buida, "
-      + "vol dir que la pots fer qualsevol dia.");
+    var tot = document.createElement("p"); tot.id = "total-dies"; tot.className = "ajuda"; tot.style.marginTop = "8px";
+    dTemps.appendChild(tot);
+    $("c-hores").addEventListener("input", function () { actualitza(); });
+    // Els dies que NO pot fer cada esport segur (la piscina o la bici no sempre es poden fer qualsevol dia). Les files
+    // depenen de l'esport de l'objectiu; la força, sempre.
+    var dEsp = bloc("dies_esport_no", "Hi ha algun esport que algun dia no puguis fer segur?",
+      "Marca només els dies que segur que no pots fer aquell esport (per exemple, els dies sense piscina). Si no en "
+      + "marques cap, vol dir que el pots fer qualsevol dia que entrenis.");
     [["natacio", "Natació"], ["bici", "Bici"], ["correr", "Córrer"], ["forca", "Força"]].forEach(function (e) {
       var fila = document.createElement("div"); fila.className = "fila-esport"; fila.id = "fe-" + e[0];
-      var nom = document.createElement("p"); nom.className = "nom-esport"; nom.textContent = e[1]; fila.appendChild(nom);
+      var nom = document.createElement("p"); nom.className = "nom-esport"; nom.textContent = e[1] + ": no puc…"; fila.appendChild(nom);
       var graella = document.createElement("div"); graella.className = "tria dies";
       DIES.forEach(function (d) {
         var l = document.createElement("label"), inp = document.createElement("input");
-        inp.type = "checkbox"; inp.name = "de-" + e[0]; inp.value = d;
+        inp.type = "checkbox"; inp.name = "dn-" + e[0]; inp.value = d;
         l.appendChild(inp); l.appendChild(document.createTextNode(d.charAt(0).toUpperCase() + d.slice(1))); graella.appendChild(l);
       });
       fila.appendChild(graella); dEsp.appendChild(fila);
@@ -236,6 +271,7 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
   if (demana.temporades) {
     opcions("temporades", "Quantes temporades portes entrenant amb un pla?", [["cap", "Cap, començo ara"], ["1-2", "1 o 2"],
       ["3+", "3 o més"], ["altre_esport", "Vinc d'un altre esport de resistència"]], true);
+    camp("temporades_esport", "text", "Quin esport, i quant temps?", null, "Ciclisme, 5 anys");
     obligatoris.push("temporades");
   }
   if (demana.volum) {
@@ -254,15 +290,26 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
       ["en_curs", "Una lesió ara"], ["torno", "Torno d'una lesió recent"]], true);
     opcions("lesio_zona", "On?", [["peu_turmell", "Peu o turmell"], ["tibia_bessons", "Tíbia o bessons"], ["genoll", "Genoll"],
       ["maluc", "Maluc"], ["esquena", "Esquena"], ["espatlla", "Espatlla"], ["altra", "Una altra"]]);
+    opcions("lesio_desde", "Des de quan?", [["<2", "Menys de 2 setmanes"], ["2-6", "De 2 a 6 setmanes"], [">6", "Més de 6 setmanes"]]);
+    opcions("lesio_professional", "T'ho ha mirat un metge o un fisio?", [["si", "Sí"], ["no", "No"]]);
+    opcions("lesio_quan", "Quan et fa mal?", [["esforc", "Mentre entreno"], ["despres", "En acabar"], ["dema", "L'endemà"],
+      ["repos", "També en repòs"]]);
+    opcions("tornada_setmanes", "Quant fa que tornes a entrenar?", [["<2", "Menys de 2 setmanes"], ["2-6", "De 2 a 6 setmanes"], [">6", "Més de 6 setmanes"]]);
+    opcions("alta_lesio", "Tens l'alta del metge o del fisio?", [["si", "Sí"], ["no", "No"]]);
+    text("lesio_detall", "Explica-ho amb les teves paraules (opcional)", "Què és, què et van dir i què pots fer i què no. Només ho veu l'entrenador.",
+      "Per exemple: periostitis a la tíbia dreta; el fisio diu que puc córrer pla, sense sèries");
     obligatoris.push("lesio");
   }
   if (demana.forca) {
     opcions("forca", "Has fet força (peses, gomes, màquines)?", [["mai", "Mai"], ["poc", "Una mica"], ["regular", "Sí, de manera regular"]], true);
+    opcions("forca_dies", "Quants dies a la setmana?", [["1", "1"], ["2", "2"], ["3+", "3 o més"]]);
     obligatoris.push("forca");
   }
   if (demana.material) {
     opcions("material", "On faràs la força?", [["gimnas", "Al gimnàs"], ["casa_pes", "A casa, amb manuelles o gomes"],
       ["casa_res", "A casa, sense material"]], true);
+    caselles("material_casa", "Què tens a casa?", [["manuelles", "Manuelles"], ["gomes", "Gomes"], ["kettlebell", "Kettlebell"],
+      ["barra", "Barra i discos"], ["banc", "Banc"], ["fitball", "Fitball"]]);
     obligatoris.push("material");
   }
   if (demana.edat) {
@@ -278,6 +325,7 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
       ["embaras", "Estic embarassada"], ["postpart", "He tingut un fill fa menys d'un any"]], true);
     opcions("postpart_setmanes", "Quantes setmanes fa del part?", [["<6", "Menys de 6"], ["6-12", "De 6 a 12"], ["12-26", "De 12 a 26"], ["26-52", "De 26 a 52"]]);
   }
+  text("altres", "Alguna cosa més que l'entrenador hagi de saber? (opcional)", "Horaris, viatges, curses que ja tens, el que vulguis.", null, 500);
   var avisMenor = document.createElement("p");
   avisMenor.className = "avis"; avisMenor.hidden = true;
   avisMenor.textContent = "Ginga és per a majors de 18 anys. Parla-ho amb el teu entrenador.";
@@ -291,6 +339,26 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     return (FILES[e] || ["natacio", "bici", "correr"]).concat("forca");
   }
   function actualitza() {
+    // Les preguntes que depenen d'una resposta surten de seguida (no cal tornar-li a escriure després)
+    var mostra = function (id, si) { var q = $("q-" + id); if (q) q.hidden = !si; };
+    var les = valor("lesio");
+    ["lesio_zona", "lesio_desde", "lesio_professional", "lesio_quan", "lesio_detall"].forEach(function (k) { mostra(k, les && les !== "cap"); });
+    ["tornada_setmanes", "alta_lesio"].forEach(function (k) { mostra(k, les === "torno"); });
+    mostra("forca_dies", valor("forca") === "regular");
+    mostra("material_casa", valor("material") === "casa_pes");
+    mostra("temporades_esport", valor("temporades") === "altre_esport");
+    if ($("q-temps_dia")) {                // el total de la setmana contra les hores que ha dit
+      var tot = 0, n = 0;
+      DIES.forEach(function (d) {
+        var no = $("no-" + d).checked, inp = $("t-" + d);
+        inp.disabled = no; if (no) inp.value = "";
+        var v = hores(inp.value); if (v) { tot += v; n++; }
+      });
+      var min = hores($("c-hores") && $("c-hores").value);
+      $("total-dies").textContent = n ? "Total: " + String(Math.round(tot * 10) / 10).replace(".", ",") + " h a la setmana"
+        + (min && tot < min ? ". No hi caben les " + String(min).replace(".", ",") + " h d'una setmana normal: revisa-ho." : ".") : "";
+      $("total-dies").className = n && min && tot < min ? "avis" : "ajuda";
+    }
     if ($("q-llindars")) {                // només els llindars de l'esport de l'objectiu
       var e = tipusSol ? dades.o.e : valor("esport"), cap = 0;
       (dades.l || []).forEach(function (c) {
@@ -299,16 +367,15 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
       });
       $("q-llindars").hidden = !cap;
     }
-    if ($("q-dies_esport")) {
+    if ($("q-dies_esport_no")) {
       var visibles = esportsDies();
       ["natacio", "bici", "correr", "forca"].forEach(function (e) { $("fe-" + e).hidden = visibles.indexOf(e) < 0; });
       var imp = {};
-      DIES.forEach(function (d) { if ($("t-" + d) && $("t-" + d).value === "no") imp[d] = true; });
-      document.querySelectorAll("#q-dies_esport input").forEach(function (x) {
+      DIES.forEach(function (d) { if ($("no-" + d).checked) imp[d] = true; });
+      document.querySelectorAll("#q-dies_esport_no input").forEach(function (x) {   // el dia ja és «no puc» sencer
         x.disabled = !!imp[x.value]; if (x.disabled) x.checked = false;
       });
     }
-    var zona = $("q-lesio_zona"); if (zona) zona.hidden = !valor("lesio") || valor("lesio") === "cap";
     var mat = $("q-maternitat"); if (mat) mat.hidden = sexe() === "home" || valor("edat") === "60+";
     var pp = $("q-postpart_setmanes"); if (pp) pp.hidden = !mat || mat.hidden || valor("maternitat") !== "postpart";
     var menor = valor("edat") === "menor";
@@ -320,11 +387,15 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
   $("formulari").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var r = {};
-    ["esport", "hores", "hores_sostre", "dies", "temporades", "lesio", "forca", "material", "edat", "sexe", "maternitat", "postpart_setmanes"].forEach(function (k) {
+    ["esport", "dies", "temporades", "lesio", "lesio_desde", "lesio_professional", "lesio_quan", "tornada_setmanes",
+     "alta_lesio", "forca", "forca_dies", "material", "edat", "sexe", "maternitat", "postpart_setmanes"].forEach(function (k) {
       var q = $("q-" + k); if (q && !q.hidden && valor(k)) r[k] = valor(k);
     });
     if (r.lesio && r.lesio !== "cap" && valor("lesio_zona")) r.lesio_zona = valor("lesio_zona");
-    ["distancia", "data_objectiu", "marca"].forEach(function (k) { var c = $("c-" + k); if (c && c.value.trim()) r[k] = c.value.trim(); });
+    ["distancia", "data_objectiu", "marca", "temporades_esport", "lesio_detall", "altres"].forEach(function (k) {
+      var c = $("c-" + k), q = $("q-" + k); if (c && (!q || !q.hidden) && c.value.trim()) r[k] = c.value.trim();
+    });
+    ["hores", "hores_sostre"].forEach(function (k) { var v = $("c-" + k) && hores($("c-" + k).value); if (v) r[k] = Math.round(v * 4) / 4; });
     if (tipusSol) { r.esport = dades.o.e; r.objectiu_tipus = tipusSol; }   // de la sol·licitud, tal com el va dir
     if ($("c-volum") && $("c-volum").value !== "") r.volum = Number($("c-volum").value);
     var marcats = function (nom) {
@@ -332,22 +403,26 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     };
     if ($("q-temps_dia")) {
       var temps = {}, imp = [];
-      DIES.forEach(function (d) { var v = $("t-" + d).value; if (v === "no") imp.push(d); else if (v) temps[d] = v; });
+      DIES.forEach(function (d) {
+        if ($("no-" + d).checked) imp.push(d);
+        else { var v = hores($("t-" + d).value); if (v) temps[d] = Math.round(v * 4) / 4; }
+      });
       if (imp.length) r.dies_impossibles = imp;
       if (Object.keys(temps).length) r.temps_dia = temps;
     }
-    if ($("q-dies_esport")) {
-      var de = {};
-      esportsDies().forEach(function (e) { var v = marcats("de-" + e); if (v.length) de[e] = v; });
-      if (Object.keys(de).length) r.dies_esport = de;
+    if ($("q-dies_esport_no")) {
+      var dn = {};
+      esportsDies().forEach(function (e) { var v = marcats("dn-" + e); if (v.length) dn[e] = v; });
+      if (Object.keys(dn).length) r.dies_esport_no = dn;
     }
+    if ($("q-material_casa") && !$("q-material_casa").hidden && marcats("material_casa").length) r.material_casa = marcats("material_casa");
     var ll = {};
     (dades.l || []).forEach(function (c) { var x = $("c-ll-" + c); if (x && !$("q-ll-" + c).hidden && x.value.trim()) ll[c] = x.value.trim(); });
     if (Object.keys(ll).length) r.llindars = ll;
     var falta = obligatoris.filter(function (k) { return k === "volum" ? r.volum === undefined : !r[k]; });
     if (r.maternitat === "postpart" && !r.postpart_setmanes) falta.push("postpart_setmanes");
-    var ordre = HORES ? HORES.map(function (h) { return h[0]; }) : [];
-    if (r.hores && r.hores_sostre && ordre.indexOf(r.hores_sostre) < ordre.indexOf(r.hores)) {
+    if (r.lesio && r.lesio !== "cap") { if (!r.lesio_zona) falta.push("lesio_zona"); if (!r.lesio_desde) falta.push("lesio_desde"); }
+    if (r.hores && r.hores_sostre && r.hores_sostre < r.hores) {
       $("error").hidden = false;
       $("error").textContent = "Les hores d'una setmana bona no poden ser menys que les d'una setmana normal.";
       $("q-hores_sostre").scrollIntoView({ behavior: "smooth", block: "center" });
