@@ -347,7 +347,8 @@ function pintaSessio() {
     $("quan").textContent = `${t.dies[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1} · ${t[S.s] || ""}`;
   }
   const xifres = [`~${fmt(S.k)} ${t.km}`, S.m ? `~${S.m} ${t.min}` : ""].filter(Boolean);
-  $("xifres").innerHTML = xifres.map((x) => `<span>${x}</span>`).join("");
+  // com a text, no com a HTML: el que hi ha darrere del # (km, minuts) ve de l'enllaç, i qualsevol el pot editar
+  $("xifres").replaceChildren(...xifres.map((x) => Object.assign(document.createElement("span"), { textContent: x })));
   const r = S.r || {};
   const q = r.u === "m" ? (r.q >= 1000 && r.q % 1000 === 0 ? `${r.q / 1000} km` : `${r.q} m`) : durada(r.q || 0);
   const g = r.g ? (r.g[0] === r.g[1] ? r.g[0] : `${r.g[0]}-${r.g[1]}`) : "";
