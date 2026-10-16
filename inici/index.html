@@ -63,6 +63,11 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
 .check input { width: 22px; height: 22px; accent-color: var(--ok); }
 .check.gran { align-items: flex-start; font-weight: 500; border: 2px solid var(--linia, #EBDCC8); border-radius: 12px; padding: 12px; }
 .check.gran input { width: 30px; height: 30px; flex: none; margin: 0; }
+.dies { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.dies label { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 60px;
+  border: 2px solid var(--line); border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer; }
+.dies input { width: 22px; height: 22px; accent-color: var(--ok); }
+.dies label:has(input:checked) { border-color: var(--ok); }
 .avis { color: var(--avis); font-weight: 700; }
 .ok { color: var(--ok); font-weight: 800; font-size: 22px; }
 </style>
@@ -147,6 +152,35 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
         <label class="check"><input type="checkbox" name="material" value="barra"> Una barra amb discos</label>
         <label class="check"><input type="checkbox" name="material" value="terra"> Una estora</label>
       </div>
+      <div class="pregunta" id="q-estiraments">
+        <p>Vols fer també estiraments? <span class="muted" style="font-weight:400">(sessions curtes a part, amb vídeos)</span></p>
+        <p class="muted" style="margin:-4px 0 10px;font-weight:400">Et recomanem 2 o 3 dies a la setmana, després de la sessió o al vespre, i mai just abans de fer força. Uns 10 minuts, fins a notar tensió i sense dolor. Milloren la mobilitat; no eviten lesions ni treuen les agulletes.</p>
+        <div class="sino">
+          <label><input type="radio" name="estiraments" value="si"> Sí</label>
+          <label><input type="radio" name="estiraments" value="no"> No, gràcies</label>
+        </div>
+      </div>
+      <div class="pregunta" id="q-estiraments_dies" hidden>
+        <p>Quins dies?</p>
+        <div class="dies">
+          <label><input type="checkbox" name="estiraments_dies" value="dl"> Dl</label>
+          <label><input type="checkbox" name="estiraments_dies" value="dt"> Dt</label>
+          <label><input type="checkbox" name="estiraments_dies" value="dc"> Dc</label>
+          <label><input type="checkbox" name="estiraments_dies" value="dj"> Dj</label>
+          <label><input type="checkbox" name="estiraments_dies" value="dv"> Dv</label>
+          <label><input type="checkbox" name="estiraments_dies" value="ds"> Ds</label>
+          <label><input type="checkbox" name="estiraments_dies" value="dg"> Dg</label>
+        </div>
+      </div>
+      <div class="pregunta" id="q-rigidesa" hidden>
+        <p>On et notes més rígid/a o carregat/da? <span class="muted" style="font-weight:400">(si no ho saps, deixa-ho així)</span></p>
+        <label class="check"><input type="checkbox" name="rigidesa" value="coll_espatlles"> Coll i espatlles</label>
+        <label class="check"><input type="checkbox" name="rigidesa" value="esquena"> Esquena</label>
+        <label class="check"><input type="checkbox" name="rigidesa" value="malucs"> Malucs</label>
+        <label class="check"><input type="checkbox" name="rigidesa" value="cuixes_darrere"> La part de darrere de les cuixes</label>
+        <label class="check"><input type="checkbox" name="rigidesa" value="cuixes_davant"> La part de davant de les cuixes</label>
+        <label class="check"><input type="checkbox" name="rigidesa" value="bessons"> Bessons i turmells</label>
+      </div>
     </section>
 
     <section class="card">
@@ -189,8 +223,15 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   if (!dades) { $("sense-enllac").hidden = false; return; }
   if (dades.n) $("titol").textContent = "Abans de començar, " + dades.n;
   $("formulari").hidden = false;
+  if (dades.m) {                                         // a la sol·licitud va dir que vol moure's millor
+    var nota = document.createElement("p");
+    nota.className = "muted"; nota.style.cssText = "margin:-4px 0 10px;font-weight:700";
+    nota.textContent = "Ens vas dir que vols moure't millor: els estiraments milloren la mobilitat.";
+    $("q-estiraments").insertBefore(nota, $("q-estiraments").querySelector(".sino"));
+  }
 
-  // Perfil (forca60/valoracio.py, per_perfil): edat, esports, força, mobilitat (només a partir de 60), postpart
+  // Perfil (forca60/valoracio.py, per_perfil): edat, esports, força, mobilitat (només a partir de 60), postpart, mal sovint;
+  // i, a «Com ho farem», els dies, el material i els estiraments (si en vol, quins dies i on es nota rígid)
   function opcions(contenidor, nom, text, llista, columnes) {
     var div = document.createElement("div");
     div.className = "pregunta"; div.id = "q-" + nom;
@@ -216,7 +257,11 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   function tria(nom) { var v = valor(nom); return v === null ? null : v === "si"; }
 
   var P = $("perfil");
-  opcions(P, "franja", "Quants anys tens?", [["menor", "Menys de 18"], ["18-39", "18 a 39"], ["40-59", "40 a 59"], ["60+", "60 o més"]]);
+  var qFranja = opcions(P, "franja", "Quants anys tens?", [["menor", "Menys de 18"], ["18-39", "18 a 39"], ["40-59", "40 a 59"], ["60+", "60 o més"]]);
+  if (["18-39", "40-59", "60+"].indexOf(dades.f) >= 0) {      // ja la va dir a la sol·licitud: no es torna a preguntar
+    document.querySelector("input[name='franja'][value='" + dades.f + "']").checked = true;
+    qFranja.hidden = true;
+  }
   var qEsports = document.createElement("div");
   qEsports.className = "pregunta"; qEsports.id = "q-esports";
   qEsports.innerHTML = "<p>Fas algun d'aquests esports?</p>" +
@@ -242,6 +287,19 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   sino(qPostpart, "simptomes", "Tens pèrdues d'orina, sensació de pesadesa a la pelvis o dolor (a la cicatriu, la pelvis o l'esquena)?");
   var qImpacte = sino(qPostpart, "impacte_ok", "Pots fer 10 salts petits sobre el lloc, sobre cada peu, sense pèrdues, pesadesa ni dolor?");
   P.appendChild(qPostpart);
+  // Mal sovint (dada de salut: no es desa al pla; només l'entrenador la rep, i al pla en queda la decisió)
+  var qDolor = document.createElement("div");
+  qDolor.className = "pregunta"; qDolor.id = "q-dolor";
+  qDolor.innerHTML = "<p>Tens mal sovint en algun lloc? <span class='muted' style='font-weight:400'>(marca'ls; si no, «Enlloc»)</span></p>" +
+    "<label class='check'><input type='checkbox' name='dolor' value='cap'> Enlloc</label>" +
+    "<label class='check'><input type='checkbox' name='dolor' value='esquena_baixa'> L'esquena baixa</label>" +
+    "<label class='check'><input type='checkbox' name='dolor' value='coll_espatlles'> El coll o les espatlles</label>" +
+    "<label class='check'><input type='checkbox' name='dolor' value='genolls'> Els genolls</label>" +
+    "<label class='check'><input type='checkbox' name='dolor' value='malucs'> Els malucs</label>" +
+    "<label class='check'><input type='checkbox' name='dolor' value='cames'> Les cames</label>" +
+    "<label class='check'><input type='checkbox' name='dolor' value='peus_talons'> Els peus o els talons</label>";
+  P.appendChild(qDolor);
+  var qAlarma = sino(P, "dolor_alarma", "Aquest mal és fort o va a més, et desperta a la nit, va amb formigueig o pèrdua de força a les cames, o va començar després d'un cop o una caiguda?");
   var avisMenor = document.createElement("p");
   avisMenor.className = "avis"; avisMenor.hidden = true;
   avisMenor.textContent = "Aquest programa és per a majors de 18 anys. Parla amb el teu entrenador.";
@@ -251,6 +309,9 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   avisEmbaras.textContent = "Encara no tenim un pla per a l'embaràs. Envia el formulari igualment i el teu entrenador parlarà amb tu.";
   P.appendChild(avisEmbaras);
 
+  function marcats(nom) {
+    return Array.prototype.map.call(document.querySelectorAll("input[name='" + nom + "']:checked"), function (x) { return x.value; });
+  }
   function esports() { return ["correr", "bici", "natacio"].filter(function (e) { return $("e-" + e).checked; }); }
   function perfil() {
     var r = { franja: valor("franja"), sexe: valor("sexe"), forca: tria("forca"), dies_sessions: valor("dies_sessions"),
@@ -259,6 +320,15 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
     esports().forEach(function (e) { r[e] = true; });
     r.dies = esports().length && valor("dies") ? Number(valor("dies")) : 0;
     if (r.franja === "60+") { r.camina = tria("camina"); r.cadira_sense_mans = tria("cadira_sense_mans"); }
+    r.estiraments = tria("estiraments");
+    if (r.estiraments) {
+      r.estiraments_dies = marcats("estiraments_dies");
+      r.rigidesa = marcats("rigidesa");
+    }
+    var dolors = marcats("dolor");
+    r.dolor_zones = dolors.indexOf("cap") >= 0 ? [] : dolors;
+    r.dolor_cap = dolors.indexOf("cap") >= 0;
+    if (r.dolor_zones.length) r.dolor_alarma = tria("dolor_alarma");
     if (r.maternitat === "postpart") {
       r.postpart_setmanes = valor("postpart_setmanes"); r.alta = tria("alta"); r.cesaria = tria("cesaria");
       r.simptomes = tria("simptomes");
@@ -269,6 +339,9 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
   function falta(p) {                                    // alguna pregunta que toca i no s'ha respost
     if (!p.franja || p.franja === "menor" || !p.sexe || p.forca === null || !p.maternitat || !p.dies_sessions) return true;
     if (esports().length && !valor("dies")) return true;
+    if (p.estiraments === null || (p.estiraments && !p.estiraments_dies.length)) return true;
+    if (!p.dolor_cap && !p.dolor_zones.length) return true;
+    if (p.dolor_zones.length && p.dolor_alarma === null) return true;
     if (p.franja === "60+" && (p.camina === null || p.cadira_sense_mans === null)) return true;
     if (p.maternitat === "postpart" && (!p.postpart_setmanes || p.alta === null || p.cesaria === null || p.simptomes === null ||
         (qImpacte.hidden === false && p.impacte_ok === null))) return true;
@@ -288,12 +361,22 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
     qMaternitat.hidden = p.sexe !== "dona";
     qPostpart.hidden = p.maternitat !== "postpart";
     qImpacte.hidden = !(p.postpart_setmanes === "12-26" || p.postpart_setmanes === "26-52");
+    $("q-estiraments_dies").hidden = $("q-rigidesa").hidden = !p.estiraments;
+    qAlarma.hidden = !p.dolor_zones.length;
     avisMenor.hidden = p.franja !== "menor";
     avisEmbaras.hidden = p.maternitat !== "embaras";
     $("bloc-tests").hidden = !calenTests();
     $("envia").disabled = p.franja === "menor";
   }
   P.addEventListener("change", actualitza);
+  $("bloc-com").addEventListener("change", actualitza);
+  qDolor.addEventListener("change", function (ev) {
+    if (ev.target.name !== "dolor" || !ev.target.checked) return;
+    Array.prototype.forEach.call(document.querySelectorAll("input[name='dolor']"), function (x) {
+      if (x !== ev.target && (x.value === "cap" || ev.target.value === "cap")) x.checked = false;
+    });
+    actualitza();
+  });
   actualitza();
 
   // Cronòmetres: un botó per test omple el camp; el de la cadira és un compte enrere de 30 s

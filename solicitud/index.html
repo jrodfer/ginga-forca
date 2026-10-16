@@ -221,11 +221,48 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
         </div>
         <p class="ajuda" style="margin:8px 0 0">Ginga és per a majors de 18 anys.</p>
       </div>
-      <div class="pregunta"><p>Què vols aconseguir?</p>
-        <textarea id="objectiu" maxlength="300" placeholder="Per exemple: la marató de Barcelona al març, o guanyar força i equilibri"></textarea></div>
       <div class="pregunta"><p>Com ens has conegut? <span class="muted" style="font-weight:400">(opcional)</span></p><input type="text" id="com" maxlength="120"></div>
       <div class="parany" aria-hidden="true"><label>Web <input type="text" id="web" tabindex="-1" autocomplete="off"></label></div>
     </section>
+
+    <!-- L'objectiu, tancat: només el que Ginga pot fer (el pla, no la tècnica ni la dieta) -->
+    <section class="card" id="obj-ginga" hidden>
+      <h2>El teu objectiu</h2>
+      <p class="ajuda" style="margin:0 0 10px">Ginga t'ajuda amb el pla: quant entrenes, quins dies, a quina intensitat i
+        com ho reparteixes fins a l'objectiu. La tècnica (per exemple, de natació) i la dieta, de moment no.</p>
+      <div class="pregunta" style="border-top:0"><p>Quin esport?</p>
+        <div class="tria">
+          <label><input type="radio" name="esport" value="correr"> Córrer</label>
+          <label><input type="radio" name="esport" value="natacio"> Natació</label>
+          <label><input type="radio" name="esport" value="bici"> Bici</label>
+          <label><input type="radio" name="esport" value="triatlo"> Triatló</label>
+          <label><input type="radio" name="esport" value="duatlo"> Duatló</label>
+        </div>
+      </div>
+      <div class="pregunta"><p>Què vols aconseguir?</p>
+        <div class="tria u">
+          <label><input type="radio" name="objectiu_tipus" value="cursa"> Preparar una cursa o una prova concreta</label>
+          <label><input type="radio" name="objectiu_tipus" value="marca"> Millorar la meva marca en una distància</label>
+          <label><input type="radio" name="objectiu_tipus" value="distancia"> Arribar a fer una distància (sense cursa)</label>
+          <label><input type="radio" name="objectiu_tipus" value="forma"> Entrenar amb regularitat i estar en forma</label>
+        </div>
+      </div>
+      <p class="ajuda" style="margin:8px 0 0">Els detalls (quina cursa, quan, quins dies pots entrenar...) te'ls preguntarem quan comencis.</p>
+    </section>
+
+    <section class="card" id="obj-forca" hidden>
+      <h2>El teu objectiu</h2>
+      <div class="pregunta" style="border-top:0"><p>Què vols aconseguir? <span class="muted" style="font-weight:400">(una o dues)</span></p>
+        <div class="tria u" id="objectius-forca">
+          <label><input type="checkbox" name="objectiu_forca" value="forca"> Tenir més força per al dia a dia</label>
+          <label><input type="checkbox" name="objectiu_forca" value="equilibri"> Millorar l'equilibri i evitar caigudes</label>
+          <label><input type="checkbox" name="objectiu_forca" value="mobilitat"> Moure'm millor i estar menys rígid/a</label>
+          <label><input type="checkbox" name="objectiu_forca" value="esport"> Complementar un altre esport (córrer, bici, natació...)</label>
+          <label><input type="checkbox" name="objectiu_forca" value="habit"> Fer exercici amb regularitat</label>
+        </div>
+      </div>
+    </section>
+
 
     <section class="card">
       <label class="check gran"><input type="checkbox" id="privacitat"> Accepto que Ginga faci servir aquestes dades
@@ -262,22 +299,45 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
     return v || null;
   }
   function valor(nom) { var x = document.querySelector("input[name='" + nom + "']:checked"); return x ? x.value : null; }
+  function marcats(nom) {
+    return Array.prototype.map.call(document.querySelectorAll("input[name='" + nom + "']:checked"), function (x) { return x.value; });
+  }
+  var ESPORTS = { correr: "Córrer", natacio: "Natació", bici: "Bici", triatlo: "Triatló", duatlo: "Duatló" };
+  var TIPUS = { cursa: "Preparar una cursa o prova", marca: "Millorar la marca en una distància",
+                distancia: "Arribar a fer una distància", forma: "Regularitat i forma" };
+  var FORCA = { forca: "Més força per al dia a dia", equilibri: "Equilibri i evitar caigudes", mobilitat: "Moure's millor",
+                esport: "Complementar un altre esport", habit: "Regularitat" };
   function actualitza() {
     var p = valor("programa");
     $("bloc-intervals").hidden = p !== "ginga";
     $("bloc-forca").hidden = p !== "forca";
     $("id-forca").hidden = valor("intervals_forca") !== "si";
+    $("obj-ginga").hidden = p !== "ginga";
+    $("obj-forca").hidden = p !== "forca";
+    var f = marcats("objectiu_forca");          // com a molt dues
+    document.querySelectorAll("input[name='objectiu_forca']").forEach(function (x) { x.disabled = !x.checked && f.length >= 2; });
+  }
+  // El resum llegible per a l'entrenador, a més dels camps tancats
+  function textObjectiu(p) {
+    if (p === "forca") return marcats("objectiu_forca").map(function (x) { return FORCA[x]; }).join(", ");
+    return (ESPORTS[valor("esport")] || "") + " · " + (TIPUS[valor("objectiu_tipus")] || "");
   }
   $("formulari").addEventListener("change", actualitza);
   actualitza();
   $("formulari").addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var cos = { programa: valor("programa"), nom: $("nom").value.trim(), email: $("email").value.trim(),
-                edat: valor("edat"), objectiu: $("objectiu").value.trim(),
+    var p = valor("programa"), t = valor("objectiu_tipus");
+    var cos = { programa: p, nom: $("nom").value.trim(), email: $("email").value.trim(),
+                edat: valor("edat"), objectiu: p ? textObjectiu(p) : "",
+                esport: p === "ginga" ? valor("esport") : null, objectiu_tipus: p === "ginga" ? t : null,
+                objectiu_forca: p === "forca" ? marcats("objectiu_forca").join(",") : null,
                 intervals: valor("programa") === "ginga" ? "si" : valor("intervals_forca"),
                 intervals_id: idIntervals(), com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked };
     var falta = !cos.programa ? "Tria Ginga o Ginga Força." : !cos.nom ? "Falta el nom."
       : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cos.email) ? "Revisa el correu electrònic." : !cos.edat ? "Falta l'edat."
+      : p === "ginga" && !cos.esport ? "Tria l'esport."
+      : p === "ginga" && !t ? "Tria què vols aconseguir."
+      : p === "forca" && !cos.objectiu_forca ? "Tria què vols aconseguir (una o dues)."
       : cos.programa === "ginga" && !cos.intervals_id ? "Per a Ginga cal el teu ID d'intervals.icu. Si encara no tens compte, obre «No en tinc: com l'obro?»."
       : cos.intervals_id && !/^i\d{1,10}$/.test(cos.intervals_id) ? "L'ID d'intervals.icu comença per i i va seguit de números (per exemple, i123456)."
       : !cos.privacitat ? "Per enviar-la, cal marcar la casella de privacitat." : "";
