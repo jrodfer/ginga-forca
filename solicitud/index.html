@@ -227,10 +227,6 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
       <div class="parany" aria-hidden="true"><label>Web <input type="text" id="web" tabindex="-1" autocomplete="off"></label></div>
     </section>
 
-    <section class="card">
-      <label class="check gran"><input type="checkbox" id="privacitat"> Accepto que Ginga desi aquestes dades per respondre
-        la meva sol·licitud. Només les veu l'entrenador i s'esborren soles al cap de 90 dies si no començo.</label>
-    </section>
     <p class="avis" id="error" hidden></p>
     <button class="btn" type="submit" id="envia" style="width:100%">Envia la sol·licitud</button>
   </form>
@@ -273,11 +269,11 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
     var cos = { programa: valor("programa"), nom: $("nom").value.trim(), email: $("email").value.trim(),
                 edat: valor("edat"), objectiu: $("objectiu").value.trim(),
                 intervals: valor("programa") === "ginga" ? "si" : valor("intervals_forca"),
-                intervals_id: idIntervals(), com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked };
+                intervals_id: idIntervals(), com: $("com").value.trim(), web: $("web").value };
     var falta = !cos.programa ? "Tria Ginga o Ginga Força." : !cos.nom ? "Falta el nom."
       : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cos.email) ? "Revisa el correu electrònic." : !cos.edat ? "Falta l'edat."
       : cos.programa === "ginga" && !cos.intervals_id ? "Per a Ginga cal el teu ID d'intervals.icu. Si encara no tens compte, obre «No en tinc: com l'obro?»."
-      : cos.intervals_id && !/^i\d{1,10}$/.test(cos.intervals_id) ? "L'ID d'intervals.icu comença per i i va seguit de números (per exemple, i123456)." : !cos.privacitat ? "Cal acceptar la casella de privacitat." : "";
+      : cos.intervals_id && !/^i\d{1,10}$/.test(cos.intervals_id) ? "L'ID d'intervals.icu comença per i i va seguit de números (per exemple, i123456)." : "";
     if (falta) { $("error").hidden = false; $("error").textContent = falta; return; }
     Object.keys(cos).forEach(function (k) { if (cos[k] === "" || cos[k] === null) delete cos[k]; });
     $("error").hidden = true; $("envia").disabled = true; $("envia").textContent = "Enviant…";
