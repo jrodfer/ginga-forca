@@ -23,7 +23,6 @@
   --accent: #FF6A2B;      /* Sunset orange */
   --ok: #2DBF8C;          /* Tropical green, aclarit per a fons fosc */
   --rest: #FFC531;        /* Samba yellow */
-  --punt: #FFC531;
   --display: "Nunito", Arial, sans-serif;
   --body: "Nunito", Arial, sans-serif;
   color-scheme: dark;
@@ -34,8 +33,9 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
 .lockup { display: block; height: auto; }
 .lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .lockup .lk-g { stroke: var(--accent); stroke-width: 28; }
-.lockup .lk-t { stroke: var(--fg); stroke-width: 24; }
-.lockup .lk-p { fill: var(--punt); }
+.lockup .lk-t { stroke: #00996B; stroke-width: 24; }   /* lletres verdes: es llegeixen en clar i en fosc */
+.lockup .lk-p { fill: #00996B; }   /* el punt de la G, verd */
+.lockup .lk-i { fill: var(--accent); }   /* el punt de la i, taronja */
 
 [hidden] { display: none !important; }
 .num, h1, h2 { font-family: var(--display); margin: 0; letter-spacing: -.01em; font-weight: 900; }
@@ -115,20 +115,20 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
 </head>
 <body>
   <section class="pantalla centre" id="v-espera">
-    <svg class="lockup marca" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
+    <svg class="lockup marca" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
     <h1>A punt per a la força</h1>
     <p>Obre la sessió al mòbil i toca «Comença».</p>
   </section>
 
   <section class="pantalla resum" id="v-resum" hidden>
-    <div style="display:grid;gap:.8vw"><svg class="lockup" style="width:14vw;margin-bottom:1vw" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
+    <div style="display:grid;gap:.8vw"><svg class="lockup" style="width:14vw;margin-bottom:1vw" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
       <div class="eyebrow" id="r-data"></div><h1 id="r-titol"></h1></div>
     <ol id="r-llista"></ol>
     <div class="peu">Prem OK al comandament o toca «Comença» al mòbil.</div>
   </section>
 
   <section class="pantalla exercici" id="v-exercici" hidden>
-    <div class="dalt"><div class="esq"><svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg><span class="sep"></span><span class="titol" id="e-sessio"></span></div>
+    <div class="dalt"><div class="esq"><svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg><span class="sep"></span><span class="titol" id="e-sessio"></span></div>
       <span class="pastilla" id="e-comptador"></span></div>
     <div class="video" id="e-video"><div id="yt"></div></div>
     <div class="estat">
@@ -153,7 +153,7 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
   <div class="avis-boto" id="avis-boto" aria-live="polite"></div>
 
   <section class="pantalla centre final" id="v-final" hidden>
-    <svg class="lockup marca petita" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
+    <svg class="lockup marca petita" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
     <div class="gran">Fet!</div>
     <p id="f-txt"></p>
   </section>

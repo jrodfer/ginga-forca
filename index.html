@@ -25,7 +25,6 @@
   --ok: #00996B;          /* Tropical green */
   --rest: #D9541C;        /* el descans: taronja fosc, que es llegeix sobre blanc càlid */
   --rest-soft: #FFE4D3;
-  --punt: #00996B;
   --display: "Nunito", "Helvetica Neue", Arial, sans-serif;
   --body: "Nunito", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
@@ -33,13 +32,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
-    --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31; --punt: #FFC531;
+    --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
-  --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31; --punt: #FFC531;
+  --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -117,8 +116,9 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .lockup { display: block; height: auto; }
 .lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .lockup .lk-g { stroke: var(--accent); stroke-width: 28; }
-.lockup .lk-t { stroke: var(--fg); stroke-width: 24; }
-.lockup .lk-p { fill: var(--punt); }
+.lockup .lk-t { stroke: #00996B; stroke-width: 24; }   /* lletres verdes: es llegeixen en clar i en fosc */
+.lockup .lk-p { fill: #00996B; }   /* el punt de la G, verd */
+.lockup .lk-i { fill: var(--accent); }   /* el punt de la i, taronja */
 .cap .lockup { width: 116px; }
 .titol-bloc { display: grid; gap: 6px; }
 .boto-tele { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px;
@@ -152,7 +152,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 <body>
 <main>
   <header class="cap">
-    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
+    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
     <button class="boto-tele" id="cast-boto" type="button" aria-label="Envia a la TV">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 18v3h3a3 3 0 0 0-3-3zm0-4v2a5 5 0 0 1 5 5h2a7 7 0 0 0-7-7zm0-4v2a9 9 0 0 1 9 9h2A11 11 0 0 0 1 10zm20-7H3a2 2 0 0 0-2 2v3h2V5h18v14h-7v2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/></svg>
       <span id="cast-txt">TV</span>

@@ -18,7 +18,7 @@
 :root {
   --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #00996B; --warn: #D9541C; --warn-soft: #FFE4D3;
-  --ruta: #FF6A2B; --ruta-alt: #8A968F; --pujada: #00996B; --punt: #00996B; --gent: #6B4FD8;
+  --ruta: #FF6A2B; --ruta-alt: #8A968F; --pujada: #00996B; --gent: #6B4FD8;
   --display: "Nunito", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }
@@ -26,14 +26,14 @@
   :root:not([data-theme="light"]) {
     --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
     --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --warn: #FFC531; --warn-soft: #1D3A31;
-    --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --punt: #FFC531; --gent: #B7A6FF;
+    --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --gent: #B7A6FF;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --warn: #FFC531; --warn-soft: #1D3A31;
-  --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --punt: #FFC531; --gent: #B7A6FF;
+  --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --gent: #B7A6FF;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -56,8 +56,9 @@ p { margin: 0; }
 .lockup { display: block; height: auto; }
 .lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .lockup .lk-g { stroke: var(--accent); stroke-width: 28; }
-.lockup .lk-t { stroke: var(--fg); stroke-width: 24; }
-.lockup .lk-p { fill: var(--punt); }
+.lockup .lk-t { stroke: #00996B; stroke-width: 24; }   /* lletres verdes: es llegeixen en clar i en fosc */
+.lockup .lk-p { fill: #00996B; }   /* el punt de la G, verd */
+.lockup .lk-i { fill: var(--accent); }   /* el punt de la i, taronja */
 .cap .lockup { width: 116px; }
 .cap .eyebrow { margin: 0; }
 #segueix .lockup { width: 72px; }
@@ -117,7 +118,7 @@ details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; 
 <body>
 <main id="app">
   <header class="cap">
-    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
+    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
     <span class="eyebrow">Rutes</span>
   </header>
   <div>
@@ -158,7 +159,7 @@ details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; 
 
 <section id="segueix" hidden>
   <div class="dalt">
-    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-p" cx="316" cy="-1" r="14"/></svg>
+    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
     <div class="falta" id="s-falta"></div>
     <div class="gir" id="s-gir"></div>
     <div class="fora" id="s-fora" hidden></div>
