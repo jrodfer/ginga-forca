@@ -1,0 +1,138 @@
+[
+ {
+  "id": "tn_enfonsar",
+  "nom": "Treure l'aire i enfonsar-se",
+  "nom_en": "Sink down",
+  "nivell": 1,
+  "focus": "respiració",
+  "detall": "Dempeus a la paret, treu tot l'aire pel nas i la boca i deixa't enfonsar fins a seure al fons; puja i torna-hi 4 o 5 cops. Després, 50 m de crol suau pensant només a treure l'aire sota l'aigua.",
+  "detall_en": "At the wall, breathe all the air out through your nose and mouth and sink to sit on the bottom; come up and repeat 4-5 times. Then 50 m easy freestyle, thinking only about breathing out underwater.",
+  "video": "pNMNRwM_CrU"
+ },
+ {
+  "id": "tn_patada_costat",
+  "nom": "Patada de costat",
+  "nom_en": "Side kick",
+  "nivell": 1,
+  "focus": "posició",
+  "detall": "De costat, el braç de sota estirat davant i l'altre al llarg del cos; patada suau i el cap quiet mirant avall. Gira el cap per respirar sense aixecar-lo. 25 m de cada costat.",
+  "detall_en": "On your side, bottom arm stretched forward and the other along your body; easy kick, head still looking down. Turn your head to breathe without lifting it. 25 m on each side.",
+  "material": "aletes, si en tens (ajuden molt al principi)",
+  "video": "9gG0DcdowC4"
+ },
+ {
+  "id": "tn_punt_mort",
+  "nom": "Punt mort",
+  "nom_en": "Catch-up",
+  "nivell": 1,
+  "focus": "coordinació",
+  "detall": "Crol en què una mà espera estirada davant fins que l'altra gairebé la toca. El braç de davant no cau quan respires.",
+  "detall_en": "Freestyle where one hand waits stretched out in front until the other almost touches it. The front arm doesn't drop when you breathe.",
+  "video": "hy_3AM3ylTE"
+ },
+ {
+  "id": "tn_patada_torpede",
+  "nom": "Patada de torpede",
+  "nom_en": "Torpedo kick",
+  "nivell": 1,
+  "focus": "patada",
+  "detall": "Braços estirats davant, una mà sobre l'altra, el cap entre els braços mirant avall; patada petita i ràpida des del maluc, amb els turmells relaxats. Amb planxa, si respirar et costa.",
+  "detall_en": "Arms stretched in front, one hand over the other, head between your arms looking down; small, fast kick from the hip with relaxed ankles. Use a kickboard if breathing is hard.",
+  "material": "planxa, si cal",
+  "video": "e_Jt5CIQieo"
+ },
+ {
+  "id": "tn_respiracio",
+  "nom": "Respirar a temps",
+  "nom_en": "Breathing timing",
+  "nivell": 1,
+  "focus": "respiració",
+  "detall": "Crol suau traient l'aire seguit sota l'aigua; quan gires per respirar, només has d'agafar-ne. Gira el cap amb el cos, amb un ull dins l'aigua.",
+  "detall_en": "Easy freestyle, breathing out steadily underwater; when you turn to breathe, you only have to breathe in. Turn your head with your body, one eye in the water.",
+  "video": "eLKjJ0wjwFE"
+ },
+ {
+  "id": "tn_dits",
+  "nom": "Arrossegar els dits",
+  "nom_en": "Fingertip drag",
+  "nivell": 1,
+  "focus": "coordinació",
+  "detall": "En treure el braç de l'aigua, arrossega la punta dels dits per la superfície, des del maluc fins davant. El colze alt i l'espatlla relaxada.",
+  "detall_en": "As you recover your arm, drag your fingertips along the surface from your hip to the front. Elbow high, shoulder relaxed.",
+  "video": "36lp6NgDYF0"
+ },
+ {
+  "id": "tn_616",
+  "nom": "6-1-6",
+  "nom_en": "6-1-6",
+  "nivell": 2,
+  "focus": "rotació",
+  "detall": "Sis patades de costat, una braçada per girar a l'altre costat, sis patades més. El cos gira sencer, com un tronc, i el cap no es mou.",
+  "detall_en": "Six kicks on your side, one stroke to roll to the other side, six more kicks. The whole body rolls like a log and the head stays still.",
+  "material": "aletes, si en tens",
+  "video": "3vkcnLkHImo"
+ },
+ {
+  "id": "tn_puny",
+  "nom": "Puny tancat",
+  "nom_en": "Fist drill",
+  "nivell": 2,
+  "focus": "tracció",
+  "detall": "Crol amb els punys tancats, sense estrènyer: has d'agafar l'aigua amb l'avantbraç. Els últims 10 m, mans obertes, i notaràs la diferència.",
+  "detall_en": "Freestyle with loosely closed fists: you have to catch the water with your forearm. Open your hands for the last 10 m and feel the difference.",
+  "video": "8Me_va9__NU"
+ },
+ {
+  "id": "tn_patada_fletxa",
+  "nom": "Patada en fletxa",
+  "nom_en": "Streamline kick",
+  "nivell": 2,
+  "focus": "patada",
+  "detall": "Braços en fletxa (una mà sobre l'altra, braços tocant les orelles), mirant avall; patada constant i el cos recte del cap als peus. Respira girant el cap de costat.",
+  "detall_en": "Arms in streamline (one hand over the other, arms by your ears), looking down; steady kick, body straight from head to toes. Breathe by turning your head to the side.",
+  "material": "aletes, si en tens",
+  "video": "Mva6HOwnV00"
+ },
+ {
+  "id": "tn_un_brac",
+  "nom": "Crol a un braç",
+  "nom_en": "One-arm freestyle",
+  "nivell": 2,
+  "focus": "rotació",
+  "detall": "Crol amb un sol braç i l'altre estirat davant. Respira cap al costat del braç que neda, girant el cos. 25 m amb cada braç.",
+  "detall_en": "Freestyle with one arm, the other stretched out in front. Breathe to the side of the working arm, rolling your body. 25 m with each arm.",
+  "video": "8J0jeC9qTO0"
+ },
+ {
+  "id": "tn_remada",
+  "nom": "Remada",
+  "nom_en": "Sculling",
+  "nivell": 2,
+  "focus": "tracció",
+  "detall": "Boca avall, braços davant; mou les mans de fora a dins i de dins a fora, amb el palmell una mica girat, per sentir com t'aguanta l'aigua. Patada suau.",
+  "detall_en": "Face down, arms in front; sweep your hands out and in, palms slightly angled, to feel the water holding you. Easy kick.",
+  "material": "pull buoy entre les cames, si en tens",
+  "video": "8DPGEb90RNM"
+ },
+ {
+  "id": "tn_636",
+  "nom": "6-3-6",
+  "nom_en": "6-3-6",
+  "nivell": 3,
+  "focus": "rotació",
+  "detall": "Com el 6-1-6, però amb tres braçades entre els dos costats. Les braçades, amb el mateix gir que quan fas les patades.",
+  "detall_en": "Like 6-1-6, but with three strokes between sides. Keep the same roll in the strokes as in the kicks.",
+  "material": "aletes, si en tens",
+  "video": "KYDADbuPBTs"
+ },
+ {
+  "id": "tn_estabilitat",
+  "nom": "Tres de crol, dues d'esquena",
+  "nom_en": "Three freestyle, two backstroke",
+  "nivell": 3,
+  "focus": "posició",
+  "detall": "Tres braçades de crol i dues d'esquena, girant tot el cos com un tronc. El cap no es mou i el cos queda recte.",
+  "detall_en": "Three freestyle strokes and two backstroke, rolling your whole body like a log. Head still, body straight.",
+  "video": "1r3oPTURBtI"
+ }
+]
