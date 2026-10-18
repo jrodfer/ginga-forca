@@ -112,7 +112,7 @@ a { color: inherit; }
     tots: "All the drills",
     nivells: { 1: "Level 1 · Breathing, body position and the parts of the stroke", 2: "Level 2 · Rotation and catching the water", 3: "Level 3 · Stability and sighting" },
     focus: { "respiració": "breathing", "posició": "body position", "coordinació": "timing", "rotació": "rotation", "tracció": "catch and pull", "recobrament": "recovery", "patada": "kick" },
-    idea: "Last 10 m, full stroke:",
+    perA: "What it's for: ", idea: "Last 10 m, full stroke:",
     video: "Play the video", error: "The drills couldn't be loaded. Try again in a while.",
     peu: "Videos on YouTube: TriDot (Swim Drill Series) and RSB Training (Éducatif natation technique crawl)."
   } : {
@@ -122,7 +122,7 @@ a { color: inherit; }
     tots: "Tots els exercicis",
     nivells: { 1: "Nivell 1 · Respiració, posició i les parts de la braçada", 2: "Nivell 2 · Girar i agafar l'aigua", 3: "Nivell 3 · Estabilitat i orientar-se" },
     focus: null,
-    idea: "Els últims 10 m, crol complet:",
+    perA: "Per a què serveix: ", idea: "Els últims 10 m, crol complet:",
     video: "Mira el vídeo", error: "No s'han pogut carregar els exercicis. Torna-ho a provar d'aquí a una estona.",
     peu: "Vídeos a YouTube: TriDot (Swim Drill Series) i RSB Training (Éducatif natation technique crawl)."
   };
@@ -163,6 +163,12 @@ a { color: inherit; }
     tags.appendChild(el("span", "tag", T.focus ? (T.focus[e.focus] || e.focus) : e.focus));
     if (e.material && !en) tags.appendChild(el("span", "tag", e.material));
     c.appendChild(tags);
+    if (e.per_a) {
+      var per = el("p", "per");
+      per.appendChild(el("b", null, T.perA));
+      per.appendChild(document.createTextNode(en ? e.per_a_en : e.per_a));
+      c.appendChild(per);
+    }
     c.appendChild(el("p", null, en ? e.detall_en : e.detall));
     if (e.idea) {
       var idea = el("p", "idea");
