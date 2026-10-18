@@ -7,6 +7,9 @@
 (function (global) {
   "use strict";
   var CANVI_COSTAT = 5;   // segons per canviar de costat en els exercicis de temps
+  // Sessió guiada (sessio.g, la fa la pàgina de ioga): tot passa sol, com un vídeo. Abans de cada exercici, uns
+  // segons per posar-se; les repeticions es fan a temps (SEG_REP cadascuna); OK posa en pausa i continua.
+  var PREPARA = 10, SEG_REP = 4;
 
   function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   function quantitat(e) {
@@ -26,19 +29,21 @@
     m.i = Math.min(Math.max(inicial.i || 0, 0), sessio.e.length - 1);
     m.vista = "resum"; m.fase = "serie"; m.text = ""; m.seguentTxt = "";
     m.temps = null;                       // { fi, total, avisat, enAcabar }
+    m.pausat = null;                      // el temps aturat (sessió guiada): { queda, total, enAcabar }
     m.id = setInterval(function () { m._tick(); }, 200);
   }
   var P = Motor.prototype;
 
   P.foto = function () {
-    var t = this.temps;
+    var t = this.temps, p = this.pausat;
     return { tipus: "estat", i: this.i, fetes: this.fetes.slice(), vista: this.vista, fase: this.fase,
-             text: this.text, seguent: this.seguentTxt,
-             queda: t ? Math.max(0, (t.fi - Date.now()) / 1000) : null, total: t ? t.total : null };
+             text: this.text, seguent: this.seguentTxt, pausat: !!p,
+             queda: t ? Math.max(0, (t.fi - Date.now()) / 1000) : (p ? p.queda : null),
+             total: t ? t.total : (p ? p.total : null) };
   };
   P._avisa = function () { if (this.hooks.canvi) this.hooks.canvi(this.foto()); };
   P._xiula = function (n) { if (this.hooks.xiulet) this.hooks.xiulet(n); };
-  P.atura = function () { clearInterval(this.id); this.temps = null; };
+  P.atura = function () { clearInterval(this.id); this.temps = null; this.pausat = null; };
 
   // ---- temps
   P._tick = function () {
@@ -54,18 +59,26 @@
 
   // ---- fases
   P.obre = function (i) {
-    this.temps = null; this.i = i; this.vista = "exercici"; this._serie();
+    this.temps = null; this.pausat = null; this.i = i; this.vista = "exercici"; this._serie();
   };
   P._serie = function () {
     var e = this.sessio.e[this.i];
     if (this.fetes[this.i] >= e.s) return this._seguentExercici();
     this.fase = "serie"; this.text = ""; this.seguentTxt = "";
+    if (this.sessio.g) return this.fetes[this.i] === 0 ? this._prepara() : this._feina();
     this._avisa();
+  };
+  P._prepara = function () {
+    var m = this;
+    m.fase = "prepara"; m.text = "Prepara't"; m.seguentTxt = "";
+    m._compta(PREPARA, function () { m._xiula(1); m._feina(); });
+    m._avisa();
   };
   P._feina = function () {
     var m = this, e = m.sessio.e[m.i];
     var textos = e.c ? ["Primer costat", "Canvia de costat", "Segon costat"] : ["Ara"];
-    var durades = e.c ? [e.q, CANVI_COSTAT, e.q] : [e.q];
+    var q = e.u === "r" && m.sessio.g ? e.q * SEG_REP : e.q;
+    var durades = e.c ? [q, CANVI_COSTAT, q] : [q];
     var pas = 0;
     (function seguent() {
       m.fase = "feina"; m.text = textos[pas];
@@ -102,7 +115,7 @@
     if (k < 0) return this._final();
     this.obre(k);
   };
-  P._final = function () { this.temps = null; this.vista = "final"; this.fase = "serie"; this._avisa(); };
+  P._final = function () { this.temps = null; this.pausat = null; this.vista = "final"; this.fase = "serie"; this._avisa(); };
 
   // ---- accions (els botons del mòbil i el comandament de la tele)
   P.comenca = function () {
@@ -112,15 +125,23 @@
   };
   P.principal = function () {
     if (this.vista === "resum") return this.comenca();
+    if (this.sessio.g && this.vista === "exercici" && (this.temps || this.pausat)) return this.pausa();
     if (this.vista !== "exercici") return;
     if (this.fase === "descans") return this.salta();
     if (this.fase === "feina") return this._serieFeta();          // "Acaba ara"
     return this.sessio.e[this.i].u === "s" ? this._feina() : this._serieFeta();
   };
   P.salta = function () {
-    var t = this.temps;
+    var t = this.temps || this.pausat;
     if (!t) return;
-    this.temps = null; t.enAcabar();
+    this.temps = null; this.pausat = null; t.enAcabar();
+  };
+  P.pausa = function () {
+    var t = this.temps, p = this.pausat;
+    if (p) { this._compta(p.queda, p.enAcabar); this.temps.total = p.total; this.temps.avisat = p.queda <= 3.05; this.pausat = null; }
+    else if (t) { this.pausat = { queda: Math.max(0, (t.fi - Date.now()) / 1000), total: t.total, enAcabar: t.enAcabar }; this.temps = null; }
+    else return;
+    this._avisa();
   };
   P.mes15 = function () {
     if (!this.temps || this.fase !== "descans") return;
@@ -135,11 +156,11 @@
   P.anterior = function () {
     if (this.vista === "exercici" && this.i > 0) this.obre(this.i - 1);
   };
-  P.resum = function () { this.temps = null; this.vista = "resum"; this.fase = "serie"; this._avisa(); };
+  P.resum = function () { this.temps = null; this.pausat = null; this.vista = "resum"; this.fase = "serie"; this._avisa(); };
   P.reinicia = function () { this.fetes = zeros(this.sessio); this.i = 0; this.resum(); };
   P.accio = function (nom, arg) {
     if (nom === "obre" && typeof arg === "number" && arg >= 0 && arg < this.sessio.e.length) return this.obre(arg);
-    if (["principal", "salta", "mes15", "seguent", "anterior", "resum", "reinicia", "comenca"].indexOf(nom) >= 0) this[nom]();
+    if (["principal", "salta", "mes15", "seguent", "anterior", "resum", "reinicia", "comenca", "pausa"].indexOf(nom) >= 0) this[nom]();
   };
 
   global.GingaMotor = { Motor: Motor, mmss: mmss, quantitat: quantitat, pauta: pauta };

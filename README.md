@@ -4,6 +4,15 @@ Reproductor de sessions de força: cada exercici amb el seu vídeo, les sèries 
 
 La sessió va dins l'enllaç (després del `#`) que envia Ginga al correu setmanal; aquesta pàgina no guarda ni rep cap dada.
 
+Si l'enllaç porta `g: 1` (sessió guiada; ara, només la de `ioga/`), la sessió passa sola com un vídeo: uns segons per
+posar-se abans de cada exercici, les repeticions a temps, una veu guia que es pot apagar i Pausa (també amb l'OK del
+comandament de la tele). Sense `g`, tot funciona com sempre.
+
+## Ioga per corredors (`ioga/`)
+
+Cada dia una sessió de ioga per corredors (una postura de cada fase d'`estiraments/ioga.yaml`), que s'obre guiada al
+reproductor. No l'enllaça cap correu.
+
 ## Rutes (`rutes/`)
 
 Per a cada sessió de córrer o de bici, l'atleta tria d'on surt i la pàgina li proposa circuits que encaixen amb la

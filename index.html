@@ -80,6 +80,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .btn.rest { background: var(--rest); color: var(--accent-fg); }
 .btn:focus-visible, a:focus-visible, button:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
 .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn.veu { padding: 12px 14px; font-size: .9rem; }
 
 /* exercici */
 .progres { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
@@ -167,6 +168,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     <span><strong>A la TV</strong> <span class="muted" id="tele-nom"></span> · el mòbil i el comandament de la TV fan de comandament</span>
   </div>
 
+  <button class="btn sec veu" id="veu" type="button" hidden aria-pressed="true">Veu guia: sí</button>
   <div class="demo" id="avis-demo" hidden>Sessió d'exemple. Les teves arriben amb l'enllaç del correu setmanal de Ginga.</div>
 
   <!-- Resum de la sessió -->
@@ -308,8 +310,67 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 
   // ---- so, vibració i pantalla encesa
   var audio = null;
-  function preparaSo() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (err) {} }
+  function preparaSo() {
+    try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (err) {}
+    desbloquejaVeu();
+  }
+
+  // ---- veu guia (només a les sessions guiades, sessio.g: la pàgina de ioga). Diu cada pas, com un vídeo de ioga.
+  var veu = true;
+  try { veu = localStorage.getItem("ginga-veu") !== "no"; } catch (err) {}
+  var sintesi = window.speechSynthesis, veuCa = null, veuDesbloquejada = false;
+  function triaVeu() {
+    if (!sintesi) return;
+    var vs = sintesi.getVoices() || [];
+    veuCa = vs.filter(function (v) { return /^ca/i.test(v.lang); })[0] || null;
+  }
+  if (sintesi) { triaVeu(); try { sintesi.addEventListener("voiceschanged", triaVeu); } catch (err) {} }
+  function desbloquejaVeu() {                              // iOS: la primera vegada ha de ser dins d'un toc
+    if (!sintesi || veuDesbloquejada || !sessio.g) return;
+    veuDesbloquejada = true;
+    try { var u = new SpeechSynthesisUtterance(" "); u.volume = 0; sintesi.speak(u); } catch (err) {}
+  }
+  function parla(text) {
+    if (!sessio.g || !veu || !sintesi || !text) return;
+    try {
+      sintesi.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = veuCa ? veuCa.lang : "ca-ES"; if (veuCa) u.voice = veuCa;
+      u.rate = 0.88; u.pitch = 0.95;                       // a poc a poc: és ioga
+      sintesi.speak(u);
+    } catch (err) {}
+  }
+  function pintaVeu() {
+    $("veu").hidden = !sessio.g;
+    $("veu").textContent = "Veu guia: " + (veu ? "sí" : "no");
+    $("veu").setAttribute("aria-pressed", veu ? "true" : "false");
+  }
+  $("veu").addEventListener("click", function () {
+    veu = !veu; preparaSo();
+    try { localStorage.setItem("ginga-veu", veu ? "si" : "no"); } catch (err) {}
+    if (!veu && sintesi) sintesi.cancel();
+    pintaVeu();
+  });
+  var guiaAbans = "";
+  function guia(f) {                                       // què dir quan canvia el pas
+    if (!sessio.g) return;
+    var e = sessio.e[f.i] || {}, clauPas = [f.vista, f.i, f.fase, f.text, (f.fetes || [])[f.i]].join("|");
+    if (clauPas === guiaAbans || f.pausat) return;
+    guiaAbans = clauPas;
+    if (f.vista === "final") return parla("Sessió acabada. Queda't uns segons estirat i respira. Bona feina.");
+    if (f.vista !== "exercici") return;
+    if (f.fase === "prepara") return parla((f.i === 0 ? "Comencem. " : "Següent. ") + e.n + ". " + (e.x || ""));
+    if (f.fase === "feina") {
+      var rep = e.u === "r" ? " " + e.q + " vegades, al ritme de la respiració." : " Respira a poc a poc.";
+      if (f.text === "Canvia de costat") return parla("Canvia de costat.");
+      if (f.text === "Segon costat") return parla("Segon costat." + (e.u === "r" ? "" : " Deixa anar."));
+      var cop = (f.fetes || [])[f.i] > 0 ? "Un cop més. " : "";
+      return parla(cop + (f.text === "Primer costat" ? "Primer costat." : "Ara.") + rep);
+    }
+    if (f.fase === "descans") return parla("Descansa. Respira.");
+  }
   function xiulet(n) {
+    if (sessio.g && veu) return;                          // la veu ja ho diu
     if (navigator.vibrate) { try { navigator.vibrate(n > 1 ? [200, 100, 200] : 150); } catch (err) {} }
     if (!audio) return;
     for (var k = 0; k < (n || 1); k++) {
@@ -406,7 +467,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     try { localStorage.setItem(clau, JSON.stringify({ i: f.i, fetes: f.fetes })); } catch (err) {}
     if (f.vista === "resum") { mostra("vista-resum"); compte = null; return pintaLlista(f); }
     if (f.vista === "final") {
-      mostra("vista-final"); compte = null;
+      mostra("vista-final"); compte = null; guia(f);
       $("final-txt").textContent = suma(f.fetes) + " sèries de " + sessio.e.length + " exercicis.";
       preparaValoracio();
       try { if (bloqueig && !remot) bloqueig.release(); } catch (err) {}
@@ -424,8 +485,9 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     $("enrere").disabled = i === 0;
     $("endavant").disabled = i === sessio.e.length - 1;
 
-    var serie = f.fase === "serie", feina = f.fase === "feina", descans = f.fase === "descans";
+    var serie = f.fase === "serie", feina = f.fase === "feina" || f.fase === "prepara", descans = f.fase === "descans";
     $("bloc-serie").hidden = !serie; $("bloc-feina").hidden = !feina; $("bloc-descans").hidden = !descans;
+    guia(f);
     if (serie) {
       var q = quantitat(e);
       $("serie-txt").textContent = e.s > 1 ? "Sèrie " + (fetes + 1) + " de " + e.s : "Una tanda";
@@ -437,9 +499,11 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     }
     if (feina) $("feina-txt").textContent = f.text || "Ara";
     if (descans) $("seguent").textContent = f.seguent || "";
-    $("accio").hidden = descans;
-    $("accio").textContent = feina ? "Acaba ara" : (e.u === "s" ? "Comença el temps" : "Sèrie feta");
-    compte = (feina || descans) && f.queda != null ? { fi: Date.now() + f.queda * 1000 } : null;
+    $("accio").hidden = descans && !sessio.g;
+    $("accio").textContent = sessio.g && !serie ? (f.pausat ? "Continua" : "Pausa")
+      : feina ? "Acaba ara" : (e.u === "s" ? "Comença el temps" : "Sèrie feta");
+    compte = (feina || descans) && f.queda != null && !f.pausat ? { fi: Date.now() + f.queda * 1000 } : null;
+    if (f.pausat && f.queda != null) { $("feina-temps").textContent = $("descans-temps").textContent = mmss(f.queda); }
     rellotge();
   }
   function rellotge() {
@@ -569,6 +633,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   $("tele-play").addEventListener("click", function () { envia({ tipus: "video", accio: "play" }); });
   $("tele-pausa").addEventListener("click", function () { envia({ tipus: "video", accio: "pausa" }); });
 
+  pintaVeu();
   motorLocal(desat ? { i: desat.i, fetes: desat.fetes, vista: "resum" } : null);
 })();
 </script>

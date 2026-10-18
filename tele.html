@@ -280,17 +280,18 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
     posaVideo(e.v || "");
 
     var fetes = Math.min((m.fetes || [])[m.i] || 0, e.s), caixa = $("e-caixa");
-    caixa.className = "caixa" + (m.fase === "descans" ? " descans" : m.fase === "feina" ? " feina" : "");
+    caixa.className = "caixa" + (m.fase === "descans" ? " descans" : m.fase === "feina" || m.fase === "prepara" ? " feina" : "");
     $("e-seguent").textContent = m.fase === "descans" ? (m.seguent || "") : "";
     var punts = $("e-punts"); punts.textContent = "";
     var ara = m.fase === "descans" ? fetes - 1 : fetes;
     for (var k = 0; k < e.s && e.s > 1; k++) {
       var sp = document.createElement("span"); sp.className = k < fetes ? "fet" : (k === ara ? "ara" : ""); punts.appendChild(sp);
     }
-    if (m.fase === "descans" || m.fase === "feina") {
-      $("e-etiqueta").textContent = m.fase === "descans" ? "Descans" : (m.text || "Ara");
+    if (m.fase === "descans" || m.fase === "feina" || m.fase === "prepara") {
+      $("e-etiqueta").textContent = (m.fase === "descans" ? "Descans" : (m.text || "Ara")) + (m.pausat ? " · en pausa" : "");
       $("e-unitat").textContent = "";
       arrencaCompte(m.queda || 0, m.total, m.fase);
+      if (m.pausat) paraCompte();                        // sessió guiada en pausa: el temps queda aturat
     } else {
       paraCompte(); $("e-barra").hidden = true;
       var q = quantitat(e);

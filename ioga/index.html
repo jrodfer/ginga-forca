@@ -96,7 +96,7 @@ p { margin: 0; }
   </div>
 
   <p class="muted" id="error" hidden>No s'han pogut carregar els exercicis. Torna-ho a provar d'aquí a una estona.</p>
-  <p class="muted peu">Fins a notar tensió, sense dolor. Després de córrer o al vespre, no just abans d'una sessió dura. Cada dia surt una sessió nova; si un exercici no et ve de gust, canvia'l.</p>
+  <p class="muted peu">Fins a notar tensió, sense dolor. Després de córrer o al vespre, no just abans d'una sessió dura. Cada dia surt una sessió nova; si un exercici no et ve de gust, canvia'l. La sessió passa sola, amb veu guia (la pots apagar) i Pausa quan calgui.</p>
 </main>
 <script>
 (function () {
@@ -170,7 +170,7 @@ p { margin: 0; }
         }
         llista.appendChild(c);
       });
-      $("comenca").href = "../#" + codi({ t: TITOL, d: dia, l: "ca", e: es, m: NOTA });
+      $("comenca").href = "../#" + codi({ t: TITOL, d: dia, l: "ca", e: es, m: NOTA, g: 1 })   // g: guiada (passa sola, amb veu);
     }
 
     $("una-altra").addEventListener("click", function () {
