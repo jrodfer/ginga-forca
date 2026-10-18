@@ -87,6 +87,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .progres > div { height: 100%; background: var(--ok); width: 0; transition: width .3s; }
 .video { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
 .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video .fotograma { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .sense-video { display: grid; place-items: center; text-align: center; padding: 16px; color: #ddd; height: 100%; }
 .sense-video a { color: #fff; }
 .tele { display: block; text-align: center; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 10px;
@@ -355,7 +356,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
         if (!s) return seguent(n + 1);
         font = audio.createBufferSource(); font.buffer = s; font.connect(audio.destination);
         font.onended = function () { font = null; seguent(n + 1); };
-        font.start();
+        font.start(0, 0, Math.max(0.2, s.duration - 0.9));   // sense el silenci del final (estiraments/veu.py: SILENCI)
       });
     })(0);
   }
@@ -422,11 +423,20 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     if (e.v) {
       var f = document.createElement("iframe"), id = encodeURIComponent(e.v);
       f.src = "https://www.youtube-nocookie.com/embed/" + id + "?rel=0&playsinline=1&modestbranding=1" +
-        (sessio.g ? "&enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=" + id + "&origin=" + encodeURIComponent(location.origin) : "");
+        (sessio.g ? "&enablejsapi=1&autoplay=1&mute=1&controls=0&disablekb=1&iv_load_policy=3&origin=" + encodeURIComponent(location.origin) : "");
       f.title = "Vídeo: " + e.n; if (!sessio.g) f.loading = "lazy";
       f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
       f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
       cont.appendChild(f);
+      if (sessio.g) {                                      // el fotograma del mig, per quan el vídeo està aturat
+        var im = document.createElement("img"); im.className = "fotograma"; im.alt = ""; im.hidden = true;
+        im.src = "https://i.ytimg.com/vi/" + id + "/sd2.jpg";
+        im.onerror = function () { im.onerror = null; im.src = "https://i.ytimg.com/vi/" + id + "/hq2.jpg"; };
+        cont.appendChild(im);
+        f.addEventListener("load", function () {           // que el vídeo ens digui quan s'acaba
+          try { f.contentWindow.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*"); } catch (err) {}
+        });
+      }
     } else {
       var d = document.createElement("div"); d.className = "sense-video";
       var a = document.createElement("a");
@@ -435,22 +445,33 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
       d.appendChild(a); cont.appendChild(d);
     }
   }
-  // Sessió guiada: el vídeo arrenca sol, sense so (parla la veu guia) i en bucle; torna a començar a cada sèrie i
-  // a cada costat, i s'atura al descans i a la pausa. Les ordres van per postMessage (enablejsapi).
+  // Sessió guiada: el vídeo arrenca quan comença l'explicació (la presentació i «Un cop més»), sense so (parla la veu
+  // guia), i quan s'acaba s'hi queda el fotograma del mig (la imatge sd2 de YouTube: la postura feta), sense botó de
+  // pausa ni pantalla final. Al descans i a la pausa, també el fotograma. Les ordres van per postMessage (enablejsapi).
   function ordreVideo(func, args) {
     var f = $("video").querySelector("iframe");
     if (!f || !f.contentWindow) return;
     try { f.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), "*"); } catch (err) {}
   }
+  function fotograma(si) { var im = $("video").querySelector(".fotograma"); if (im) im.hidden = !si; }
   var videoPas = "";
   function videoGuiat(f) {
     if (!sessio.g || remot || f.vista !== "exercici") return;
-    if (f.pausat || f.fase === "descans") return ordreVideo("pauseVideo");
+    if (f.pausat || f.fase === "descans") { ordreVideo("pauseVideo"); return fotograma(true); }
     var pas = [f.i, f.fase, f.text, (f.fetes || [])[f.i]].join("|");
-    if (pas !== videoPas && f.fase === "feina" && f.text !== "Canvia de costat") ordreVideo("seekTo", [0, true]);
+    if (pas === videoPas) return;
     videoPas = pas;
-    ordreVideo("playVideo");
+    var explica = f.fase === "prepara" ||
+      (f.fase === "feina" && (f.fetes || [])[f.i] > 0 && (f.text === "Ara" || f.text === "Primer costat"));
+    if (explica) { fotograma(false); ordreVideo("seekTo", [0, true]); ordreVideo("playVideo"); }
   }
+  window.addEventListener("message", function (ev) {
+    if (!sessio.g || !/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(ev.origin)) return;
+    var d;
+    try { d = JSON.parse(ev.data); } catch (err) { return; }
+    var info = d && d.info || {}, estat = d && d.event === "onStateChange" ? d.info : info.playerState;
+    if (estat === 0 || (info.duration && info.currentTime >= info.duration - 0.3)) { fotograma(true); ordreVideo("pauseVideo"); }
+  });
 
   // ---- Força 60+: valoració del final de la sessió. L'enllaç porta f = { u: Worker, k: clau, g: signatura }.
   var valora = sessio.f && sessio.f.u && sessio.f.k && sessio.f.g ? sessio.f : null, triat = null;

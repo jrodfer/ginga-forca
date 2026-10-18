@@ -9,7 +9,7 @@
   var CANVI_COSTAT = 5;   // segons per canviar de costat en els exercicis de temps
   // Sessió guiada (sessio.g, la fa la pàgina de ioga): tot passa sol, com un vídeo. Abans de cada exercici, uns
   // segons per posar-se; les repeticions es fan a temps (SEG_REP cadascuna); OK posa en pausa i continua.
-  var PREPARA = 15, SEG_REP = 4;
+  var PREPARA = 8, SEG_REP = 4;
 
   function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   function quantitat(e) {
