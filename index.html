@@ -433,7 +433,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
         im.src = "https://i.ytimg.com/vi/" + id + "/sd2.jpg";
         im.onerror = function () { im.onerror = null; im.src = "https://i.ytimg.com/vi/" + id + "/hq2.jpg"; };
         cont.appendChild(im);
-        f.addEventListener("load", function () {           // que el vídeo ens digui quan s'acaba
+        videoArrenca = Date.now(); videoDurada = 0;
+        f.addEventListener("load", function () {           // que el vídeo ens digui per on va
           try { f.contentWindow.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*"); } catch (err) {}
         });
       }
@@ -446,15 +447,17 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     }
   }
   // Sessió guiada: el vídeo arrenca quan comença l'explicació (la presentació i «Un cop més»), sense so (parla la veu
-  // guia), i quan s'acaba s'hi queda el fotograma del mig (la imatge sd2 de YouTube: la postura feta), sense botó de
-  // pausa ni pantalla final. Al descans i a la pausa, també el fotograma. Les ordres van per postMessage (enablejsapi).
+  // guia), i s'atura a la meitat, a la postura feta, fins que s'acaba l'exercici. A sobre s'hi posa el fotograma del
+  // mig (la imatge sd2 de YouTube, la mateixa imatge), perquè no es vegi el botó de pausa. Al descans i a la pausa,
+  // també el fotograma. Les ordres van per postMessage (enablejsapi), i el vídeo diu per on va (infoDelivery).
   function ordreVideo(func, args) {
     var f = $("video").querySelector("iframe");
     if (!f || !f.contentWindow) return;
     try { f.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), "*"); } catch (err) {}
   }
   function fotograma(si) { var im = $("video").querySelector(".fotograma"); if (im) im.hidden = !si; }
-  var videoPas = "";
+  var videoPas = "", videoArrenca = 0, videoDurada = 0;
+  function arrencaVideo() { fotograma(false); videoArrenca = Date.now(); ordreVideo("seekTo", [0, true]); ordreVideo("playVideo"); }
   function videoGuiat(f) {
     if (!sessio.g || remot || f.vista !== "exercici") return;
     if (f.pausat || f.fase === "descans") { ordreVideo("pauseVideo"); return fotograma(true); }
@@ -463,14 +466,16 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     videoPas = pas;
     var explica = f.fase === "prepara" ||
       (f.fase === "feina" && (f.fetes || [])[f.i] > 0 && (f.text === "Ara" || f.text === "Primer costat"));
-    if (explica) { fotograma(false); ordreVideo("seekTo", [0, true]); ordreVideo("playVideo"); }
+    if (explica) arrencaVideo();
   }
   window.addEventListener("message", function (ev) {
     if (!sessio.g || !/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(ev.origin)) return;
     var d;
     try { d = JSON.parse(ev.data); } catch (err) { return; }
     var info = d && d.info || {}, estat = d && d.event === "onStateChange" ? d.info : info.playerState;
-    if (estat === 0 || (info.duration && info.currentTime >= info.duration - 0.3)) { fotograma(true); ordreVideo("pauseVideo"); }
+    if (info.duration) videoDurada = info.duration;
+    var aLaMeitat = videoDurada && info.currentTime >= videoDurada / 2 && Date.now() - videoArrenca > 1000;
+    if (estat === 0 || aLaMeitat) { ordreVideo("pauseVideo"); fotograma(true); }
   });
 
   // ---- Força 60+: valoració del final de la sessió. L'enllaç porta f = { u: Worker, k: clau, g: signatura }.
