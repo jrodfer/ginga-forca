@@ -1,0 +1,215 @@
+{
+ "veu": "ca-ES-JoanaNeural",
+ "frases": {
+  "comencem": {
+   "t": "Comencem.",
+   "f": "comencem-cb688d6c.mp3",
+   "s": 2.2
+  },
+  "ara_s": {
+   "t": "Som-hi. Aguanta la postura i respira a poc a poc.",
+   "f": "ara_s-e8c01133.mp3",
+   "s": 6.2
+  },
+  "ara_r": {
+   "t": "Som-hi. Segueix el ritme de la respiració.",
+   "f": "ara_r-f360c700.mp3",
+   "s": 5.4
+  },
+  "primer_s": {
+   "t": "Primer costat. Aguanta i respira.",
+   "f": "primer_s-ecc63d1e.mp3",
+   "s": 5.1
+  },
+  "primer_r": {
+   "t": "Primer costat. Al ritme de la respiració.",
+   "f": "primer_r-c0e298f5.mp3",
+   "s": 5.3
+  },
+  "canvi": {
+   "t": "Amb calma, canvia de costat.",
+   "f": "canvi-33feae1b.mp3",
+   "s": 3.6
+  },
+  "segon": {
+   "t": "Segon costat.",
+   "f": "segon-2998a12e.mp3",
+   "s": 2.5
+  },
+  "un_cop_mes": {
+   "t": "Un cop més.",
+   "f": "un_cop_mes-a0018cfe.mp3",
+   "s": 2.4
+  },
+  "descans": {
+   "t": "Molt bé. Deixa anar, i descansa uns segons.",
+   "f": "descans-c805a71b.mp3",
+   "s": 6.0
+  },
+  "respira_1": {
+   "t": "Inspira pel nas... i, quan deixis anar l'aire, entra una mica més a la postura.",
+   "f": "respira_1-4c2c0bd6.mp3",
+   "s": 7.1
+  },
+  "respira_2": {
+   "t": "Relaxa les espatlles i la mandíbula. Respira.",
+   "f": "respira_2-66bd894b.mp3",
+   "s": 6.1
+  },
+  "respira_3": {
+   "t": "Amb cada expiració, deixa que la tensió es fongui.",
+   "f": "respira_3-0599113c.mp3",
+   "s": 5.0
+  },
+  "final": {
+   "t": "Sessió acabada. Queda't uns segons estirat, amb els ulls tancats, i respira. Bona feina.",
+   "f": "final-e044071a.mp3",
+   "s": 10.5
+  },
+  "ex-3TF3q7LWCUU": {
+   "t": "Gat-vaca. A quatre grapes. Inspira i arqueja l'esquena; expira i arrodoneix-la, a poc a poc.",
+   "f": "ex-3TF3q7LWCUU-544ba65b.mp3",
+   "s": 11.1
+  },
+  "ex-u3BbO6JWEBc": {
+   "t": "Postura del nen. Seu sobre els talons, estira els braços endavant i deixa descansar el front.",
+   "f": "ex-u3BbO6JWEBc-cd3c5724.mp3",
+   "s": 9.3
+  },
+  "ex-4rYamEm0QGE": {
+   "t": "Gos cadell. Els malucs sobre els genolls; camina amb les mans endavant i deixa baixar el pit.",
+   "f": "ex-4rYamEm0QGE-4d4d01d1.mp3",
+   "s": 9.0
+  },
+  "ex-AEZGdxPi0v0": {
+   "t": "De planxa a gos cap avall. Empeny el terra i porta els malucs amunt i enrere; torna a la planxa.",
+   "f": "ex-AEZGdxPi0v0-9b546387.mp3",
+   "s": 9.6
+  },
+  "ex-NQZKcs4tOfM": {
+   "t": "Flexió a gos cap avall. Baixa en una flexió, de genolls si cal, i empeny els malucs enrere.",
+   "f": "ex-NQZKcs4tOfM-2c0817b3.mp3",
+   "s": 9.9
+  },
+  "ex-BbHzhZakamk": {
+   "t": "Gambada amb rotació. Des del gos, el peu entre les mans, el genoll a terra, i obre el braç cap al cel.",
+   "f": "ex-BbHzhZakamk-1cf87bdf.mp3",
+   "s": 10.6
+  },
+  "ex-YT0x73_ikKY": {
+   "t": "Llangardaix. Gambada baixa, les mans per dins del peu. Si et ve de gust, baixa als avantbraços.",
+   "f": "ex-YT0x73_ikKY-8c86f08b.mp3",
+   "s": 11.0
+  },
+  "ex-rikcTv-XJ6I": {
+   "t": "Home aranya. Entra i surt de la gambada baixa, suau, sense presses.",
+   "f": "ex-rikcTv-XJ6I-8c26a36e.mp3",
+   "s": 8.1
+  },
+  "ex-PqMyyC2p4Vk": {
+   "t": "Flexor del maluc. Un genoll a terra; estreny el gluti de darrere i avança el maluc.",
+   "f": "ex-PqMyyC2p4Vk-a9c632ed.mp3",
+   "s": 8.8
+  },
+  "ex-IaR_ETK_AO8": {
+   "t": "Sofà. El genoll de darrere contra la paret i el peu amunt. El tronc dret i el gluti estret.",
+   "f": "ex-IaR_ETK_AO8-d92afb58.mp3",
+   "s": 10.3
+  },
+  "ex-TxwRE_voSTU": {
+   "t": "De noranta-noranta a gambada. Gira els malucs, passa a la gambada i torna amb control.",
+   "f": "ex-TxwRE_voSTU-4f262ef8.mp3",
+   "s": 8.9
+  },
+  "ex-aUSAw196e3U": {
+   "t": "Colom. El genoll del davant cap a la mà, la cama de darrere estirada. Deixa baixar el tronc.",
+   "f": "ex-aUSAw196e3U-0c89301e.mp3",
+   "s": 10.2
+  },
+  "ex-I1R7TG6iV9c": {
+   "t": "Colom doble. Assegut, un turmell sobre l'altre genoll. L'esquena llarga, i inclina't endavant.",
+   "f": "ex-I1R7TG6iV9c-57b34cf4.mp3",
+   "s": 10.8
+  },
+  "ex-1LniuSgGVqw": {
+   "t": "Quatre estirat. Panxa amunt, el turmell sobre el genoll, i porta les cames cap al pit.",
+   "f": "ex-1LniuSgGVqw-b3a1ddd2.mp3",
+   "s": 9.4
+  },
+  "ex-RFNf526zhkk": {
+   "t": "Noranta-noranta. Assegut, les dues cames en angle recte. El tronc dret, i inclina't sobre la del davant.",
+   "f": "ex-RFNf526zhkk-2c302d59.mp3",
+   "s": 11.6
+  },
+  "ex-iLrBtr5fQyI": {
+   "t": "Pretzel. Assegut, creua un genoll per sobre de l'altra cama i gira el tronc cap a ell.",
+   "f": "ex-iLrBtr5fQyI-3f45910c.mp3",
+   "s": 8.6
+  },
+  "ex-HntQ38YzGZA": {
+   "t": "Granota. A quatre grapes, obre bé els genolls i deixa baixar els malucs a poc a poc.",
+   "f": "ex-HntQ38YzGZA-aca3cddc.mp3",
+   "s": 8.7
+  },
+  "ex-kjeyLG-P-Vc": {
+   "t": "Papallona. Assegut, les plantes dels peus juntes. Allarga l'esquena i deixa caure els genolls.",
+   "f": "ex-kjeyLG-P-Vc-4a22c3d6.mp3",
+   "s": 10.8
+  },
+  "ex-T5tgqhI-Xf8": {
+   "t": "Flexió endavant. Les cames estirades, els genolls tous si cal. Inclina't amb l'esquena llarga.",
+   "f": "ex-T5tgqhI-Xf8-1da7733c.mp3",
+   "s": 10.8
+  },
+  "ex-Cew5quhECZM": {
+   "t": "Isquios amb goma. Panxa amunt, la goma a la planta del peu. Estira la cama cap amunt.",
+   "f": "ex-Cew5quhECZM-68158841.mp3",
+   "s": 10.3
+  },
+  "ex-yxs5G2M4WxY": {
+   "t": "Bessons. Les mans a la paret, la cama de darrere estirada i el taló ben a terra.",
+   "f": "ex-yxs5G2M4WxY-f44dd059.mp3",
+   "s": 8.6
+  },
+  "ex-gTDJj4ndN5E": {
+   "t": "Bessons amb goma. Assegut, la goma a la planta del peu. Porta la punta cap a tu.",
+   "f": "ex-gTDJj4ndN5E-f3228466.mp3",
+   "s": 9.8
+  },
+  "ex-Mk2lA1Lw1xk": {
+   "t": "Mig seient. Una cama doblegada sota el maluc. Tira't enrere amb les mans fins a notar el quàdriceps.",
+   "f": "ex-Mk2lA1Lw1xk-93fa7c0f.mp3",
+   "s": 11.0
+  },
+  "ex-65wv7PURy2w": {
+   "t": "Cobra. Panxa avall, els malucs a terra. Aixeca el pit a poc a poc.",
+   "f": "ex-65wv7PURy2w-d314783a.mp3",
+   "s": 8.9
+  },
+  "ex-yKilWFKxOnU": {
+   "t": "Gos cap per amunt. Empeny amb les mans i aixeca el pit. Les espatlles lluny de les orelles.",
+   "f": "ex-yKilWFKxOnU-bbe642a2.mp3",
+   "s": 10.1
+  },
+  "ex-1JBhEJcm0fc": {
+   "t": "Pont. Panxa amunt, els peus a terra. Puja els malucs estrenyent els glutis, i aguanta.",
+   "f": "ex-1JBhEJcm0fc-0acf4b58.mp3",
+   "s": 10.3
+  },
+  "ex-d2-djDRFMdY": {
+   "t": "Torsió. Panxa amunt, els braços en creu. Deixa caure el genoll cap a l'altre costat.",
+   "f": "ex-d2-djDRFMdY-cd958b4d.mp3",
+   "s": 10.1
+  },
+  "ex-QT2pOIMkq4s": {
+   "t": "Nadó feliç. Panxa amunt, agafa't els peus per fora i porta els genolls cap a les aixelles.",
+   "f": "ex-QT2pOIMkq4s-55cb100f.mp3",
+   "s": 9.1
+  },
+  "ex-3wnGJ8mPH_c": {
+   "t": "Genolls al pit. Abraça't els genolls i deixa que l'esquena es relaxi a terra.",
+   "f": "ex-3wnGJ8mPH_c-23459677.mp3",
+   "s": 8.0
+  }
+ }
+}

@@ -312,33 +312,52 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   var audio = null;
   function preparaSo() {
     try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (err) {}
-    desbloquejaVeu();
+    precarregaVeu();
   }
 
   // ---- veu guia (només a les sessions guiades, sessio.g: la pàgina de ioga). Diu cada pas, com un vídeo de ioga.
+  // Són frases gravades amb una veu neural (estiraments/veu.py): sessio.a és la carpeta, amb index.json, que diu
+  // quin mp3 és cada clau. Sonen per l'AudioContext, que el primer toc (Comença) ja ha desbloquejat. Si no es poden
+  // carregar, no parla: queden els xiulets.
   var veu = true;
   try { veu = localStorage.getItem("ginga-veu") !== "no"; } catch (err) {}
-  var sintesi = window.speechSynthesis, veuCa = null, veuDesbloquejada = false;
-  function triaVeu() {
-    if (!sintesi) return;
-    var vs = sintesi.getVoices() || [];
-    veuCa = vs.filter(function (v) { return /^ca/i.test(v.lang); })[0] || null;
+  var carpetaVeu = sessio.g && /^[a-z0-9_-]+(\/[a-z0-9_-]+)*\/$/.test(sessio.a || "") ? sessio.a : null;
+  var frases = null, sons = {}, font = null, torn = 0, precarregada = false, nRespira = 0;
+  if (carpetaVeu) {
+    fetch(carpetaVeu + "index.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (ix) { frases = ix && ix.frases || null; precarregaVeu(); }).catch(function () {});
   }
-  if (sintesi) { triaVeu(); try { sintesi.addEventListener("voiceschanged", triaVeu); } catch (err) {} }
-  function desbloquejaVeu() {                              // iOS: la primera vegada ha de ser dins d'un toc
-    if (!sintesi || veuDesbloquejada || !sessio.g) return;
-    veuDesbloquejada = true;
-    try { var u = new SpeechSynthesisUtterance(" "); u.volume = 0; sintesi.speak(u); } catch (err) {}
+  function carregaFrase(k, fet) {
+    if (sons[k] || !audio || !frases || !frases[k]) return fet(sons[k] || null);
+    fetch(carpetaVeu + frases[k].f).then(function (r) { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(function (b) { audio.decodeAudioData(b, function (s) { sons[k] = s; fet(s); }, function () { fet(null); }); })
+      .catch(function () { fet(null); });
   }
-  function parla(text) {
-    if (!sessio.g || !veu || !sintesi || !text) return;
-    try {
-      sintesi.cancel();
-      var u = new SpeechSynthesisUtterance(text);
-      u.lang = veuCa ? veuCa.lang : "ca-ES"; if (veuCa) u.voice = veuCa;
-      u.rate = 0.88; u.pitch = 0.95;                       // a poc a poc: és ioga
-      sintesi.speak(u);
-    } catch (err) {}
+  function precarregaVeu() {                               // les frases d'aquesta sessió, perquè no hi hagi espera
+    if (precarregada || !audio || !frases) return;
+    precarregada = true;
+    Object.keys(frases).forEach(function (k) {
+      if (k.indexOf("ex-") !== 0 || sessio.e.some(function (e) { return "ex-" + e.v === k; })) carregaFrase(k, function () {});
+    });
+  }
+  function calla() {
+    torn++;
+    if (font) { try { font.onended = null; font.stop(); } catch (err) {} font = null; }
+  }
+  function diu(claus) {                                    // les frases una darrere l'altra; talla el que deia
+    if (!sessio.g || !veu || !frases || !audio) return;
+    calla();
+    var meu = torn;
+    (function seguent(n) {
+      if (meu !== torn || n >= claus.length) return;
+      carregaFrase(claus[n], function (s) {
+        if (meu !== torn) return;
+        if (!s) return seguent(n + 1);
+        font = audio.createBufferSource(); font.buffer = s; font.connect(audio.destination);
+        font.onended = function () { font = null; seguent(n + 1); };
+        font.start();
+      });
+    })(0);
   }
   function pintaVeu() {
     $("veu").hidden = !sessio.g;
@@ -348,29 +367,31 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   $("veu").addEventListener("click", function () {
     veu = !veu; preparaSo();
     try { localStorage.setItem("ginga-veu", veu ? "si" : "no"); } catch (err) {}
-    if (!veu && sintesi) sintesi.cancel();
+    if (!veu) calla();
     pintaVeu();
   });
   var guiaAbans = "";
-  function guia(f) {                                       // què dir quan canvia el pas
+  function guia(f) {                                       // què dir quan canvia el pas (les claus, a estiraments/veu.py)
     if (!sessio.g) return;
     var e = sessio.e[f.i] || {}, clauPas = [f.vista, f.i, f.fase, f.text, (f.fetes || [])[f.i]].join("|");
     if (clauPas === guiaAbans || f.pausat) return;
     guiaAbans = clauPas;
-    if (f.vista === "final") return parla("Sessió acabada. Queda't uns segons estirat i respira. Bona feina.");
+    if (f.vista === "final") return diu(["final"]);
     if (f.vista !== "exercici") return;
-    if (f.fase === "prepara") return parla((f.i === 0 ? "Comencem. " : "Següent. ") + e.n + ". " + (e.x || ""));
+    if (f.fase === "prepara") return diu((f.i === 0 ? ["comencem"] : []).concat("ex-" + e.v));
     if (f.fase === "feina") {
-      var rep = e.u === "r" ? " " + e.q + " vegades, al ritme de la respiració." : " Respira a poc a poc.";
-      if (f.text === "Canvia de costat") return parla("Canvia de costat.");
-      if (f.text === "Segon costat") return parla("Segon costat." + (e.u === "r" ? "" : " Deixa anar."));
-      var cop = (f.fetes || [])[f.i] > 0 ? "Un cop més. " : "";
-      return parla(cop + (f.text === "Primer costat" ? "Primer costat." : "Ara.") + rep);
+      if (f.text === "Canvia de costat") return diu(["canvi"]);
+      if (f.text === "Segon costat") return diu(["segon"]);
+      var u = e.u === "r" ? "r" : "s";
+      return diu(((f.fetes || [])[f.i] > 0 ? ["un_cop_mes"] : []).concat((f.text === "Primer costat" ? "primer_" : "ara_") + u));
     }
-    if (f.fase === "descans") return parla("Descansa. Respira.");
+    if (f.fase === "descans") return diu(["descans"]);
+  }
+  function respira() {                                     // a la meitat d'aguantar una postura, una frase per respirar
+    diu([["respira_1", "respira_2", "respira_3"][nRespira++ % 3]]);
   }
   function xiulet(n) {
-    if (sessio.g && veu) return;                          // la veu ja ho diu
+    if (sessio.g && veu && frases) return;                 // la veu ja ho diu
     if (navigator.vibrate) { try { navigator.vibrate(n > 1 ? [200, 100, 200] : 150); } catch (err) {} }
     if (!audio) return;
     for (var k = 0; k < (n || 1); k++) {
@@ -399,9 +420,10 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     videoActual = e.v + "|" + e.n;
     var cont = $("video"); cont.textContent = "";
     if (e.v) {
-      var f = document.createElement("iframe");
-      f.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(e.v) + "?rel=0&playsinline=1&modestbranding=1";
-      f.title = "Vídeo: " + e.n; f.loading = "lazy";
+      var f = document.createElement("iframe"), id = encodeURIComponent(e.v);
+      f.src = "https://www.youtube-nocookie.com/embed/" + id + "?rel=0&playsinline=1&modestbranding=1" +
+        (sessio.g ? "&enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=" + id + "&origin=" + encodeURIComponent(location.origin) : "");
+      f.title = "Vídeo: " + e.n; if (!sessio.g) f.loading = "lazy";
       f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
       f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
       cont.appendChild(f);
@@ -412,6 +434,22 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
       a.target = "_blank"; a.rel = "noopener"; a.textContent = "Busca un vídeo de «" + e.n + "» a YouTube";
       d.appendChild(a); cont.appendChild(d);
     }
+  }
+  // Sessió guiada: el vídeo arrenca sol, sense so (parla la veu guia) i en bucle; torna a començar a cada sèrie i
+  // a cada costat, i s'atura al descans i a la pausa. Les ordres van per postMessage (enablejsapi).
+  function ordreVideo(func, args) {
+    var f = $("video").querySelector("iframe");
+    if (!f || !f.contentWindow) return;
+    try { f.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), "*"); } catch (err) {}
+  }
+  var videoPas = "";
+  function videoGuiat(f) {
+    if (!sessio.g || remot || f.vista !== "exercici") return;
+    if (f.pausat || f.fase === "descans") return ordreVideo("pauseVideo");
+    var pas = [f.i, f.fase, f.text, (f.fetes || [])[f.i]].join("|");
+    if (pas !== videoPas && f.fase === "feina" && f.text !== "Canvia de costat") ordreVideo("seekTo", [0, true]);
+    videoPas = pas;
+    ordreVideo("playVideo");
   }
 
   // ---- Força 60+: valoració del final de la sessió. L'enllaç porta f = { u: Worker, k: clau, g: signatura }.
@@ -487,7 +525,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 
     var serie = f.fase === "serie", feina = f.fase === "feina" || f.fase === "prepara", descans = f.fase === "descans";
     $("bloc-serie").hidden = !serie; $("bloc-feina").hidden = !feina; $("bloc-descans").hidden = !descans;
-    guia(f);
+    guia(f); videoGuiat(f);
     if (serie) {
       var q = quantitat(e);
       $("serie-txt").textContent = e.s > 1 ? "Sèrie " + (fetes + 1) + " de " + e.s : "Una tanda";
@@ -503,13 +541,16 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     $("accio").textContent = sessio.g && !serie ? (f.pausat ? "Continua" : "Pausa")
       : feina ? "Acaba ara" : (e.u === "s" ? "Comença el temps" : "Sèrie feta");
     compte = (feina || descans) && f.queda != null && !f.pausat ? { fi: Date.now() + f.queda * 1000 } : null;
+    if (compte && sessio.g && f.fase === "feina" && e.u === "s" && f.text !== "Canvia de costat" && f.total >= 20 &&
+        f.queda > f.total / 2 + 1) compte.respira = f.total / 2;                  // quan en quedi la meitat
     if (f.pausat && f.queda != null) { $("feina-temps").textContent = $("descans-temps").textContent = mmss(f.queda); }
     rellotge();
   }
   function rellotge() {
     if (!compte) return;
-    var t = mmss((compte.fi - Date.now()) / 1000);
+    var queda = (compte.fi - Date.now()) / 1000, t = mmss(queda);
     $("feina-temps").textContent = t; $("descans-temps").textContent = t;
+    if (compte.respira && queda <= compte.respira) { compte.respira = null; respira(); }
   }
   setInterval(rellotge, 250);
 

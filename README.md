@@ -4,9 +4,11 @@ Reproductor de sessions de força: cada exercici amb el seu vídeo, les sèries 
 
 La sessió va dins l'enllaç (després del `#`) que envia Ginga al correu setmanal; aquesta pàgina no guarda ni rep cap dada.
 
-Si l'enllaç porta `g: 1` (sessió guiada; ara, només la de `ioga/`), la sessió passa sola com un vídeo: uns segons per
+Si l'enllaç porta `g: 1` (sessió guiada; ara, només la de `ioga/`), la sessió passa sola com un vídeo: 15 s per
 posar-se abans de cada exercici, les repeticions a temps, una veu guia que es pot apagar i Pausa (també amb l'OK del
-comandament de la tele). Sense `g`, tot funciona com sempre.
+comandament de la tele). El vídeo arrenca sol, sense so i en bucle, torna a començar a cada sèrie i s'atura al
+descans. La veu són frases gravades amb una veu neural (`a`: la carpeta, amb `index.json`; ara, `ioga/veu/`, que
+fa `python -m estiraments.veu`). Sense `g`, tot funciona com sempre.
 
 ## Ioga per corredors (`ioga/`)
 

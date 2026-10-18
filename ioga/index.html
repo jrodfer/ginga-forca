@@ -124,7 +124,7 @@ p { margin: 0; }
     var t = 0;
     es.forEach(function (e) {
       var q = e.q * (e.u === "r" ? 3 : 1);
-      t += e.s * ((e.c ? 2 * q + CANVI_COSTAT_S : q) + e.d) + 10;
+      t += e.s * ((e.c ? 2 * q + CANVI_COSTAT_S : q) + e.d) + 15;      // 15: la preparació (web/motor.js)
     });
     return Math.max(1, Math.round(t / 60));
   }
@@ -170,7 +170,7 @@ p { margin: 0; }
         }
         llista.appendChild(c);
       });
-      $("comenca").href = "../#" + codi({ t: TITOL, d: dia, l: "ca", e: es, m: NOTA, g: 1 })   // g: guiada (passa sola, amb veu);
+      $("comenca").href = "../#" + codi({ t: TITOL, d: dia, l: "ca", e: es, m: NOTA, g: 1, a: "ioga/veu/" });   // g: guiada (passa sola); a: la veu gravada
     }
 
     $("una-altra").addEventListener("click", function () {
