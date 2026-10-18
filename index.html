@@ -414,7 +414,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   });
 
   // ---- vídeo (al mòbil només quan no s'emet: si no, sona per partida doble)
-  var videoActual = null, videoQuart = 3;
+  var videoActual = null, videoQuart = 3, videoSegon = 0;
   function posaVideo(e) {
     $("tele").hidden = !e.v;
     if (e.v) $("tele").href = "https://www.youtube.com/watch?v=" + encodeURIComponent(e.v);
@@ -431,7 +431,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
       f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
       cont.appendChild(f);
       if (sessio.g) {                                      // el fotograma on s'atura (e.p, en quarts; 3/4 si no ho diu)
-        videoQuart = e.p === 2 ? 2 : 3;
+        videoQuart = e.p === 1 || e.p === 2 ? e.p : 3; videoSegon = e.ps > 0 ? e.ps : 0;
         var im = document.createElement("img"); im.className = "fotograma"; im.alt = ""; im.hidden = true;
         im.src = "https://i.ytimg.com/vi/" + id + "/sd" + videoQuart + ".jpg";   // YouTube: 1, 2, 3 = 1/4, 1/2, 3/4
         im.onerror = function () { im.onerror = null; im.src = "https://i.ytimg.com/vi/" + id + "/hq" + videoQuart + ".jpg"; };
@@ -450,9 +450,9 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     }
   }
   // Sessió guiada: el vídeo arrenca quan comença l'explicació (la presentació i «Un cop més»), sense so (parla la veu
-  // guia), i s'atura als 3/4 (o a la meitat, si l'exercici ho diu: e.p), a la postura feta, fins que s'acaba
-  // l'exercici. A sobre s'hi posa el mateix fotograma (les imatges sd3 o sd2 de YouTube), perquè no es vegi el botó de
-  // pausa; també a la pausa. Al descans, fons negre. Les ordres van per postMessage (enablejsapi), i el vídeo diu per on va (infoDelivery).
+  // guia), i s'atura als 3/4 (o on digui l'exercici: e.p en quarts, o e.ps en segons), a la postura feta, fins que
+  // s'acaba l'exercici. A sobre s'hi posa la imatge de YouTube d'aquell quart (sd1, sd2 o sd3), perquè no es vegi el
+  // botó de pausa; també a la pausa. Al descans, fons negre. Les ordres van per postMessage (enablejsapi), i el vídeo diu per on va (infoDelivery).
   function ordreVideo(func, args) {
     var f = $("video").querySelector("iframe");
     if (!f || !f.contentWindow) return;
@@ -479,7 +479,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     try { d = JSON.parse(ev.data); } catch (err) { return; }
     var info = d && d.info || {}, estat = d && d.event === "onStateChange" ? d.info : info.playerState;
     if (info.duration) videoDurada = info.duration;
-    var aLlocDeParar = videoDurada && info.currentTime >= videoDurada * videoQuart / 4 && Date.now() - videoArrenca > 1000;
+    var para = videoSegon || videoDurada * videoQuart / 4;
+    var aLlocDeParar = videoDurada && info.currentTime >= para && Date.now() - videoArrenca > 1000;
     if (estat === 0 || aLlocDeParar) { ordreVideo("pauseVideo"); fotograma(true); }
   });
 
