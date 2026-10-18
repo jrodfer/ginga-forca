@@ -323,10 +323,11 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   var veu = true;
   try { veu = localStorage.getItem("ginga-veu") !== "no"; } catch (err) {}
   var carpetaVeu = sessio.g && /^[a-z0-9_-]+(\/[a-z0-9_-]+)*\/$/.test(sessio.a || "") ? sessio.a : null;
-  var frases = null, sons = {}, font = null, torn = 0, precarregada = false, nRespira = 0;
+  var frases = null, silenci = 0, sons = {}, font = null, torn = 0, precarregada = false, nRespira = 0;
   if (carpetaVeu) {
     fetch(carpetaVeu + "index.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (ix) { frases = ix && ix.frases || null; precarregaVeu(); }).catch(function () {});
+      .then(function (ix) { frases = ix && ix.frases || null; silenci = ix && ix.silenci || 0; precarregaVeu(); })
+      .catch(function () {});
   }
   function carregaFrase(k, fet) {
     if (sons[k] || !audio || !frases || !frases[k]) return fet(sons[k] || null);
@@ -356,7 +357,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
         if (!s) return seguent(n + 1);
         font = audio.createBufferSource(); font.buffer = s; font.connect(audio.destination);
         font.onended = function () { font = null; seguent(n + 1); };
-        font.start(0, 0, Math.max(0.2, s.duration - 0.9));   // sense el silenci del final (estiraments/veu.py: SILENCI)
+        font.start(0, 0, Math.max(0.2, s.duration - silenci));   // sense el silenci del final (index.json)
       });
     })(0);
   }

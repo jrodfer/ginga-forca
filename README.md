@@ -7,8 +7,8 @@ La sessió va dins l'enllaç (després del `#`) que envia Ginga al correu setman
 Si l'enllaç porta `g: 1` (sessió guiada; ara, només la de `ioga/`), la sessió passa sola com un vídeo: 8 s per
 posar-se abans de cada exercici, les repeticions a temps, una veu guia que es pot apagar i Pausa (també amb l'OK del
 comandament de la tele). El vídeo, sense so, es reprodueix quan comença l'explicació (la presentació de cada
-exercici i «Un cop més») i s'atura a la meitat, a la postura feta, fins que s'acaba l'exercici, sense botó de pausa. La veu són frases gravades amb una veu neural (`a`: la carpeta, amb `index.json`; ara, `ioga/veu/`, que
-fa `python -m estiraments.veu`). Sense `g`, tot funciona com sempre.
+exercici i «Un cop més») i s'atura a la meitat, a la postura feta, fins que s'acaba l'exercici, sense botó de pausa. La veu són frases gravades amb Eleven v4 d'ElevenLabs (`a`: la carpeta, amb `index.json`; ara,
+`ioga/veu/ca/` o `ioga/veu/en/`, segons l'idioma que es tria a la pàgina de ioga, i les fa `python -m estiraments.veu`). Sense `g`, tot funciona com sempre.
 
 ## Ioga per corredors (`ioga/`)
 
