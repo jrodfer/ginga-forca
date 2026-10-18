@@ -94,22 +94,49 @@
     return { dolents, metres };
   }
 
-  // Carreteres principals (molt trànsit), que la bici de carretera evita: la referència del nom ho diu millor que
-  // el waytype d'openrouteservice, que marca la C-260 com a "carretera" igual que una GIV. Estat (N-, A-, AP-, E-)
-  // i xarxa bàsica de la Generalitat (C-); les de les diputacions (GI-, GIV-, BV-...) i els antics trams (C-260z),
-  // no. On no hi ha referència, el waytype 1 (carretera principal) d'openrouteservice.
-  const REF_PRINCIPAL = /\b(?:N|A|AP|E|C)-(?:\d+|[IVX]+)\b(?![a-z])/;
+  // Trànsit de cada tram, de 0 (cap) a 1 (molt), pel tipus de carretera: a la bici de carretera, com menys trànsit,
+  // millor. Les vies principals són més perilloses per als ciclistes que les secundàries [REYNOLDS2009], i els límits
+  // de més de 70-80 km/h i els camions agreugen les lesions [KAPLAN2014]. No hi ha aforaments per a tot arreu: el
+  // tipus de carretera n'és l'aproximació, i els nivells són criteri (metodologia/regles.yaml). La referència del nom
+  // ho diu millor que el waytype d'openrouteservice, que marca la C-252 o la N-IIa com a "carretera" igual que una GIV.
+  const TRANSIT_REF = [            // de més a menys: un nom amb dues referències ("N-II > GI-513") es queda la més alta
+    [1, /\b(?:N|A|AP|E)[- ](?:\d+|[IVX]+)\b(?![a-z])|\bC-\d{1,2}\b(?![a-z])/],  // l'Estat (N-II, N-260) i els eixos (C-31)
+    [0.7, /\bN-(?:\d+|[IVX]+)a\b|\bC-\d{3}\b(?![a-z])/],                        // antics trams de l'Estat (N-IIa) i la C-252
+    [0.4, /\b(?:GI|B|T|L)-\d{3}\b(?![a-z])|\b[A-Z]{1,3}-\d+[az]\b/],              // diputacions (GI-610) i antics trams (C-260z)
+    [0.15, /\b(?:GIV|GIP|BV|TV|LV)-\d+|\b[A-Z]{1,3}-\d{4}\b/],                    // veïnals i secundàries (GIV-6211, GI-5101)
+  ];
+  const TRANSIT_ALTRA_REF = 0.4;   // una referència d'enlloc més (D 914, M-607): de les del mig
+  const REF = /\b(?!GR|EV)[A-Z]{1,3}[- ]\d{1,4}[a-z]?\b/;   // els senders (GR 92) i les EuroVelo no són carreteres
+  // sense referència, pel waytype: 1 carretera principal, 2 carretera (camins asfaltats), 3 carrer, 6 carril bici
+  const TRANSIT_WAYTYPE = { 1: 1, 2: 0.15, 3: 0.2, 6: 0 };
+  const NIVELL_PRINCIPAL = 0.7;    // d'aquí amunt, carretera principal: se'n treuen els trams llargs i es diu el %
   const TRAM_PRINCIPAL = 300;      // m seguits per una principal que ja es miren d'evitar (creuar-la o un tros curt, no)
   const CADA_EVITA_PRINCIPAL = 400;  // per tallar una carretera n'hi ha prou amb un punt de tant en tant
 
-  /** Quins punts van per carretera principal; quants metres en fan; i quins són de trams llargs (> 300 m). */
-  function perPrincipal(coords, acc, passos, waytype) {
+  /** Trànsit (0-1) d'un tram pel nom del pas d'openrouteservice, o null si el nom no porta cap referència. */
+  function transitRef(nom) {
+    for (const [nivell, re] of TRANSIT_REF) if (re.test(nom || "")) return nivell;
+    return REF.test(nom || "") ? TRANSIT_ALTRA_REF : null;
+  }
+
+  /**
+   * El trànsit de cada punt; la mitjana de tot el circuit (0-1); quins punts van per carretera principal i quants
+   * metres en fan; i quins són de trams llargs (> 300 m) per principal.
+   */
+  function perTransit(coords, acc, passos, waytype) {
     const total = acc[acc.length - 1];
-    const principal = new Array(coords.length).fill(false);
+    const nivell = new Array(coords.length).fill(null);
     for (const pas of passos) {
-      if (pas.way_points && REF_PRINCIPAL.test(pas.name || "")) for (let i = pas.way_points[0]; i < pas.way_points[1]; i++) principal[i] = true;
+      const n = pas.way_points ? transitRef(pas.name) : null;
+      if (n != null) for (let i = pas.way_points[0]; i < pas.way_points[1]; i++) nivell[i] = n;
     }
-    for (const [ini, fi, valor] of (waytype && waytype.values) || []) if (valor === 1) for (let i = ini; i < fi; i++) principal[i] = true;
+    const perWaytype = new Array(coords.length).fill(0);
+    for (const [ini, fi, valor] of (waytype && waytype.values) || []) for (let i = ini; i < fi; i++) perWaytype[i] = TRANSIT_WAYTYPE[valor] || 0;
+    // l'OSM marca les principals (trunk, primary) encara que no portin referència: llavors mana el waytype 1
+    for (let i = 0; i < coords.length; i++) nivell[i] = nivell[i] == null ? perWaytype[i] : Math.max(nivell[i], perWaytype[i] === 1 ? 1 : 0);
+    let suma = 0;
+    for (let i = 0; i < coords.length - 1; i++) suma += nivell[i] * (acc[i + 1] - acc[i]);
+    const principal = nivell.map((n) => n >= NIVELL_PRINCIPAL);
     let metres = 0;
     const llarg = new Array(coords.length).fill(false);
     for (let i = 0; i < coords.length - 1;) {
@@ -122,7 +149,7 @@
       }
       i = j;
     }
-    return { principal, metres, llarg };
+    return { nivell, transit: total ? suma / total : 0, principal, metres, llarg };
   }
 
   /** Punts de pas per tornar a fer el circuit per on anava, sempre sobre trams bons (per a la reparació). */
@@ -181,15 +208,18 @@
     const km = (p.summary && p.summary.distance ? p.summary.distance : acc[acc.length - 1]) / 1000;
     const surface = fraccions(extras.surface, acc);
     const waytype = fraccions(extras.waytype || extras.waytypes, acc);   // el nom va canviar a ORS 9
-    const passos = ((p.segments || [])[0] || {}).steps || [];
+    // amb punts de pas (les reparacions), openrouteservice dona un tram per a cada un, amb els way_points de tota
+    // la ruta: els passos de tots, sense l'arribada a cada punt de pas del mig (abans, només els del primer tram)
+    const trams = p.segments || [];
+    const passos = trams.flatMap((s, n) => (s.steps || []).filter((pas) => pas.type !== 10 || n === trams.length - 1));
     let senseAsfalt = 0;
     for (const [v, x] of Object.entries(surface)) if (SURFACE_SENSE_PAVIMENTAR.has(Number(v))) senseAsfalt += x;
     const fora = foraCarretera(coords, acc, extras);
-    const princ = perPrincipal(coords, acc, passos, extras.waytype || extras.waytypes);
+    const princ = perTransit(coords, acc, passos, extras.waytype || extras.waytypes);
     return {
       coords, acc, km,
       dolents: fora.dolents, foraCarretera: fora.metres,
-      principal: princ.metres / (acc[acc.length - 1] || 1), principalLlarg: princ.llarg,
+      transit: princ.transit, principal: princ.metres / (acc[acc.length - 1] || 1), principalLlarg: princ.llarg,
       tramsPrincipals: princ.llarg.some(Boolean),
       desnivell: p.ascent != null ? p.ascent : desnivellPositiu(coords),
       senseAsfalt,
@@ -199,6 +229,19 @@
       girsPerKm: passos.filter((s) => s.type <= 9 && s.type !== 6).length / Math.max(km, 0.1),
       passos,
     };
+  }
+
+  // Una quarta part del circuit per la C-31 (1) en lloc d'una GIV (0,15) paga 5 x 0,25 x 0,85 = 1,1, com un 35% de
+  // desviació dels km; per una GI- de tres xifres (0,4), 0,3, com un 10%. Abans, només les principals: 4 x fracció.
+  const PES_TRANSIT = 5;
+
+  // Com es diu a l'atleta: poc trànsit per sota de 0,25 (veïnals i camins asfaltats, amb com a molt un 10% per la
+  // C-31); moderat, com la meitat per GI- de tres xifres (0,28); molt, com una tercera part per la C-31 (0,43).
+  const GRAUS_TRANSIT = [0.25, 0.4];
+
+  /** 0 poc trànsit, 1 moderat, 2 molt, a partir de la mitjana del circuit. */
+  function grauTransit(transit) {
+    return GRAUS_TRANSIT.filter((g) => (transit || 0) >= g).length;
   }
 
   /** Desnivell que busquem (m), segons la sessió. */
@@ -217,7 +260,7 @@
     let pena = 3 * errKm + fora / Math.max(dMax, 50);
     if (sessio.s === "ride") {
       pena += (sessio.o === "cycling-road" ? 3 : 0.5) * r.senseAsfalt + (sessio.o === "cycling-road" ? 1.5 : 0) * r.camins;
-      if (sessio.o === "cycling-road") pena += 4 * (r.principal || 0);   // millor per carreteres locals que per una C- o N-
+      if (sessio.o === "cycling-road") pena += PES_TRANSIT * (r.transit || 0);   // com menys trànsit, millor
     } else {
       pena += 0.8 * r.carretera + 2 * r.escales;        // córrer lluny del trànsit, i sense escales
     }
@@ -478,7 +521,7 @@ out tags geom qt;`;
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
-    foraCarretera, perPrincipal, puntsDePas, puntsAEvitar, esCarretera,
+    foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
