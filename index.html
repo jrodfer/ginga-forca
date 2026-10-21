@@ -113,6 +113,10 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .valora { display: grid; gap: 10px; text-align: left; }
 .valora .tria { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .valora .tria button[aria-pressed="true"] { background: var(--ok); color: #fff; border-color: var(--ok); }
+.lloc { display: grid; gap: 8px; }
+.lloc .tria { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lloc .tria .btn { padding: 12px 10px; }
+.lloc .tria button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .valora label { display: flex; gap: 10px; align-items: center; font-weight: 600; padding: 4px 0; }
 .valora input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--ok); }
 .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
@@ -175,6 +179,13 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 
   <!-- Resum de la sessió -->
   <section id="vista-resum" class="card" style="display:grid;gap:14px">
+    <div class="lloc" id="lloc" hidden>
+      <span class="eyebrow">On la fas?</span>
+      <div class="tria" role="group" aria-label="On la fas">
+        <button class="btn sec" type="button" data-lloc="gimnas" aria-pressed="true">Al gimnàs</button>
+        <button class="btn sec" type="button" data-lloc="casa" aria-pressed="false">A casa</button>
+      </div>
+    </div>
     <ol class="plan" id="llista"></ol>
     <details id="notes-bloc" hidden><summary>Notes de l'entrenador</summary><p id="notes"></p></details>
     <button class="btn" id="comenca" type="button">Comença</button>
@@ -287,6 +298,23 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   var esExemple = !sessio;
   sessio = sessio || EXEMPLE;
   var clau = "ginga-forca:" + ((location.hash || "").slice(1, 80) || "exemple");
+
+  // ---- al gimnàs o a casa: els exercicis amb alternativa de casa (e.k) es canvien sencers; la resta, igual
+  var gimnas = sessio.e, teCasa = gimnas.some(function (e) { return e.k; }), clauLloc = "ginga-lloc:" + clau;
+  function posaLloc(casa) {
+    sessio.e = gimnas.map(function (e) {
+      if (!casa || !e.k) return e;
+      var x = {}; Object.keys(e).forEach(function (k) { if (k !== "k") x[k] = e[k]; });
+      Object.keys(e.k).forEach(function (k) { x[k] = e.k[k]; });
+      return x;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#lloc button"), function (b) {
+      b.setAttribute("aria-pressed", (b.getAttribute("data-lloc") === "casa") === casa ? "true" : "false");
+    });
+  }
+  var aCasa = false;
+  try { aCasa = teCasa && localStorage.getItem(clauLloc) === "casa"; } catch (err) {}
+  posaLloc(aCasa);
 
   var G = window.GingaMotor, mmss = G.mmss, quantitat = G.quantitat, pauta = G.pauta;
   var $ = function (id) { return document.getElementById(id); };
@@ -621,6 +649,19 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     if (remot) envia({ tipus: "comandament", accio: accio, i: arg });
     else if (motor) motor.accio(accio, arg);
   }
+  $("lloc").hidden = !teCasa;
+  Array.prototype.forEach.call(document.querySelectorAll("#lloc button"), function (b) {
+    b.addEventListener("click", function () {
+      var casa = b.getAttribute("data-lloc") === "casa";
+      if (casa === aCasa) return;
+      aCasa = casa; posaLloc(casa);
+      try { localStorage.setItem(clauLloc, casa ? "casa" : "gimnas"); } catch (err) {}
+      var f = foto ? { i: foto.i, fetes: foto.fetes, vista: "resum" } : null;
+      if (remot) return envia({ tipus: "inici", sessio: sessio, estat: f });   // la tele refà el motor
+      if (motor) motor.atura();
+      motorLocal(f);
+    });
+  });
   $("comenca").addEventListener("click", function () { fes("comenca"); });
   $("reinicia").addEventListener("click", function () { fes("reinicia"); });
   $("accio").addEventListener("click", function () { fes("principal"); });
