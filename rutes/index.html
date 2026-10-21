@@ -228,6 +228,8 @@ const T = {
       pista: "Les sèries ({n}x{q}) surten millor a una pista d'atletisme: ritme exacte i sense semàfors.",
     },
     desnivellM: "Uns {a} m de desnivell positiu.",
+    fixa: "La ruta que t'ha preparat l'entrenador. Descarrega'n el GPX per al rellotge o segueix-la amb el mòbil.",
+    laRuta: "La ruta",
     sortida: "D'on surts?", cerca: "Cerca", placeholder: "Ciutat, adreça o lloc",
     aqui: "Surto d'on sóc ara", ajuda: "O toca el mapa per triar el punt de sortida. Pots moure'l arrossegant-lo.",
     busca: "Busca rutes", buscaPistes: "Busca pistes a prop", buscant: "Buscant…",
@@ -279,6 +281,8 @@ const T = {
       pista: "The intervals ({n}x{q}) work best on an athletics track: exact pace and no traffic lights.",
     },
     desnivellM: "About {a} m of climbing.",
+    fixa: "The route your coach has set for you. Download the GPX for your watch or follow it on your phone.",
+    laRuta: "The route",
     sortida: "Where are you starting from?", cerca: "Search", placeholder: "City, address or place",
     aqui: "Start from where I am", ajuda: "Or tap the map to set the starting point. You can drag it.",
     busca: "Find routes", buscaPistes: "Find tracks nearby", buscant: "Searching…",
@@ -351,7 +355,7 @@ function pintaSessio() {
     const d = new Date(S.d + "T12:00:00");
     $("quan").textContent = `${t.dies[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1} · ${t[S.s] || ""}`;
   }
-  const xifres = [`~${fmt(S.k)} ${t.km}`, S.m ? `~${S.m} ${t.min}` : ""].filter(Boolean);
+  const xifres = [`~${fmt(S.k)} ${t.km}`, S.m ? `~${S.m} ${t.min}` : "", S.f && S.h ? `${Math.round(S.h)} ${t.dPos}` : ""].filter(Boolean);
   // com a text, no com a HTML: el que hi ha darrere del # (km, minuts) ve de l'enllaç, i qualsevol el pot editar
   $("xifres").replaceChildren(...xifres.map((x) => Object.assign(document.createElement("span"), { textContent: x })));
   const r = S.r || {};
@@ -359,7 +363,7 @@ function pintaSessio() {
   const g = r.g ? (r.g[0] === r.g[1] ? r.g[0] : `${r.g[0]}-${r.g[1]}`) : "";
   let que = omple(t.perfil[S.p] || t.perfil.suau, { n: r.n, q, m: r.m, g });
   if (S.p === "desnivell" && S.a) que += " " + omple(t.desnivellM, { a: S.a[0] === S.a[1] ? S.a[0] : `${S.a[0]}-${S.a[1]}` });
-  $("que-busquem").textContent = que;
+  $("que-busquem").textContent = S.f ? t.fixa : que;
   if (S.k > 100) { $("avis").textContent = t.llarga; $("avis").hidden = false; }
   $("sessio").hidden = false;
 }
@@ -438,6 +442,19 @@ function posaSortida(p, desa = true) {
     marcaSortida.setLatLng([p[1], p[0]]);
   }
   $("b-busca").disabled = false;
+}
+
+// ---------- la ruta feta ----------
+// Un enllaç de coach/ruta_fixa.py: la ruta ja hi és, sense triar d'on surts ni calcular res.
+function mostraRutaFixa() {
+  for (const id of ["t-sortida", "cerca", "b-aqui", "ajuda-mapa", "b-busca"]) $(id).hidden = true;
+  $("sortida").hidden = false;
+  mapa = L_.map("mapa", { zoomControl: true }).setView([41.6, 2.2], 8);
+  // la ruta l'ha calculat BRouter, no openrouteservice
+  L_.tileLayer(TESSELES, { maxZoom: 19, attribution: ATRIBUCIO.replace(
+    '<a href="https://openrouteservice.org/">openrouteservice</a>', '<a href="https://brouter.de/">BRouter</a>') }).addTo(mapa);
+  propostes = [{ r: Motor.rutaFixa(S) }];
+  pintaPropostes(S);
 }
 
 // ---------- pistes ----------
@@ -671,13 +688,13 @@ function pintaPropostes(sessio) {
       const g = sessio.r.g, encaixa = p.pujada.pendent >= g[0] - 0.5 && p.pujada.pendent <= g[1] + 0.5;
       pujada = omple(encaixa ? t.pujada : t.senseAPujada, { a: fmt(p.pujada.aKm), m: Math.round(p.pujada.llarg / 10) * 10, g: fmt(p.pujada.pendent) });
     }
-    div.innerHTML = `<div class="cap"><h2>${omple(t.proposta, { n: n + 1 })}</h2><button type="button" data-veure>${t.veure}</button></div>
+    div.innerHTML = `<div class="cap"><h2>${S.f ? t.laRuta : omple(t.proposta, { n: n + 1 })}</h2>${S.f ? "" : `<button type="button" data-veure>${t.veure}</button>`}</div>
       <div class="xifres"><span>${fmt(r.km)} ${t.km}</span><span>${Math.round(r.desnivell)} ${t.dPos}</span></div>
       ${detalls.length ? `<p class="muted">${detalls.join(" · ")}</p>` : ""}
       ${pujada ? `<p>${pujada}</p>` : ""}
       <div class="fila"><button class="btn sec petit" type="button" data-gpx>${t.gpx}</button>
       <button class="btn petit" type="button" data-segueix>${t.segueix}</button></div>`;
-    div.querySelector("[data-veure]").addEventListener("click", () => { triada = n; pintaPropostes(sessio); });
+    if (!S.f) div.querySelector("[data-veure]").addEventListener("click", () => { triada = n; pintaPropostes(sessio); });
     div.querySelector("[data-gpx]").addEventListener("click", () => descarregaGpx(p, n));
     div.querySelector("[data-segueix]").addEventListener("click", () => segueix(p));
     res.append(div);
@@ -689,12 +706,14 @@ function pintaPropostes(sessio) {
     llegenda.append(sessio.s === "run" ? t.llegendaRun : t.llegendaRide);
     res.append(llegenda);
   }
-  const mes = document.createElement("button");
-  mes.className = "btn sec petit";
-  mes.type = "button";
-  mes.textContent = L === "en" ? "More options" : "Més opcions";
-  mes.addEventListener("click", () => { triada = 0; buscaCircuits(sessio); });
-  res.append(mes);
+  if (!S.f) {
+    const mes = document.createElement("button");
+    mes.className = "btn sec petit";
+    mes.type = "button";
+    mes.textContent = L === "en" ? "More options" : "Més opcions";
+    mes.addEventListener("click", () => { triada = 0; buscaCircuits(sessio); });
+    res.append(mes);
+  }
   res.hidden = false;
   dibuixa();
 }
@@ -857,7 +876,7 @@ if (!S) {
   error(omple(t.caducat, { d: S.d }));
 } else {
   pintaSessio();
-  iniciaMapa();
+  S.f ? mostraRutaFixa() : iniciaMapa();
 }
 </script>
 </body>

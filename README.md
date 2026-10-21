@@ -25,7 +25,8 @@ reproductor. No l'enllaça cap correu.
 Per a cada sessió de córrer o de bici, l'atleta tria d'on surt i la pàgina li proposa circuits que encaixen amb la
 sessió (o les pistes d'atletisme més properes per a les sèries), amb el GPX i un mode per seguir-la amb el mòbil.
 La sessió també va dins l'enllaç; els circuits els calcula openrouteservice a través del proxy de Ginga, que només
-respon als enllaços signats.
+respon als enllaços signats. Una ruta ja feta (`python -m coach.ruta_fixa` al repositori privat) va sencera dins
+l'enllaç, i la pàgina l'ensenya directament, amb el GPX i el mode de seguir-la.
 
 ## No editis res aquí
 

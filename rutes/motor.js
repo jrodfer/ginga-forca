@@ -2,7 +2,9 @@
 
    La sessió arriba a l'enllaç, després del #: "<codi>.<signatura>", amb el codi en base64 d'URL del JSON que fa
    coach/rutes.py (t nom, d data, v vàlid fins, l idioma, s run|ride, o perfil d'openrouteservice, k km, m minuts,
-   p perfil: suau|pla|desnivell|pujades|pista, r repeticions, a desnivell [min, max]).
+   p perfil: suau|pla|desnivell|pujades|pista, r repeticions, a desnivell [min, max]). Una ruta feta per
+   l'entrenador (coach/ruta_fixa.py) porta, en lloc del perfil, la ruta sencera: f traça en polilínia, i girs
+   [punt, tipus de pas d'openrouteservice, sortida de la rotonda] i h desnivell.
    Res d'això surt del navegador fora del proxy de rutes, que només en necessita el codi i la signatura. */
 
 (function (arrel) {
@@ -23,7 +25,7 @@
     const [codi, sig] = net.split(".");
     try {
       const sessio = JSON.parse(b64url(codi));
-      if (!sessio || typeof sessio.k !== "number" || !sessio.p) return null;
+      if (!sessio || typeof sessio.k !== "number" || !(sessio.p || typeof sessio.f === "string")) return null;
       return { sessio, codi, sig: sig || "" };
     } catch (e) {
       return null;
@@ -64,6 +66,35 @@
       else if (ref - c[2] >= llindar) ref = c[2];
     }
     return pujada;
+  }
+
+  // ---------- ruta feta ----------
+
+  /** Polilínia de Google (precisió 5) -> [[lon, lat], ...]. La fa coach/ruta_fixa.py. */
+  function llegeixPolilinia(text) {
+    const coords = [];
+    let i = 0, lat = 0, lon = 0;
+    const num = () => {
+      let v = 0, bit = 0, b;
+      do { b = text.charCodeAt(i++) - 63; v |= (b & 0x1f) << bit; bit += 5; } while (b >= 0x20 && i < text.length);
+      return v & 1 ? ~(v >> 1) : v >> 1;
+    };
+    while (i < text.length) {
+      lat += num(); lon += num();
+      coords.push([lon / 1e5, lat / 1e5]);
+    }
+    return coords;
+  }
+
+  /** La ruta feta de l'enllaç, amb la forma del resum d'una ruta d'openrouteservice (per al mapa, el GPX i seguir-la). */
+  function rutaFixa(sessio) {
+    const coords = llegeixPolilinia(sessio.f);
+    const acc = acumulada(coords);
+    const passos = (Array.isArray(sessio.i) ? sessio.i : [])
+      .filter((g) => Number.isInteger(g[0]) && g[0] > 0 && g[0] < coords.length && Number.isInteger(g[1]))
+      .map(([i, type, sortida]) => ({ type, name: "", exit_number: sortida, way_points: [i, i] }));
+    return { coords, acc, km: acc[acc.length - 1] / 1000, desnivell: Number(sessio.h) || 0, passos,
+      senseAsfalt: 0, carretera: 0, gent: null };
   }
 
   // ---------- puntuació ----------
@@ -522,7 +553,7 @@ out tags geom qt;`;
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
-    radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent,
+    radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;
