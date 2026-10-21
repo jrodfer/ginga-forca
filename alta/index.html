@@ -310,8 +310,9 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
   if (demana.material) {
     opcions("material", "On faràs la força?", [["gimnas", "Al gimnàs"], ["casa_pes", "A casa, amb manuelles o gomes"],
       ["casa_res", "A casa, sense material"]], true);
-    caselles("material_casa", "Què tens a casa?", [["manuelles", "Manuelles"], ["gomes", "Gomes"], ["kettlebell", "Kettlebell"],
-      ["barra", "Barra i discos"], ["banc", "Banc"], ["fitball", "Fitball"]]);
+    caselles("material_casa", "Què tens a casa?", [["manuelles", "Manuelles"], ["gomes", "Gomes"], ["trx", "TRX o anelles"],
+      ["kettlebell", "Kettlebell"], ["pilota", "Pilota medicinal"], ["barra", "Barra i discos"], ["banc", "Banc"],
+      ["fitball", "Fitball"]], "Si vas al gimnàs, el que tens per als dies que la facis a casa.");
     obligatoris.push("material");
   }
   if (demana.estiraments) {
@@ -360,7 +361,7 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     ["lesio_zona", "lesio_desde", "lesio_professional", "lesio_quan", "lesio_detall"].forEach(function (k) { mostra(k, les && les !== "cap"); });
     ["tornada_setmanes", "alta_lesio"].forEach(function (k) { mostra(k, les === "torno"); });
     mostra("forca_dies", valor("forca") === "regular");
-    mostra("material_casa", valor("material") === "casa_pes");
+    mostra("material_casa", valor("material") === "casa_pes" || valor("material") === "gimnas");
     mostra("temporades_esport", valor("temporades") === "altre_esport");
     if ($("q-temps_dia")) {                // el total de la setmana contra les hores que ha dit
       var tot = 0, n = 0;
