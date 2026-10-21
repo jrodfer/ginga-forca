@@ -4,6 +4,11 @@ Reproductor de sessions de força: cada exercici amb el seu vídeo, les sèries 
 
 La sessió va dins l'enllaç (després del `#`) que envia Ginga al correu setmanal; aquesta pàgina no guarda ni rep cap dada.
 
+Els exercicis per costat (`c: 1`) compten cada costat com una sèrie: 2×20" per costat són quatre comptes
+enrere (esquerre, dret, esquerre, dret), amb 10 s per canviar de costat (en els de temps, el segon costat arrenca
+sol) i el descans després dels dos. L'OK durant un costat n'acaba només aquell. `c: 2` és per costat però alternant
+(dead bug, bird dog): una sola sèrie.
+
 Si l'enllaç porta `g: 1` (sessió guiada; ara, només la de `ioga/`), la sessió passa sola com un vídeo: 8 s per
 posar-se abans de cada exercici, les repeticions a temps, una veu guia que es pot apagar i Pausa (també amb l'OK del
 comandament de la tele). El vídeo, sense so, es reprodueix quan comença l'explicació (la presentació de cada

@@ -6,7 +6,11 @@
  */
 (function (global) {
   "use strict";
-  var CANVI_COSTAT = 5;   // segons per canviar de costat en els exercicis de temps
+  var CANVI_COSTAT = 5;   // segons per canviar de costat en els exercicis de temps (sessió guiada)
+  // Fora de la sessió guiada, cada costat d'un exercici per costat (c: 1) és una sèrie: es compta, té el seu temps i
+  // l'OK n'acaba només un. Entre costats, CANVI segons (si és de temps, el segon arrenca sol); després dels dos, el
+  // descans. c: 2 és alternant: una sèrie, com c: 0.
+  var CANVI = 10;
   // Sessió guiada (sessio.g, la fa la pàgina de ioga): tot passa sol, com un vídeo. Abans de cada exercici, uns
   // segons per posar-se; les repeticions es fan a temps (SEG_REP cadascuna); OK posa en pausa i continua.
   var PREPARA = 8, SEG_REP = 4;
@@ -18,6 +22,13 @@
     return { num: e.q + "\"", unitat: e.c ? "segons per costat" : "segons" };
   }
   function pauta(e) { var q = quantitat(e); return (e.s > 1 ? e.s + "×" : "") + q.num + (e.c ? " /costat" : ""); }
+  function perCostats(sessio, e) { return e.c === 1 && !sessio.g; }
+  function passos(sessio, e) { return perCostats(sessio, e) ? 2 * e.s : e.s; }   // les sèries que es compten
+  function costat(fetes) { return fetes % 2 ? "costat dret" : "costat esquerre"; }
+  function etiqueta(sessio, e, fetes) {                    // "Sèrie 2 de 3", "Sèrie 1 de 2 · costat dret"
+    if (perCostats(sessio, e)) return "Sèrie " + (Math.floor(fetes / 2) + 1) + " de " + e.s + " · " + costat(fetes);
+    return e.s > 1 ? "Sèrie " + (fetes + 1) + " de " + e.s : "Una tanda";
+  }
   function zeros(sessio) { return sessio.e.map(function () { return 0; }); }
 
   function Motor(sessio, inicial, hooks) {
@@ -63,7 +74,7 @@
   };
   P._serie = function () {
     var e = this.sessio.e[this.i];
-    if (this.fetes[this.i] >= e.s) return this._seguentExercici();
+    if (this.fetes[this.i] >= passos(this.sessio, e)) return this._seguentExercici();
     this.fase = "serie"; this.text = ""; this.seguentTxt = "";
     if (this.sessio.g) return this.fetes[this.i] === 0 ? this._prepara() : this._feina();
     this._avisa();
@@ -76,12 +87,14 @@
   };
   P._feina = function () {
     var m = this, e = m.sessio.e[m.i];
-    var textos = e.c ? ["Primer costat", "Canvia de costat", "Segon costat"] : ["Ara"];
+    var guiat = e.c === 1 && m.sessio.g;
+    var textos = guiat ? ["Primer costat", "Canvia de costat", "Segon costat"]
+      : [perCostats(m.sessio, e) ? costat(m.fetes[m.i]).replace("c", "C") : "Ara"];
     var q = e.u === "r" && m.sessio.g ? e.q * SEG_REP : e.q;
-    var durades = e.c ? [q, CANVI_COSTAT, q] : [q];
+    var durades = guiat ? [q, CANVI_COSTAT, q] : [q];
     var pas = 0;
     (function seguent() {
-      m.fase = "feina"; m.text = textos[pas];
+      m.fase = "feina"; m.text = textos[pas]; m.seguentTxt = "";
       m._compta(durades[pas], function () {
         pas++;
         if (pas < durades.length) { m._xiula(1); seguent(); } else { m._serieFeta(); }
@@ -92,22 +105,29 @@
   P._serieFeta = function () {
     var m = this, e = m.sessio.e[m.i];
     m.temps = null;
-    m.fetes[m.i] = Math.min(e.s, m.fetes[m.i] + 1);
-    var ultimaExercici = m.fetes[m.i] >= e.s;
-    if (ultimaExercici && m.fetes.every(function (f, k) { return f >= m.sessio.e[k].s; })) { m._xiula(2); return m._final(); }
-    if (!e.d) { m._xiula(2); return ultimaExercici ? m._seguentExercici() : m._serie(); }
+    m.fetes[m.i] = Math.min(passos(m.sessio, e), m.fetes[m.i] + 1);
+    var ultimaExercici = m.fetes[m.i] >= passos(m.sessio, e);
+    if (ultimaExercici && m._totFet()) { m._xiula(2); return m._final(); }
+    var canvi = perCostats(m.sessio, e) && m.fetes[m.i] % 2 === 1;      // acabat el primer costat
+    if (!e.d && !canvi) { m._xiula(2); return ultimaExercici ? m._seguentExercici() : m._serie(); }
     var proper = ultimaExercici ? m._properPendent() : m.i;
     var prox = m.sessio.e[proper];
-    m.fase = "descans"; m.text = "";
+    m.fase = "descans"; m.text = canvi ? "Canvia de costat" : "";
     m.seguentTxt = ultimaExercici ? "Després: " + prox.n + " · " + pauta(prox)
-                                  : "Després: sèrie " + (m.fetes[m.i] + 1) + " de " + e.s;
-    m._compta(e.d, function () { m._xiula(2); ultimaExercici ? m._seguentExercici() : m._serie(); });
+                                  : "Després: " + etiqueta(m.sessio, e, m.fetes[m.i]).replace("S", "s");
+    m._compta(canvi ? CANVI : e.d, function () {
+      m._xiula(2);
+      if (canvi && e.u === "s") return m._feina();                    // de temps: el segon costat arrenca sol
+      ultimaExercici ? m._seguentExercici() : m._serie();
+    });
     m._avisa();
   };
+  P._fet = function (k) { return this.fetes[k] >= passos(this.sessio, this.sessio.e[k]); };
+  P._totFet = function () { var m = this; return m.sessio.e.every(function (e, k) { return m._fet(k); }); };
   P._properPendent = function () {
     var m = this;
-    var k = m.sessio.e.findIndex(function (e, j) { return j > m.i && m.fetes[j] < e.s; });
-    if (k < 0) k = m.sessio.e.findIndex(function (e, j) { return m.fetes[j] < e.s; });
+    var k = m.sessio.e.findIndex(function (e, j) { return j > m.i && !m._fet(j); });
+    if (k < 0) k = m.sessio.e.findIndex(function (e, j) { return !m._fet(j); });
     return k;
   };
   P._seguentExercici = function () {
@@ -119,7 +139,7 @@
 
   // ---- accions (els botons del mòbil i el comandament de la tele)
   P.comenca = function () {
-    var m = this, k = m.sessio.e.findIndex(function (e, j) { return m.fetes[j] < e.s; });
+    var m = this, k = m.sessio.e.findIndex(function (e, j) { return !m._fet(j); });
     if (k < 0) { m.fetes = zeros(m.sessio); k = 0; }
     m.obre(k);
   };
@@ -163,5 +183,5 @@
     if (["principal", "salta", "mes15", "seguent", "anterior", "resum", "reinicia", "comenca", "pausa"].indexOf(nom) >= 0) this[nom]();
   };
 
-  global.GingaMotor = { Motor: Motor, mmss: mmss, quantitat: quantitat, pauta: pauta };
+  global.GingaMotor = { Motor: Motor, mmss: mmss, quantitat: quantitat, pauta: pauta, passos: passos, etiqueta: etiqueta };
 })(window);

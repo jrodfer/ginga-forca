@@ -218,7 +218,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     </div>
 
     <div id="bloc-descans" class="descans" hidden>
-      <div class="eyebrow">Descans</div>
+      <div class="eyebrow" id="descans-txt">Descans</div>
       <div class="num" id="descans-temps">1:30</div>
       <div class="seguent muted" id="seguent"></div>
       <div class="fila">
@@ -293,7 +293,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   var DIES = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
   var MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"];
   function suma(fetes) { return fetes.reduce(function (a, b) { return a + b; }, 0); }
-  var totalSeries = sessio.e.reduce(function (a, e) { return a + e.s; }, 0);
+  var totalSeries = sessio.e.reduce(function (a, e) { return a + G.passos(sessio, e); }, 0);
 
   // ---- capçalera
   var titol = sessio.t.replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/g, "Força");
@@ -544,7 +544,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
       return;
     }
     mostra("vista-exercici"); mantenEncesa();
-    var i = f.i, e = sessio.e[i], fetes = Math.min(f.fetes[i], e.s);
+    var i = f.i, e = sessio.e[i], n = G.passos(sessio, e), fetes = Math.min(f.fetes[i], n);
     posaVideo(e);
     $("comptador").textContent = "Exercici " + (i + 1) + " de " + sessio.e.length;
     $("barra").style.width = Math.round(suma(f.fetes) / totalSeries * 100) + "%";
@@ -560,15 +560,15 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     guia(f); videoGuiat(f);
     if (serie) {
       var q = quantitat(e);
-      $("serie-txt").textContent = e.s > 1 ? "Sèrie " + (fetes + 1) + " de " + e.s : "Una tanda";
+      $("serie-txt").textContent = G.etiqueta(sessio, e, fetes);
       $("objectiu").textContent = q.num; $("unitat").textContent = q.unitat;
       var punts = $("punts"); punts.textContent = "";
-      for (var k = 0; k < e.s && e.s > 1; k++) {
+      for (var k = 0; k < n && n > 1; k++) {
         var sp = document.createElement("span"); sp.className = k < fetes ? "fet" : (k === fetes ? "ara" : ""); punts.appendChild(sp);
       }
     }
     if (feina) $("feina-txt").textContent = f.text || "Ara";
-    if (descans) $("seguent").textContent = f.seguent || "";
+    if (descans) { $("seguent").textContent = f.seguent || ""; $("descans-txt").textContent = f.text || "Descans"; }
     $("accio").hidden = descans && !sessio.g;
     $("accio").textContent = sessio.g && !serie ? (f.pausat ? "Continua" : "Pausa")
       : feina ? "Acaba ara" : (e.u === "s" ? "Comença el temps" : "Sèrie feta");
@@ -590,7 +590,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     var ol = $("llista"); ol.textContent = "";
     sessio.e.forEach(function (e, i) {
       var li = document.createElement("li");
-      if (f.fetes[i] >= e.s) li.className = "fet";
+      if (f.fetes[i] >= G.passos(sessio, e)) li.className = "fet";
       var idx = document.createElement("span"); idx.className = "idx"; idx.textContent = i + 1;
       var mig = document.createElement("div"); mig.style.minWidth = "0";
       var nom = document.createElement("div"); nom.className = "nom"; nom.textContent = e.n;

@@ -279,29 +279,29 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
     $("e-instr").textContent = e.i || "";
     posaVideo(e.v || "");
 
-    var fetes = Math.min((m.fetes || [])[m.i] || 0, e.s), caixa = $("e-caixa");
+    var n = GingaMotor.passos(ses, e), fetes = Math.min((m.fetes || [])[m.i] || 0, n), caixa = $("e-caixa");
     caixa.className = "caixa" + (m.fase === "descans" ? " descans" : m.fase === "feina" || m.fase === "prepara" ? " feina" : "");
     $("e-seguent").textContent = m.fase === "descans" ? (m.seguent || "") : "";
     var punts = $("e-punts"); punts.textContent = "";
     var ara = m.fase === "descans" ? fetes - 1 : fetes;
-    for (var k = 0; k < e.s && e.s > 1; k++) {
+    for (var k = 0; k < n && n > 1; k++) {
       var sp = document.createElement("span"); sp.className = k < fetes ? "fet" : (k === ara ? "ara" : ""); punts.appendChild(sp);
     }
     if (m.fase === "descans" || m.fase === "feina" || m.fase === "prepara") {
-      $("e-etiqueta").textContent = (m.fase === "descans" ? "Descans" : (m.text || "Ara")) + (m.pausat ? " · en pausa" : "");
+      $("e-etiqueta").textContent = (m.text || (m.fase === "descans" ? "Descans" : "Ara")) + (m.pausat ? " · en pausa" : "");
       $("e-unitat").textContent = "";
       arrencaCompte(m.queda || 0, m.total, m.fase);
       if (m.pausat) paraCompte();                        // sessió guiada en pausa: el temps queda aturat
     } else {
       paraCompte(); $("e-barra").hidden = true;
       var q = quantitat(e);
-      $("e-etiqueta").textContent = e.s > 1 ? "Sèrie " + (fetes + 1) + " de " + e.s : "Una tanda";
+      $("e-etiqueta").textContent = GingaMotor.etiqueta(ses, e, fetes);
       $("e-gran").textContent = q.num; $("e-unitat").textContent = q.unitat;
     }
     var tira = $("e-tira"); tira.textContent = "";
     ses.e.forEach(function (x, k) {
       var d = document.createElement("div");
-      d.className = k === m.i ? "ara" : (((m.fetes || [])[k] || 0) >= x.s ? "fet" : "");
+      d.className = k === m.i ? "ara" : (((m.fetes || [])[k] || 0) >= GingaMotor.passos(ses, x) ? "fet" : "");
       d.textContent = x.n; tira.appendChild(d);
     });
   }
