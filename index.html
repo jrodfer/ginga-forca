@@ -452,9 +452,11 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     var cont = $("video"); cont.textContent = ""; cont.classList.remove("fosc");
     if (e.v) {
       var f = document.createElement("iframe"), id = encodeURIComponent(e.v);
-      f.src = "https://www.youtube-nocookie.com/embed/" + id + "?rel=0&playsinline=1&modestbranding=1" +
-        (sessio.g ? "&enablejsapi=1&autoplay=1&mute=1&controls=0&disablekb=1&iv_load_policy=3&origin=" + encodeURIComponent(location.origin) : "");
-      f.title = "Vídeo: " + e.n; if (!sessio.g) f.loading = "lazy";
+      // arrenca sol quan s'obre l'exercici, sense so (si no, el mòbil no el deixa arrencar); fora de la guiada, en bucle
+      f.src = "https://www.youtube-nocookie.com/embed/" + id + "?rel=0&playsinline=1&modestbranding=1&autoplay=1&mute=1" +
+        (sessio.g ? "&enablejsapi=1&controls=0&disablekb=1&iv_load_policy=3&origin=" + encodeURIComponent(location.origin)
+                  : "&loop=1&playlist=" + id);
+      f.title = "Vídeo: " + e.n;
       f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
       f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
       cont.appendChild(f);

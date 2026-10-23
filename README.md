@@ -4,6 +4,9 @@ Reproductor de sessions de força: cada exercici amb el seu vídeo, les sèries 
 
 La sessió va dins l'enllaç (després del `#`) que envia Ginga al correu setmanal; aquesta pàgina no guarda ni rep cap dada.
 
+Quan s'obre un exercici, el vídeo arrenca sol, sense so (el so es pot posar des del vídeo) i en bucle; també als
+estiraments i a la tele.
+
 Els exercicis per costat (`c: 1`) compten cada costat com una sèrie: 2×20" per costat són quatre comptes
 enrere (esquerre, dret, esquerre, dret), amb 10 s per canviar de costat (en els de temps, el segon costat arrenca
 sol) i el descans després dels dos. L'OK durant un costat n'acaba només aquell. `c: 2` és per costat però alternant
