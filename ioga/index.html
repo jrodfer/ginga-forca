@@ -77,14 +77,23 @@ p { margin: 0; }
 .idioma button { appearance: none; border: 1.5px solid var(--line); background: transparent; color: var(--fg);
   border-radius: 999px; padding: 8px 14px; font: 700 .9rem var(--display); cursor: pointer; }
 .idioma button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.boto-tele { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px;
+  border: 1.5px solid var(--line); background: var(--card); color: var(--fg); font: 600 .95rem var(--display); cursor: pointer; }
+.boto-tele svg { width: 22px; height: 22px; fill: currentColor; }
+.boto-tele.connectat { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.avis-tele { background: var(--tag); border-radius: 10px; padding: 10px 12px; font-size: .9rem; }
 </style>
 </head>
 <body>
 <main>
   <header class="cap">
     <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
-    <span class="eyebrow">Ioga per corredors</span>
+    <button class="boto-tele" id="cast-boto" type="button" aria-label="Envia a la TV">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 18v3h3a3 3 0 0 0-3-3zm0-4v2a5 5 0 0 1 5 5h2a7 7 0 0 0-7-7zm0-4v2a9 9 0 0 1 9 9h2A11 11 0 0 0 1 10zm20-7H3a2 2 0 0 0-2 2v3h2V5h18v14h-7v2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/></svg>
+      <span id="cast-txt">TV</span>
+    </button>
   </header>
+  <p class="avis-tele" id="avis-tele" hidden></p>
 
   <section>
     <div class="eyebrow" id="data"></div>
@@ -179,7 +188,7 @@ p { margin: 0; }
     function pinta() {
       desa({ dia: dia, triats: triats });
       var es = fases.map(function (f, i) { return f.exercicis[triats[i]]; });
-      $("data").textContent = new Date().toLocaleDateString("ca", { weekday: "long", day: "numeric", month: "long" });
+      $("data").textContent = TITOL + " · " + new Date().toLocaleDateString("ca", { weekday: "long", day: "numeric", month: "long" });
       $("intro").textContent = es.length + " exercicis, uns " + minuts(es) + " minuts. Tot a terra i lligat, en aquest ordre.";
       var llista = $("llista");
       llista.textContent = "";
@@ -210,7 +219,43 @@ p { margin: 0; }
     });
     pinta();
   }).catch(function () { $("error").hidden = false; });
+
+  // ---- la tele: es connecta aquí i, en tocar Comença, el reproductor (mateix origen, ORIGIN_SCOPED) la recupera i
+  // hi passa la sessió. La mateixa app de Cast que el reproductor (web/index.html).
+  var APP = "7F88A6AB", castLlest = false;
+  function avisTele(text) { $("avis-tele").textContent = text || ""; $("avis-tele").hidden = !text; }
+  function sessioCast() {
+    try { return cast.framework.CastContext.getInstance().getCurrentSession(); } catch (err) { return null; }
+  }
+  function pintaTele() {
+    var s = sessioCast();
+    $("cast-boto").classList.toggle("connectat", !!s);
+    $("cast-txt").textContent = s ? "Desconnecta" : "TV";
+    avisTele(s ? "A la TV " + (s.getCastDevice().friendlyName || "") + ". Toca Comença i la sessió hi anirà." : "");
+  }
+  $("cast-boto").addEventListener("click", function () {
+    if (!castLlest) return avisTele("Aquest navegador no carrega Google Cast. Obre la pàgina amb Chrome, a la mateixa wifi que la TV.");
+    var ctx = cast.framework.CastContext.getInstance();
+    if (sessioCast()) return ctx.endCurrentSession(true);
+    if (ctx.getCastState() === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
+      avisTele("No trobo cap TV que pugui obrir Ginga. Mira que la TV estigui encesa i a la mateixa wifi.");
+    }
+    ctx.requestSession().then(pintaTele, function (err) {
+      if (err !== "cancel" && err !== chrome.cast.ErrorCode.CANCEL) avisTele("No s'ha pogut connectar amb la TV (" + err + ").");
+    });
+  });
+  window.__onGCastApiAvailable = function (disponible) {
+    if (!disponible) return;
+    try {
+      var ctx = cast.framework.CastContext.getInstance();
+      ctx.setOptions({ receiverApplicationId: APP, autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED });
+      ctx.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function () { setTimeout(pintaTele, 0); });
+      castLlest = true;
+      pintaTele();
+    } catch (err) {}
+  };
 })();
 </script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
 </body>
 </html>

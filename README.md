@@ -24,7 +24,8 @@ exercici i «Un cop més») i s'atura als 3/4 (o a la meitat, `p`), a la postura
 ## Ioga per corredors (`ioga/`)
 
 Cada dia una sessió de ioga per corredors (una postura de cada fase d'`estiraments/ioga.yaml`), que s'obre guiada al
-reproductor. No l'enllaça cap correu.
+reproductor. No l'enllaça cap correu. El botó TV de dalt connecta la tele des d'aquí, i en tocar Comença el
+reproductor recupera la connexió i hi passa la sessió (a la tele, el vídeo sense so: parla la veu guia del mòbil).
 
 ## Rutes (`rutes/`)
 
