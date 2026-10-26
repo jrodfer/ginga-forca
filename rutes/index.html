@@ -575,7 +575,7 @@ function diferents(cands) {
 async function repara(c, sessio) {
   const k = Math.min(sessio.k, 100);
   const err = (x) => Math.abs(x.r.km - k) / k;
-  const val = (x) => x && !x.r.foraCarretera && err(x) <= MAX_ERR_KM;
+  const val = (x) => x && !x.r.foraCarretera && !x.r.voltes.length && err(x) <= MAX_ERR_KM;
   let millor = val(c) ? c : null, actual = c;
   const evita = [];
   const afegeix = (punts, max) => { const n = evita.length; for (const p of punts) if (evita.length < max) evita.push(p); return evita.length > n; };
@@ -632,8 +632,9 @@ async function buscaCircuits(sessio) {
     let cands = await tanda(factor, LLAVORS);
     const kObjectiu = Math.min(sessio.k, 100);
     const err = (c) => Math.abs(c.r.km - kObjectiu) / kObjectiu;
-    if (cands.length && !cands.some((c) => err(c) <= MARGE_KM)) {
-      // tots massa llargs o massa curts: una tanda més, amb la llargada corregida per la mediana del que ha sortit
+    if (cands.length && !cands.some((c) => err(c) <= MARGE_KM && !c.r.voltes.length)) {
+      // tots massa llargs, massa curts o amb voltes per allargar: una tanda més, amb la llargada corregida per la
+      // mediana del que ha sortit
       const ratis = cands.map((c) => c.r.km / (kObjectiu * factor)).sort((a, b) => a - b);
       const mediana = ratis[Math.floor(ratis.length / 2)];
       cands = cands.concat(await tanda(Math.max(0.6, Math.min(1.5, 1 / mediana)), 4));
@@ -648,8 +649,9 @@ async function buscaCircuits(sessio) {
         .map((c, i) => new Promise((ok) => setTimeout(ok, i * ESGLAO_MS)).then(() => repara(c, sessio))));
       cands = cands.filter(bo).concat(reparats.filter(Boolean)).sort((a, b) => a.pena - b.pena);
     }
-    // mai un circuit que s'allunyi massa dels km de la sessió (abans en sortien de 150 km per a una de 36)
-    propostes = diferents(cands.filter((c) => err(c) <= MAX_ERR_KM)).slice(0, 3);
+    // mai un circuit que s'allunyi massa dels km de la sessió (abans en sortien de 150 km per a una de 36), ni un
+    // que faci voltes a una rotonda o anades i tornades per allargar: millor més curt o una mica més llarg
+    propostes = diferents(cands.filter((c) => err(c) <= MAX_ERR_KM && !c.r.voltes.length)).slice(0, 3);
     if (!propostes.length) {
       res.innerHTML = `<p>${quotaEsgotada ? t.quota : saturat ? t.saturat : omple(Motor.esCarretera(sessio) ? t.capCarretera : t.capRuta, { k: fmt(kObjectiu, 0) })}</p>`;
       res.hidden = false; netejaCapes(); return;

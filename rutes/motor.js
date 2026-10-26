@@ -97,6 +97,34 @@
       senseAsfalt: 0, carretera: 0, gent: null };
   }
 
+  // ---------- voltes per allargar ----------
+
+  // Un circuit no fa voltes només per sumar km (en Joan, 26/10/2026: «o més curt o una mica més llarg»): ni una
+  // rotonda sencera, ni un carrer d'anada i tornada, ni una mitja volta per tornar per on has vingut. Es veu perquè
+  // la ruta torna on ja havia estat al cap de poc: a menys de A_PROP_VOLTA m d'un tram de fa entre MIN_VOLTA i
+  // MAX_VOLTA m. Les dues bandes d'una autovia queden a 10-20 m; les d'un revolt de muntanya, més lluny.
+  const A_PROP_VOLTA = 15, MIN_VOLTA = 60, MAX_VOLTA = 1000;
+  const PES_VOLTA = 1;
+
+  /** Les voltes per allargar, [{ini, fi, metres}] en índexs de coords, sense comptar la sortida ni l'arribada. */
+  function voltes(coords, acc) {
+    const total = acc[acc.length - 1];
+    const fora = (m) => m < MARGE_SORTIDA || m > total - MARGE_SORTIDA;
+    const trobades = [];
+    for (let i = 2; i < coords.length; i++) {
+      if (fora(acc[i])) continue;
+      let ini = -1;                                  // el tram més antic on torna (una anada i tornada sencera)
+      for (let j = i - 1; j >= 1 && acc[i] - acc[j] <= MAX_VOLTA; j--) {
+        if (acc[i] - acc[j - 1] >= MIN_VOLTA && projecta(coords[i], coords[j - 1], coords[j]).d <= A_PROP_VOLTA) ini = j - 1;
+      }
+      if (ini < 0 || fora(acc[ini])) continue;
+      const ultima = trobades[trobades.length - 1];
+      if (ultima && ini <= ultima.fi) { ultima.ini = Math.min(ultima.ini, ini); ultima.fi = i; }   // la mateixa volta
+      else trobades.push({ ini, fi: i });
+    }
+    return trobades.map((v) => ({ ...v, metres: acc[v.fi] - acc[v.ini] }));
+  }
+
   // ---------- puntuació ----------
 
   // Codis d'openrouteservice (extra_info). waytype: 1 carretera principal, 2 carretera, 3 carrer, 4 camí,
@@ -248,6 +276,7 @@
     const fora = foraCarretera(coords, acc, extras);
     const princ = perTransit(coords, acc, passos, extras.waytype || extras.waytypes);
     return {
+      voltes: voltes(coords, acc),
       coords, acc, km,
       dolents: fora.dolents, foraCarretera: fora.metres,
       transit: princ.transit, principal: princ.metres / (acc[acc.length - 1] || 1), principalLlarg: princ.llarg,
@@ -299,6 +328,8 @@
     // per on va la gent: a peu, cada 10% més de circuit per rutes, parcs i passejos compensa un 3% de desviació
     // dels km; en bici de carretera, un 2% (allà mana més no anar per carreteres principals)
     if (r.gent != null) pena += (sessio.s === "run" ? 1 : sessio.o === "cycling-road" ? 0.6 : 0.8) * (1 - r.gent);
+    // cada volta per allargar pesa més que un 30% de desviació dels km (MAX_ERR_KM): millor més curt o més llarg
+    pena += PES_VOLTA * ((r.voltes && r.voltes.length) || 0);
     return pena;
   }
 
@@ -553,7 +584,7 @@ out tags geom qt;`;
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
-    radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa,
+    radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa, voltes,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;
