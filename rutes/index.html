@@ -245,6 +245,10 @@ const T = {
     carretera100: "100% per carretera",
     saturat: "Ara mateix hi ha massa cerques de rutes alhora. Torna-ho a provar d'aquí a un minut.",
     quota: "Avui ja s'han fet totes les cerques de rutes que permet el servei de mapes. Torna-ho a provar demà.",
+    limitEnllac: "Ja has buscat rutes per a aquesta sessió: cada enllaç en té una cerca.",
+    limitDia: "Avui ja has fet les dues cerques de rutes del dia. Demà en tornes a tenir.",
+    capRutaUna: "No he trobat cap circuit de ~{k} km des d'aquí.",
+    capCarreteraUna: "No he trobat cap circuit de ~{k} km 100% per carretera des d'aquí.",
     principal: "{x}% per carretera principal (N-, C-)",
     transit: ["poc trànsit", "trànsit moderat", "molt trànsit"],
     gent: "{x}% per on va la gent",
@@ -298,6 +302,10 @@ const T = {
     carretera100: "100% on roads",
     saturat: "Too many route searches right now. Please try again in a minute.",
     quota: "Today's route searches with the map service are used up. Please try again tomorrow.",
+    limitEnllac: "You've already searched routes for this session: each link has one search.",
+    limitDia: "You've used today's two route searches. You'll have them again tomorrow.",
+    capRutaUna: "I couldn't find a ~{k} km loop from here.",
+    capCarreteraUna: "I couldn't find a ~{k} km loop that's 100% on roads from here.",
     principal: "{x}% on main roads",
     transit: ["little traffic", "moderate traffic", "heavy traffic"],
     gent: "{x}% where people usually go",
@@ -333,6 +341,8 @@ const L = S && T[S.l] ? S.l : (navigator.language || "ca").startsWith("en") ? "e
 const t = T[L];
 document.documentElement.lang = L;
 let mapa, sortida, capes = [], propostes = [], triada = 0, llavor = 0, saturat = false, quotaEsgotada = false;
+let tiquet = null;              // el de la cerca d'ara (el proxy el demana si l'enllaç té límit de cerques)
+const ambLimit = Boolean(S && S.a);   // l'enllaç porta l'atleta: una cerca per enllaç i dues per dia (worker/rutes.js)
 let gent = null;                // per on va la gent a la zona: {clau, c, r, t, dades, idx}
 let gentZona = null;            // la que s'ha fet servir per a les propostes d'ara (null: no ha arribat)
 
@@ -530,10 +540,25 @@ function gentATemps(sessio, p) {
 }
 
 // ---------- circuits ----------
+/**
+ * El tiquet d'una cerca nova. Si el proxy diu que l'enllaç o l'atleta ja han fet les seves, error amb el motiu;
+ * si falla per qualsevol altra cosa (un proxy d'abans, que no en dona), es busca igual sense tiquet.
+ */
+async function demanaTiquet() {
+  const r = await fetch(PROXY, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, cerca: "nova" }),
+  }).catch(() => null);
+  const cos = r ? await r.json().catch(() => ({})) : {};
+  if (r && r.status === 429 && cos.error === "limit") throw new Error(cos.motiu === "dia" ? "limitDia" : "limitEnllac");
+  if (r && r.status === 410) throw new Error("caducat");
+  return (r && r.ok && cos.tiquet) || null;
+}
+
 async function demana(seed, factor, via, evita) {
   const r = await fetch(PROXY, {
     method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, inici: sortida, seed, factor, via, evita }),
+    body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, tiquet, inici: sortida, seed, factor, via, evita }),
   });
   if (r.status === 410) throw new Error("caducat");
   if (r.status === 403 || r.status === 429) {
@@ -620,6 +645,7 @@ async function buscaCircuits(sessio) {
   b.disabled = true; b.textContent = t.buscant;
   saturat = quotaEsgotada = false;
   try {
+    tiquet = await demanaTiquet();
     const factor = FACTOR[sessio.s] || 0.9;
     const esperaGent = gentATemps(sessio, sortida);             // alhora que els circuits
     const tanda = async (f, n) => {
@@ -653,13 +679,24 @@ async function buscaCircuits(sessio) {
     // que faci voltes a una rotonda o anades i tornades per allargar: millor més curt o una mica més llarg
     propostes = diferents(cands.filter((c) => err(c) <= MAX_ERR_KM && !c.r.voltes.length)).slice(0, 3);
     if (!propostes.length) {
-      res.innerHTML = `<p>${quotaEsgotada ? t.quota : saturat ? t.saturat : omple(Motor.esCarretera(sessio) ? t.capCarretera : t.capRuta, { k: fmt(kObjectiu, 0) })}</p>`;
+      // amb límit de cerques, no li diem que torni a buscar
+      const cap = Motor.esCarretera(sessio) ? (ambLimit ? t.capCarreteraUna : t.capCarretera) : (ambLimit ? t.capRutaUna : t.capRuta);
+      res.innerHTML = `<p>${quotaEsgotada ? t.quota : saturat ? t.saturat : omple(cap, { k: fmt(kObjectiu, 0) })}</p>`;
       res.hidden = false; netejaCapes(); return;
     }
     pintaPropostes(sessio);
   } catch (e) {
     console.error(e);
-    res.innerHTML = `<p>${e.message === "caducat" ? omple(t.caducat, { d: S.d }) : e.message === "signatura" ? t.senseSignatura : t.errorProxy}</p>`;
+    if (e.message.startsWith("limit") && propostes.length) {
+      // ja n'havia buscat: les propostes d'abans es queden, amb l'avís a sobre
+      pintaPropostes(sessio);
+      const avis = document.createElement("p");
+      avis.textContent = t[e.message];
+      res.prepend(avis);
+      return;
+    }
+    res.innerHTML = `<p>${e.message === "caducat" ? omple(t.caducat, { d: S.d }) : e.message === "signatura" ? t.senseSignatura
+      : e.message.startsWith("limit") ? t[e.message] : t.errorProxy}</p>`;
     res.hidden = false;
   } finally {
     b.disabled = false; b.textContent = S.p === "pista" ? t.buscaPistes : t.busca;
@@ -708,7 +745,7 @@ function pintaPropostes(sessio) {
     llegenda.append(sessio.s === "run" ? t.llegendaRun : t.llegendaRide);
     res.append(llegenda);
   }
-  if (!S.f) {
+  if (!S.f && !ambLimit) {           // amb límit, «més opcions» seria una cerca nova
     const mes = document.createElement("button");
     mes.className = "btn sec petit";
     mes.type = "button";
