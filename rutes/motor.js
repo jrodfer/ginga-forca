@@ -102,7 +102,9 @@
   // Un circuit no fa voltes només per sumar km (en Joan, 26/10/2026: «o més curt o una mica més llarg»): ni una
   // rotonda sencera, ni un carrer d'anada i tornada, ni una mitja volta per tornar per on has vingut. Es veu perquè
   // la ruta torna on ja havia estat al cap de poc: a menys de A_PROP_VOLTA m d'un tram de fa entre MIN_VOLTA i
-  // MAX_VOLTA m. Les dues bandes d'una autovia queden a 10-20 m; les d'un revolt de muntanya, més lluny.
+  // MAX_VOLTA m. Les dues bandes d'una autovia queden a 10-20 m; les d'un revolt de muntanya, més lluny. El que
+  // compta és on queda el punt més proper del tram, no on comença: un tram recte llarg seguit de punts junts (el que
+  // torna openrouteservice a qualsevol revolt o cruïlla) no és tornar enrere.
   const A_PROP_VOLTA = 15, MIN_VOLTA = 60, MAX_VOLTA = 1000;
   const PES_VOLTA = 1;
 
@@ -115,7 +117,9 @@
       if (fora(acc[i])) continue;
       let ini = -1;                                  // el tram més antic on torna (una anada i tornada sencera)
       for (let j = i - 1; j >= 1 && acc[i] - acc[j] <= MAX_VOLTA; j--) {
-        if (acc[i] - acc[j - 1] >= MIN_VOLTA && projecta(coords[i], coords[j - 1], coords[j]).d <= A_PROP_VOLTA) ini = j - 1;
+        if (acc[i] - acc[j - 1] < MIN_VOLTA) continue;
+        const pr = projecta(coords[i], coords[j - 1], coords[j]);
+        if (pr.d <= A_PROP_VOLTA && acc[i] - (acc[j - 1] + pr.t * (acc[j] - acc[j - 1])) >= MIN_VOLTA) ini = j - 1;
       }
       if (ini < 0 || fora(acc[ini])) continue;
       const ultima = trobades[trobades.length - 1];
