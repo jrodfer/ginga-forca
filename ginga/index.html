@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="https://jrodfer.github.io/ginga-forca/icona.svg">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10231D">
+<meta name="description" content="Ginga: l'assistent setmanal de l'entrenador de córrer, bici, natació i triatló. Un entrenador ho valida tot.">
+<title>Ginga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<style>
+/* La pàgina de presentació de Ginga, en català i en anglès: què és, com funciona, contacte i privacitat. És el web
+   que es dona a Garmin (API de Courses) i a qui pregunti què és Ginga. La font és a jrodfer/ginga (web/ginga/). */
+:root {
+  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8; --accent: #FF6A2B; --ok: #00996B;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239; --accent: #FF6A2B; --ok: #2DBF8C;
+    color-scheme: dark;
+  }
+}
+/* el logo, igual que al reproductor de força */
+.lockup { display: block; height: auto; width: 150px; }
+.lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lockup .lk-g { stroke: var(--accent); stroke-width: 28; }
+.lockup .lk-t { stroke: #00996B; stroke-width: 24; }
+.lockup .lk-p { fill: #00996B; }
+.lockup .lk-i { fill: var(--accent); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 "Nunito", "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 720px; margin: 0 auto; padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 0 8px; flex-wrap: wrap; }
+.idiomes { display: flex; gap: 6px; }
+.idiomes button { font: 800 15px/1 "Nunito", sans-serif; padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line);
+  background: transparent; color: var(--fg); cursor: pointer; }
+.idiomes button[aria-pressed="true"] { border-color: var(--ok); }
+h1 { font-size: 32px; line-height: 1.2; margin: 18px 0 8px; }
+h2 { font-size: 22px; margin: 0 0 8px; }
+.lead { font-size: 20px; margin: 0 0 8px; }
+.muted { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; }
+.card ul { margin: 6px 0 0; padding-left: 20px; }
+.card li { margin: 4px 0; }
+.passos { counter-reset: pas; list-style: none; padding: 0; margin: 0; }
+.passos li { counter-increment: pas; display: grid; grid-template-columns: 36px 1fr; gap: 10px; margin: 10px 0; }
+.passos li::before { content: counter(pas); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent); color: #10231D; font-weight: 900; }
+.btn { display: inline-block; border-radius: 14px; font: 800 18px/1 "Nunito", sans-serif; padding: 16px 20px; background: var(--accent);
+  color: #10231D; text-decoration: none; }
+a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+footer { margin-top: 28px; color: var(--muted); font-size: 15px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
+    <div class="idiomes" role="group" aria-label="Idioma / Language">
+      <button type="button" data-idioma="ca">Català</button>
+      <button type="button" data-idioma="en">English</button>
+    </div>
+  </header>
+
+  <article lang="ca" data-idioma="ca">
+    <h1>L'assistent setmanal de l'entrenador</h1>
+    <p class="lead">Córrer, bici, natació i triatló, amb la força al costat. Ginga analitza la setmana de cada atleta i proposa;
+      l'entrenador ho valida tot.</p>
+
+    <section class="card">
+      <h2>Com funciona</h2>
+      <ol class="passos">
+        <li><span>L'atleta entrena amb el seu rellotge (Garmin, Coros, Polar, Suunto, Wahoo...) connectat a intervals.icu.</span></li>
+        <li><span>Cada diumenge, Ginga compara el que ha fet amb el pla, avisa l'entrenador si hi ha dolor o fatiga i repassa
+          les setmanes que queden.</span></li>
+        <li><span>L'entrenador revisa la proposta i decideix.</span></li>
+        <li><span>L'atleta rep un correu amb la setmana, els vídeos de força i una ruta per a cada sessió de córrer i de bici.</span></li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Què hi ha</h2>
+      <ul>
+        <li><strong>Plans amb base científica:</strong> cada regla del pla té la seva font, i el que no en té es diu com a criteri
+          d'entrenador.</li>
+        <li><strong>Ginga Força:</strong> sessions de força amb vídeo de cada exercici, per seguir al mòbil o a la tele.</li>
+        <li><strong>Rutes:</strong> un circuit per a cada sessió a l'aire lliure, amb el GPX per al rellotge. Amb Garmin, la ruta
+          podrà anar directament al rellotge com a recorregut.</li>
+        <li><strong>Per a entrenadors i clubs</strong>, i per a atletes que entrenen sols però volen que una persona els validi
+          el pla.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Vols entrenar amb Ginga?</h2>
+      <p>Explica'ns què busques i l'entrenador et respon per correu.</p>
+      <a class="btn" href="../solicitud/">Vull entrenar</a>
+    </section>
+
+    <footer>
+      <p>Contacte: <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a> · <a href="../privacitat/">Privacitat</a></p>
+    </footer>
+  </article>
+
+  <article lang="en" data-idioma="en">
+    <h1>The coach's weekly assistant</h1>
+    <p class="lead">Running, cycling, swimming and triathlon, with strength training alongside. Ginga analyses each athlete's
+      week and makes proposals; the coach validates everything.</p>
+
+    <section class="card">
+      <h2>How it works</h2>
+      <ol class="passos">
+        <li><span>The athlete trains with their own watch (Garmin, Coros, Polar, Suunto, Wahoo...) connected to intervals.icu.</span></li>
+        <li><span>Every Sunday, Ginga compares what they did with the plan, alerts the coach about pain or fatigue, and reviews
+          the remaining weeks.</span></li>
+        <li><span>The coach reviews the proposal and decides.</span></li>
+        <li><span>The athlete gets an email with the week, strength videos and a route for each run and ride.</span></li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>What's included</h2>
+      <ul>
+        <li><strong>Evidence-based plans:</strong> every rule in the plan has its source, and anything without one is stated as
+          coaching judgement.</li>
+        <li><strong>Ginga Força:</strong> strength sessions with a video for every exercise, to follow on the phone or on TV.</li>
+        <li><strong>Routes:</strong> a loop for every outdoor session, with a GPX for the watch. With Garmin, the route will be
+          able to go straight to the watch as a course.</li>
+        <li><strong>For coaches and clubs</strong>, and for athletes who train on their own but want a person to validate their
+          plan.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Want to train with Ginga?</h2>
+      <p>Tell us what you're looking for and the coach will reply by email.</p>
+      <a class="btn" href="../solicitud/">I want to train</a>
+    </section>
+
+    <footer>
+      <p>Contact: <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a> · <a href="../privacitat/?lang=en">Privacy</a></p>
+    </footer>
+  </article>
+</main>
+<script>
+// l'idioma: el de l'enllaç (?lang=en), el que s'ha triat abans o el del navegador (com a web/privacitat/)
+(function () {
+  const desat = (() => { try { return localStorage.getItem("ginga-idioma"); } catch (e) { return null; } })();
+  const demanat = new URLSearchParams(location.search).get("lang");
+  let idioma = demanat || desat || (/^(ca|es)/i.test(navigator.language || "") ? "ca" : "en");
+  const posa = (i) => {
+    idioma = i === "en" ? "en" : "ca";
+    document.documentElement.lang = idioma;
+    for (const a of document.querySelectorAll("article[data-idioma]")) a.hidden = a.dataset.idioma !== idioma;
+    for (const b of document.querySelectorAll(".idiomes button")) b.setAttribute("aria-pressed", String(b.dataset.idioma === idioma));
+  };
+  for (const b of document.querySelectorAll(".idiomes button")) b.addEventListener("click", () => {
+    posa(b.dataset.idioma);
+    try { localStorage.setItem("ginga-idioma", idioma); } catch (e) {}
+  });
+  posa(idioma);
+})();
+</script>
+</body>
+</html>

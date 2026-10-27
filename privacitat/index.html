@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="https://jrodfer.github.io/ginga-forca/icona.svg">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10231D">
+<title>Ginga · Privacitat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<style>
+/* Política de privacitat de Ginga, en català i en anglès (la llegeix Garmin per a l'API de Courses).
+   La font és a jrodfer/ginga (web/privacitat/); aquí se'n publica la còpia. Si canvia el que es fa amb les dades
+   (un servei nou, una dada nova), aquesta pàgina canvia a la mateixa PR. */
+:root {
+  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8; --accent: #FF6A2B; --ok: #00996B;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239; --accent: #FF6A2B; --ok: #2DBF8C;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 17px/1.6 "Nunito", "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 720px; margin: 0 auto; padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 0 8px; flex-wrap: wrap; }
+.marca { font-weight: 900; font-size: 26px; color: var(--accent); text-decoration: none; }
+.idiomes { display: flex; gap: 6px; }
+.idiomes button { font: 800 15px/1 "Nunito", sans-serif; padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line);
+  background: transparent; color: var(--fg); cursor: pointer; }
+.idiomes button[aria-pressed="true"] { border-color: var(--ok); }
+h1 { font-size: 30px; line-height: 1.2; margin: 8px 0 4px; }
+h2 { font-size: 21px; margin: 28px 0 6px; }
+.muted { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; margin: 16px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-top: 1px solid var(--line); }
+th { font-weight: 800; }
+.taula { overflow-x: auto; }
+a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <a class="marca" href="../ginga/">ginga</a>
+    <div class="idiomes" role="group" aria-label="Idioma / Language">
+      <button type="button" data-idioma="ca">Català</button>
+      <button type="button" data-idioma="en">English</button>
+    </div>
+  </header>
+
+  <article lang="ca" data-idioma="ca">
+    <h1>Política de privacitat</h1>
+    <p class="muted">Darrera actualització: 27 d'octubre de 2026</p>
+
+    <div class="card">
+      <p style="margin:0"><strong>En resum:</strong> Ginga fa servir les teves dades d'entrenament només per preparar-te el pla i el
+        correu de cada setmana. Un entrenador ho revisa tot. No venem dades, no fem publicitat i les dades de salut que ens
+        expliques (lesions, embaràs, malalties) no es guarden mai als plans ni al codi.</p>
+    </div>
+
+    <h2>Qui és el responsable</h2>
+    <p>Ginga és el nom comercial de <strong>Joan Rodeja Ferrer</strong>, treballador autònom, amb NIF <strong>41555947F</strong> i
+      domicili a <strong>c. Méndez Núñez 7, àtic B, 17600 Figueres</strong>. Contacte: <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a>.</p>
+    <p>Si entrenes amb un entrenador o un club que fa servir Ginga, el responsable de les teves dades és ell, i Ginga les
+      tracta per encàrrec seu.</p>
+
+    <h2>Quines dades fem servir i per a què</h2>
+    <div class="taula"><table>
+      <tr><th>Dades</th><th>Per a què</th></tr>
+      <tr><td>Nom, correu i idioma</td><td>Saludar-te i enviar-te el correu setmanal.</td></tr>
+      <tr><td>El teu objectiu, la disponibilitat i el nivell (formulari d'alta)</td><td>Fer-te el pla.</td></tr>
+      <tr><td>Entrenaments i benestar de intervals.icu (sessions fetes, ritmes, potència, freqüència cardíaca, son, sensacions)</td>
+        <td>Comparar el que has fet amb el pla, avisar l'entrenador si hi ha dolor o fatiga, i ajustar les setmanes que
+          queden.</td></tr>
+      <tr><td>Lesions, embaràs, postpart o malalties que ens expliquis</td><td>Només perquè l'entrenador decideixi el pla. Van al
+        correu de l'entrenador i no es guarden ni als plans ni al codi.</td></tr>
+      <tr><td>Valoracions de les sessions de força (dolor, mareig)</td><td>Ajustar la sessió següent. Es guarden amb un pseudònim
+        i s'esborren als 60 dies.</td></tr>
+      <tr><td>El punt de sortida d'una ruta</td><td>Buscar-te un circuit a prop per a la sessió. Surt del teu navegador només
+        quan prems «Busca», i no el guardem.</td></tr>
+    </table></div>
+    <p>La base legal és el teu consentiment, que dones en apuntar-te, i, si en tens, el contracte del pla. Les dades de salut
+      només les tractem amb el teu consentiment explícit, i el pots retirar quan vulguis.</p>
+
+    <h2>Garmin</h2>
+    <p>Si connectes el teu compte de Garmin Connect a Ginga, Ginga hi envia la ruta que tries per a una sessió, perquè la
+      tinguis al rellotge com a recorregut. <strong>Ginga no llegeix cap dada del teu compte de Garmin</strong>: ni activitats, ni
+      salut, ni ubicació. Només guardem l'autorització que ens dona Garmin (un token xifrat), i l'esborrem si desconnectes
+      Ginga des de la pàgina de rutes o des de la configuració de Garmin Connect.</p>
+
+    <h2>Qui hi té accés</h2>
+    <p>L'entrenador de Ginga i, si en tens, el teu entrenador o club. A més, aquests serveis tracten dades per encàrrec nostre:</p>
+    <div class="taula"><table>
+      <tr><th>Servei</th><th>Què hi passa</th></tr>
+      <tr><td>intervals.icu</td><td>D'on llegim els teus entrenaments, amb el teu permís.</td></tr>
+      <tr><td>Anthropic (Claude)</td><td>Analitza un resum de la setmana, sense nom, correu ni GPS, i ajuda a redactar el
+        correu. No entrena models amb aquestes dades.</td></tr>
+      <tr><td>Google (Gmail)</td><td>Envia els correus.</td></tr>
+      <tr><td>GitHub</td><td>Guarda el codi i els plans d'entrenament en un repositori privat, i hi publica les pàgines web.</td></tr>
+      <tr><td>Cloudflare</td><td>Rep els formularis i les valoracions de força (caduquen als 60 i 180 dies), fa de pont amb
+        openrouteservice i, si connectes Garmin, guarda el token.</td></tr>
+      <tr><td>openrouteservice (HeiGIT, Alemanya)</td><td>Calcula els circuits a partir del punt de sortida.</td></tr>
+      <tr><td>OpenStreetMap (Overpass)</td><td>Des del teu navegador, troba les pistes d'atletisme i els camins més freqüentats a
+        prop del punt de sortida.</td></tr>
+      <tr><td>Garmin</td><td>Només si el connectes: hi enviem les rutes que tries.</td></tr>
+    </table></div>
+    <p>Alguns d'aquests serveis són als Estats Units. Les transferències es fan amb les garanties del Reglament General de
+      Protecció de Dades (el Marc de Privacitat de Dades UE-EUA o clàusules contractuals tipus).</p>
+
+    <h2>Quant de temps</h2>
+    <p>Mentre entrenis amb Ginga. Quan ho deixis, esborrem el teu pla, la teva autorització d'intervals.icu i la de Garmin.
+      Les respostes dels formularis caduquen als 180 dies, i les valoracions de força als 60.</p>
+
+    <h2>Els teus drets</h2>
+    <p>Pots demanar veure, corregir, esborrar o endur-te les teves dades, o que deixem de fer-les servir, escrivint a
+      <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a>. Et responem en un mes com a màxim. Si creus que no les
+      tractem bé, pots reclamar a l'<a href="https://www.aepd.es/">Agència Espanyola de Protecció de Dades</a>.</p>
+
+    <h2>Menors</h2>
+    <p>Ginga no és per a menors de 14 anys, i Ginga Força és per a persones de 18 anys o més.</p>
+  </article>
+
+  <article lang="en" data-idioma="en">
+    <h1>Privacy policy</h1>
+    <p class="muted">Last updated: 27 October 2026</p>
+
+    <div class="card">
+      <p style="margin:0"><strong>In short:</strong> Ginga uses your training data only to prepare your plan and your weekly email.
+        A coach reviews everything. We do not sell data, we do not show ads, and the health information you tell us about
+        (injuries, pregnancy, illness) is never stored in plans or in code.</p>
+    </div>
+
+    <h2>Who is responsible</h2>
+    <p>Ginga is the trade name of <strong>Joan Rodeja Ferrer</strong>, self-employed, tax ID <strong>41555947F</strong>, address
+      <strong>Méndez Núñez 7, àtic B, 17600 Figueres, Spain</strong>. Contact: <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a>.</p>
+    <p>If you train with a coach or club that uses Ginga, they are the controller of your data and Ginga processes it on
+      their behalf.</p>
+
+    <h2>What data we use and why</h2>
+    <div class="taula"><table>
+      <tr><th>Data</th><th>Why</th></tr>
+      <tr><td>Name, email and language</td><td>To greet you and send your weekly email.</td></tr>
+      <tr><td>Your goal, availability and level (sign-up form)</td><td>To build your plan.</td></tr>
+      <tr><td>Training and wellness data from intervals.icu (completed sessions, pace, power, heart rate, sleep, how you
+        felt)</td><td>To compare what you did with the plan, alert the coach about pain or fatigue, and adjust the remaining
+        weeks.</td></tr>
+      <tr><td>Injuries, pregnancy, postpartum or illness you tell us about</td><td>Only so the coach can decide your plan. They go to
+        the coach's email and are not stored in plans or code.</td></tr>
+      <tr><td>Strength session ratings (pain, dizziness)</td><td>To adjust the next session. Stored under a pseudonym and deleted
+        after 60 days.</td></tr>
+      <tr><td>The starting point of a route</td><td>To find a loop near you for the session. It leaves your browser only when you
+        press "Search", and we do not store it.</td></tr>
+    </table></div>
+    <p>The legal basis is your consent, given when you sign up, and, where applicable, your plan contract. We process health
+      data only with your explicit consent, which you can withdraw at any time.</p>
+
+    <h2>Garmin</h2>
+    <p>If you connect your Garmin Connect account to Ginga, Ginga sends the route you choose for a session to it, so you have it
+      on your watch as a course. <strong>Ginga does not read any data from your Garmin account</strong>: no activities, no health
+      data, no location. We only store the authorization Garmin gives us (an encrypted token), and we delete it if you
+      disconnect Ginga from the routes page or from your Garmin Connect settings.</p>
+
+    <h2>Who has access</h2>
+    <p>Ginga's coach and, if you have one, your own coach or club. These services also process data on our behalf:</p>
+    <div class="taula"><table>
+      <tr><th>Service</th><th>What happens there</th></tr>
+      <tr><td>intervals.icu</td><td>Where we read your training from, with your permission.</td></tr>
+      <tr><td>Anthropic (Claude)</td><td>Analyses a weekly summary, without your name, email or GPS, and helps draft the email. It
+        does not train models on this data.</td></tr>
+      <tr><td>Google (Gmail)</td><td>Sends the emails.</td></tr>
+      <tr><td>GitHub</td><td>Stores the code and training plans in a private repository, and publishes the web pages.</td></tr>
+      <tr><td>Cloudflare</td><td>Receives the forms and strength ratings (they expire after 180 and 60 days), relays requests to
+        openrouteservice and, if you connect Garmin, stores the token.</td></tr>
+      <tr><td>openrouteservice (HeiGIT, Germany)</td><td>Computes the loops from the starting point.</td></tr>
+      <tr><td>OpenStreetMap (Overpass)</td><td>From your browser, finds athletics tracks and the most used paths near the starting
+        point.</td></tr>
+      <tr><td>Garmin</td><td>Only if you connect it: we send it the routes you choose.</td></tr>
+    </table></div>
+    <p>Some of these services are in the United States. Transfers rely on the safeguards of the General Data Protection
+      Regulation (the EU-US Data Privacy Framework or standard contractual clauses).</p>
+
+    <h2>How long</h2>
+    <p>For as long as you train with Ginga. When you leave, we delete your plan, your intervals.icu authorization and your
+      Garmin authorization. Form answers expire after 180 days, and strength ratings after 60.</p>
+
+    <h2>Your rights</h2>
+    <p>You can ask to see, correct, delete or take away your data, or ask us to stop using it, by writing to
+      <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a>. We reply within one month. If you think we are not
+      handling it properly, you can complain to the <a href="https://www.aepd.es/">Spanish Data Protection Agency (AEPD)</a>.</p>
+
+    <h2>Children</h2>
+    <p>Ginga is not for children under 14, and Ginga Força is for people aged 18 or over.</p>
+  </article>
+</main>
+<script>
+// l'idioma: el de l'enllaç (?lang=en), el que s'ha triat abans o el del navegador
+(function () {
+  const desat = (() => { try { return localStorage.getItem("ginga-idioma"); } catch (e) { return null; } })();
+  const demanat = new URLSearchParams(location.search).get("lang");
+  let idioma = demanat || desat || (/^(ca|es)/i.test(navigator.language || "") ? "ca" : "en");
+  const posa = (i) => {
+    idioma = i === "en" ? "en" : "ca";
+    document.documentElement.lang = idioma;
+    for (const a of document.querySelectorAll("article[data-idioma]")) a.hidden = a.dataset.idioma !== idioma;
+    for (const b of document.querySelectorAll(".idiomes button")) b.setAttribute("aria-pressed", String(b.dataset.idioma === idioma));
+    document.title = idioma === "en" ? "Ginga · Privacy" : "Ginga · Privacitat";
+  };
+  for (const b of document.querySelectorAll(".idiomes button")) b.addEventListener("click", () => {
+    posa(b.dataset.idioma);
+    try { localStorage.setItem("ginga-idioma", idioma); } catch (e) {}
+  });
+  posa(idioma);
+})();
+</script>
+</body>
+</html>
