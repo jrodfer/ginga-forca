@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="https://jrodfer.github.io/ginga-forca/icona.svg">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#10231D">
+<title>Ginga Apnea</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<style>
+/* Apnea en sec (només per a en Joan i uns companys apneistes; no l'enllaça cap correu). Les taules de CO2 i d'O2
+   amb la marca de cadascú (desada només en aquest mòbil), la marca, la respiració lenta i la preparació, que s'obre
+   al reproductor de força. Les dades són a sessions.json, que es fa des d'apnea/apnea.yaml (python -m apnea); la veu,
+   a veu/<idioma>/ (python -m apnea.veu); la música, a ../musica.js. Mateixa identitat que el reproductor. */
+:root {
+  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
+  --accent: #FF6A2B; --accent-fg: #10231D; --ok: #00996B; --tag: #FFE4D3;
+  --display: "Nunito", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --tag: #1D3A31;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+  --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --tag: #1D3A31;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg); font: 16px/1.45 var(--display);
+  padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+main { max-width: 560px; margin: 0 auto; display: grid; gap: 16px; padding-block: 16px; }
+main > *, .llista > *, .card > * { min-width: 0; }
+[hidden] { display: none !important; }
+h1 { font-size: 1.9rem; line-height: 1.1; font-weight: 900; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.15rem; line-height: 1.25; font-weight: 800; margin: 0; }
+h3 { font-size: 1.05rem; line-height: 1.25; font-weight: 800; margin: 0; }
+p { margin: 0; }
+.eyebrow { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+.muted { color: var(--muted); }
+.lockup { display: block; height: auto; width: 116px; }
+.lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lockup .lk-g { stroke: var(--accent); stroke-width: 28; }
+.lockup .lk-t { stroke: #00996B; stroke-width: 24; }
+.lockup .lk-p { fill: #00996B; }
+.lockup .lk-i { fill: var(--accent); }
+.bloc { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+.avis { background: var(--tag); border-radius: 14px; padding: 12px 14px; font-size: .93rem; display: grid; gap: 4px; }
+.avis strong { font-weight: 800; }
+.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.marca { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.marca input { font: 800 1.4rem var(--display); width: 6.5ch; padding: 8px 10px; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); text-align: center; }
+.marca input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+.tria { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--bg); border-radius: 14px; padding: 4px;
+  border: 1px solid var(--line); }
+.tria button { appearance: none; border: 0; background: transparent; color: var(--fg); border-radius: 10px; padding: 10px 4px;
+  font: 800 .92rem/1.15 var(--display); cursor: pointer; }
+.tria button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 4px; border-bottom: 1px solid var(--line); }
+th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+td:first-child, th:first-child { width: 2.5em; color: var(--muted); }
+td.ag { font-weight: 800; }
+.llista { display: grid; gap: 10px; }
+.card { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+  display: grid; grid-template-columns: 28px 1fr auto; gap: 4px 12px; align-items: start; }
+.num { width: 28px; height: 28px; border-radius: 50%; background: var(--ok); color: #fff;
+  font-weight: 900; display: grid; place-items: center; font-size: .95rem; grid-row: span 3; }
+.card .eyebrow { grid-column: 2; }
+.card h3 { grid-column: 2; }
+.card .muted { grid-column: 2 / 4; font-size: .9rem; }
+.pauta { grid-column: 3; grid-row: 1 / 3; font-weight: 800; white-space: nowrap; font-size: .88rem; }
+.canvia { grid-column: 2 / 4; justify-self: start; appearance: none; background: none; border: 0; padding: 4px 0;
+  color: var(--ok); font: 700 .9rem var(--display); cursor: pointer; }
+.btn { appearance: none; border: 0; border-radius: 14px; font: 800 1.05rem/1 var(--display); letter-spacing: .04em;
+  text-transform: uppercase; padding: 18px 16px; width: 100%; cursor: pointer; background: var(--accent);
+  color: var(--accent-fg); text-align: center; text-decoration: none; display: block; }
+.btn.sec { background: transparent; color: var(--fg); border: 1.5px solid var(--line); }
+.btn.petit { padding: 10px 14px; font-size: .9rem; width: auto; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:focus-visible, button:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+.opcions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.opcions button { appearance: none; border: 1.5px solid var(--line); background: transparent; color: var(--fg);
+  border-radius: 999px; padding: 8px 14px; font: 700 .9rem var(--display); cursor: pointer; }
+.opcions button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.nota { font-size: .9rem; }
+.peu { font-size: .85rem; }
+
+/* el reproductor de la taula: pantalla sencera, fosca i tranquil·la */
+.jugador { position: fixed; inset: 0; z-index: 10; background: #0C1C17; color: #FFF4E8;
+  display: grid; grid-template-rows: auto 1fr auto; padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px
+  calc(env(safe-area-inset-bottom, 0px) + 20px); }
+.j-dalt { display: flex; justify-content: space-between; align-items: center; gap: 12px; max-width: 560px; width: 100%; margin: 0 auto; }
+.j-dalt .eyebrow { color: #A6B4AC; }
+.j-dalt button { flex: none; white-space: nowrap; appearance: none; background: transparent; color: #FFF4E8; border: 1.5px solid #284239; border-radius: 999px;
+  padding: 8px 14px; font: 700 .85rem var(--display); cursor: pointer; }
+.j-mig { display: grid; place-items: center; align-content: center; gap: 18px; text-align: center; }
+.j-cercle { position: relative; width: min(72vw, 320px); aspect-ratio: 1; display: grid; place-items: center; }
+.j-cercle svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.j-pulmo { position: absolute; inset: 12%; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(45,191,140,.55), rgba(45,191,140,.12) 70%);
+  transform: scale(.6); will-change: transform; }
+.aguanta .j-pulmo { background: radial-gradient(circle at 50% 40%, rgba(255,106,43,.42), rgba(255,106,43,.08) 70%); }
+.j-text { position: relative; display: grid; gap: 2px; }
+.j-fase { font-size: 1.5rem; font-weight: 900; letter-spacing: .02em; }
+.j-temps { font-size: 3.4rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.j-sub { color: #A6B4AC; font-size: 1rem; min-height: 1.45em; }
+.j-seg { color: #A6B4AC; font-size: .95rem; min-height: 1.45em; }
+.j-baix { display: grid; gap: 10px; max-width: 560px; width: 100%; margin: 0 auto; }
+.j-baix .btn.sec { color: #FFF4E8; border-color: #284239; }
+.j-resultat { display: grid; gap: 10px; }
+@media (prefers-reduced-motion: reduce) { .j-pulmo { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
+  </header>
+
+  <section>
+    <div class="eyebrow" id="data">Apnea en sec</div>
+    <h1>Apnea en sec</h1>
+    <p class="muted" style="margin-top:8px">Taules de CO2 i d'O2 amb la teva marca, respiració lenta i una preparació
+      per obrir el tòrax. Amb veu guia i música.</p>
+  </section>
+
+  <div class="avis" role="note">
+    <span><strong>Només en sec, assegut o estirat.</strong> Mai a l'aigua (tampoc a la banyera), dret ni conduint.</span>
+    <span><strong>Sense hiperventilar:</strong> respira tranquil abans d'aguantar. Si notes formigueig, mareig o que la
+      vista s'estreny, respira i para.</span>
+  </div>
+
+  <section class="bloc" aria-labelledby="t-marca">
+    <h2 id="t-marca">La teva marca</h2>
+    <div class="marca">
+      <input id="marca" inputmode="numeric" autocomplete="off" placeholder="2:30" aria-label="La teva marca, en minuts i segons">
+      <button class="btn sec petit" type="button" id="desa-marca">Desa</button>
+      <button class="btn sec petit" type="button" id="mesura">Mesura-la</button>
+    </div>
+    <p class="muted nota" id="marca-txt">L'apnea més llarga que fas en sec, ara. Es desa només en aquest mòbil.</p>
+  </section>
+
+  <section class="bloc" aria-labelledby="t-avui">
+    <h2 id="t-avui">Què fem avui</h2>
+    <div class="tria" role="group" aria-label="Què fem avui">
+      <button type="button" data-mode="co2" aria-pressed="true">Taula de CO2</button>
+      <button type="button" data-mode="o2" aria-pressed="false">Taula d'O2</button>
+      <button type="button" data-mode="lenta" aria-pressed="false">Respiració lenta</button>
+    </div>
+    <p id="per-a"></p>
+    <table id="taula" hidden>
+      <thead><tr><th>#</th><th>Respira</th><th>Aguanta</th></tr></thead>
+      <tbody id="files"></tbody>
+    </table>
+    <p class="muted nota" id="resum"></p>
+    <p class="muted nota" id="avis-avui" hidden></p>
+    <button class="btn" type="button" id="comenca">Comença</button>
+  </section>
+
+  <section class="bloc" aria-labelledby="t-prep">
+    <h2 id="t-prep">Preparació</h2>
+    <p class="muted nota" id="prep-intro">Abans de la taula, si vols: obrir el tòrax i les costelles respirant amb el moviment. S'obre al reproductor, amb vídeos, veu i música.</p>
+    <div class="llista" id="prep"></div>
+    <a class="btn sec" id="obre-prep" href="../">Obre la preparació</a>
+  </section>
+
+  <div class="opcions" role="group" aria-label="Veu guia">
+    <span class="eyebrow">Veu guia</span>
+    <button type="button" data-idioma="ca" aria-pressed="true">Català</button>
+    <button type="button" data-idioma="en" aria-pressed="false">English</button>
+    <button type="button" data-idioma="no" aria-pressed="false">Sense veu</button>
+  </div>
+  <div class="opcions" role="group" aria-label="Música">
+    <span class="eyebrow">Música</span>
+    <button type="button" id="musica-si" aria-pressed="true">Sí</button>
+    <button type="button" id="musica-no" aria-pressed="false">No</button>
+  </div>
+
+  <p class="muted" id="error" hidden>No s'han pogut carregar les taules. Torna-ho a provar d'aquí a una estona.</p>
+  <p class="muted peu">Una taula al dia com a molt, i la de CO2 i la d'O2 en dies diferents. La marca, un dia descansat i com a molt un cop a la setmana. A les taules no es busca el límit: si no arribes, toca «He respirat» i la taula continua.</p>
+</main>
+
+<div class="jugador" id="jugador" hidden role="dialog" aria-modal="true" aria-labelledby="j-titol">
+  <div class="j-dalt">
+    <div>
+      <div class="eyebrow" id="j-titol"></div>
+      <div id="j-serie" style="font-weight:800"></div>
+    </div>
+    <button type="button" id="j-musica">Música: sí</button>
+  </div>
+  <div class="j-mig" id="j-mig">
+    <div class="j-cercle">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="47" fill="none" stroke="#284239" stroke-width="2"/>
+        <circle id="j-anell" cx="50" cy="50" r="47" fill="none" stroke="#FF6A2B" stroke-width="2.5" stroke-linecap="round"
+          stroke-dasharray="295.3" stroke-dashoffset="295.3"/>
+      </svg>
+      <div class="j-pulmo" id="j-pulmo"></div>
+      <div class="j-text" aria-live="polite">
+        <div class="j-fase" id="j-fase"></div>
+        <div class="j-temps" id="j-temps"></div>
+        <div class="j-sub" id="j-sub"></div>
+      </div>
+    </div>
+    <div class="j-seg" id="j-seg"></div>
+  </div>
+  <div class="j-baix">
+    <div class="j-resultat" id="j-resultat" hidden>
+      <p id="j-resultat-txt" style="text-align:center;font-weight:800"></p>
+      <div class="fila">
+        <button class="btn sec" type="button" id="j-no-desis">No la desis</button>
+        <button class="btn" type="button" id="j-desa">Desa-la</button>
+      </div>
+    </div>
+    <button class="btn" type="button" id="j-respirat" hidden>He respirat</button>
+    <div class="fila" id="j-controls">
+      <button class="btn sec" type="button" id="j-surt">Surt</button>
+      <button class="btn sec" type="button" id="j-pausa">Pausa</button>
+    </div>
+  </div>
+</div>
+
+<script src="../musica.js"></script>
+<script>
+(function () {
+  "use strict";
+  var CLAU_MARCA = "ginga-apnea-marca", CLAU_MODE = "ginga-apnea-mode", CLAU_IDIOMA = "ginga-apnea-idioma",
+      CLAU_FET = "ginga-apnea-fet", CLAU_PREP = "ginga-apnea-prep", CLAU_MUSICA = "ginga-musica";
+  var PREPARA_S = 12, CICLE_PREPARA = [7, 5], CANVI_COSTAT_S = 5, TITOL_PREP = "Preparació per a l'apnea";
+  var NOTA_PREP = "Respira amb el moviment, a poc a poc. Fins a notar tensió, sense dolor.";
+  var DIES = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
+  var MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"];
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function llegeix(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (err) { return null; } }
+  function desa(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (err) {} }
+  function avui() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function diesDes(dia) { return Math.round((new Date(avui() + "T12:00:00") - new Date(dia + "T12:00:00")) / 864e5); }
+  function mmss(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2); }
+  function llegeixMarca(text) {                             // "2:30", "2.30", "150" -> segons
+    var t = String(text || "").trim().replace(/[.,'’]/g, ":"), m = t.match(/^(\d{1,2}):(\d{1,2})$/);
+    var s = m ? +m[1] * 60 + +m[2] : (/^\d{1,3}$/.test(t) ? +t : NaN);
+    return s >= 20 && s <= 900 ? s : null;
+  }
+  // el mateix codi que coach/forca.py: JSON en UTF-8, base64url sense "="
+  function codi(dades) {
+    var bytes = new TextEncoder().encode(JSON.stringify(dades)), bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  var dades = null, mode = llegeix(CLAU_MODE) || "co2", marca = llegeix(CLAU_MARCA);   // marca: { s, dia }
+  var idioma = "ca", musicaSi = true;
+  try { idioma = { en: "en", no: "no" }[localStorage.getItem(CLAU_IDIOMA)] || "ca"; } catch (err) {}
+  try { musicaSi = localStorage.getItem(CLAU_MUSICA) !== "no"; } catch (err) {}
+  var d0 = new Date();
+  $("data").textContent = "Apnea en sec · " + DIES[d0.getDay()] + " " + d0.getDate() + " de " + MESOS[d0.getMonth()];
+
+  // ---- la marca -------------------------------------------------------------------------------------------------
+  function pintaMarca() {
+    if (marca && marca.s) {
+      $("marca").value = mmss(marca.s);
+      var fa = marca.dia ? diesDes(marca.dia) : null;
+      $("marca-txt").textContent = "Les taules es fan amb aquesta marca" + (fa != null ? " (" + (fa === 0 ? "d'avui" : fa === 1 ? "d'ahir" : "de fa " + fa + " dies") + ")" : "") + ". Es desa només en aquest mòbil." +
+        (fa != null && fa < 7 ? " La pròxima, d'aquí a " + (7 - fa) + (7 - fa === 1 ? " dia" : " dies") + " com a mínim." : "");
+    }
+  }
+  $("desa-marca").addEventListener("click", function () {
+    var s = llegeixMarca($("marca").value);
+    if (!s) { $("marca-txt").textContent = "Escriu-la en minuts i segons (2:30), entre 0:20 i 15:00."; return; }
+    marca = { s: s, dia: (marca && marca.s === s && marca.dia) || avui() }; desa(CLAU_MARCA, marca); pintaMarca(); pintaAvui();
+  });
+  $("marca").addEventListener("keydown", function (ev) { if (ev.key === "Enter") $("desa-marca").click(); });
+
+  // ---- què fem avui ---------------------------------------------------------------------------------------------
+  function taula() { return dades && dades.taules.filter(function (t) { return t.clau === mode; })[0]; }
+  function aguanta(a) { return Math.max(15, Math.round(a * marca.s / 5) * 5); }
+  function durada(passos) { return passos.reduce(function (t, p) { return t + (p.s || 0); }, 0); }
+  function pintaAvui() {
+    Array.prototype.forEach.call(document.querySelectorAll(".tria button"), function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-mode") === mode ? "true" : "false");
+    });
+    if (!dades) return;
+    var t = taula(), files = $("files"), fet = llegeix(CLAU_FET);
+    files.textContent = "";
+    $("taula").hidden = !t || !marca;
+    if (!t) {
+      var l = dades.lenta;
+      $("per-a").textContent = "Inspira pel nas en " + l.inspira + " temps i deixa anar l'aire en " + l.expira + ": " +
+        (60 / (l.inspira + l.expira)) + " respiracions per minut, sense apnees. Per relaxar-te, o abans de la taula.";
+      $("resum").textContent = l.minuts + " minuts.";
+      $("comenca").disabled = false;
+    } else {
+      $("per-a").textContent = t.per_a;
+      if (!marca) {
+        $("resum").textContent = "Primer, la teva marca: escriu-la a dalt o mesura-la.";
+        $("comenca").disabled = true;
+      } else {
+        t.series.forEach(function (s, i) {
+          var tr = el("tr");
+          tr.appendChild(el("td", null, String(i + 1)));
+          tr.appendChild(el("td", null, mmss(s.r)));
+          tr.appendChild(el("td", "ag", mmss(aguanta(s.a))));
+          files.appendChild(tr);
+        });
+        $("resum").textContent = t.series.length + " apnees, uns " + Math.round(durada(passos(mode)) / 60) + " minuts.";
+        $("comenca").disabled = false;
+      }
+    }
+    var avis = "";
+    if (t && fet && fet.dia === avui()) avis = "Avui ja has fet la " + (fet.clau === "co2" ? "taula de CO2" : "taula d'O2") + ": una al dia.";
+    $("avis-avui").textContent = avis; $("avis-avui").hidden = !avis;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".tria button"), function (b) {
+    b.addEventListener("click", function () { mode = b.getAttribute("data-mode"); desa(CLAU_MODE, mode); pintaAvui(); });
+  });
+
+  // ---- veu guia i música ----------------------------------------------------------------------------------------
+  function pintaOpcions() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-idioma]"), function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-idioma") === idioma ? "true" : "false");
+    });
+    $("musica-si").setAttribute("aria-pressed", musicaSi ? "true" : "false");
+    $("musica-no").setAttribute("aria-pressed", musicaSi ? "false" : "true");
+    $("j-musica").textContent = "Música: " + (musicaSi ? "sí" : "no");
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-idioma]"), function (b) {
+    b.addEventListener("click", function () {
+      idioma = b.getAttribute("data-idioma");
+      try { localStorage.setItem(CLAU_IDIOMA, idioma); } catch (err) {}
+      carregaIndex(); pintaOpcions(); enllacPrep();
+    });
+  });
+  function posaMusica(si) {
+    musicaSi = si;
+    try { localStorage.setItem(CLAU_MUSICA, si ? "si" : "no"); } catch (err) {}
+    if (!si && musica) musica.atura(1);
+    if (si && jugant) engegaMusica();
+    pintaOpcions();
+  }
+  $("musica-si").addEventListener("click", function () { posaMusica(true); });
+  $("musica-no").addEventListener("click", function () { posaMusica(false); });
+  $("j-musica").addEventListener("click", function () { posaMusica(!musicaSi); });
+
+  // Les frases són mp3 gravats (apnea/veu.py): veu/<idioma>/index.json diu quin fitxer és cada clau. Sonen per
+  // l'AudioContext, que el toc de Comença desbloqueja. El que s'ha de dir abans que hagi arribat l'índex, es diu
+  // quan arriba (pendent). Sense veu, o sense la frase gravada, una campaneta (CAMPANETA).
+  var audio = null, frases = null, carpetaVeu = "", silenci = 0, sons = {}, font = null, torn = 0, musica = null, pendent = null;
+  var RESPIRA = [523.25, 659.25];
+  var CAMPANETA = { aguanta: [392], respira: RESPIRA, recupera: RESPIRA, respira_ultima: RESPIRA, marca_final: RESPIRA,
+                    prepara: [783.99], deu: [880], taula_final: [523.25, 659.25, 783.99], lenta_final: RESPIRA };
+  function campaneta(clau) {
+    var notes = CAMPANETA[clau];
+    if (!notes || !audio) return;
+    notes.forEach(function (f, i) {
+      var o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + i * 0.35;
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+      o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + 2.3);
+    });
+  }
+  function carregaIndex() {
+    frases = null; sons = {};
+    if (idioma === "no") return;
+    var carpeta = "veu/" + idioma + "/", meu = idioma;
+    function llest(fr, sil) {
+      if (meu !== idioma) return;
+      frases = fr; silenci = sil; carpetaVeu = carpeta;
+      precarrega();
+      if (pendent && jugant && !jugant.pausat) { var c = pendent; pendent = null; diu(c); }
+    }
+    fetch(carpeta + "index.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (ix) { llest(ix.frases || {}, ix.silenci || 0); }, function () { llest({}, 0); });
+  }
+  function precarrega() {                                  // les frases de la pàgina (les ex-, només al reproductor)
+    if (!audio || !frases) return;
+    Object.keys(frases).forEach(function (k) { if (k.indexOf("ex-") !== 0) carrega(k, function () {}); });
+  }
+  function preparaSo() {
+    try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (err) {}
+    precarrega();
+  }
+  function carrega(k, fet) {
+    if (sons[k] || !audio || !frases || !frases[k]) return fet(sons[k] || null);
+    fetch(carpetaVeu + frases[k].f).then(function (r) { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(function (b) { audio.decodeAudioData(b, function (s) { sons[k] = s; fet(s); }, function () { fet(null); }); })
+      .catch(function () { fet(null); });
+  }
+  function calla() {
+    pendent = null;
+    torn++;
+    if (font) { try { font.onended = null; font.stop(); } catch (err) {} font = null; }
+    if (musica) musica.atenua(false);
+  }
+  function diu(claus) {
+    pendent = null;
+    if (!audio) return;
+    if (idioma === "no") return campaneta(claus[0]);
+    if (!frases) { pendent = claus; return; }
+    calla();
+    var meu = torn;
+    (function seguent(n) {
+      if (meu !== torn || n >= claus.length) return;
+      carrega(claus[n], function (s) {
+        if (meu !== torn) return;
+        if (!s) { campaneta(claus[n]); return seguent(n + 1); }
+        font = audio.createBufferSource(); font.buffer = s; font.connect(audio.destination);
+        if (musica) musica.atenua(true);
+        font.onended = function () { font = null; if (musica && n + 1 >= claus.length) musica.atenua(false); seguent(n + 1); };
+        font.start(0, 0, Math.max(0.2, s.duration - silenci));
+      });
+    })(0);
+  }
+  function engegaMusica() {
+    if (!musicaSi || !audio || !window.GingaMusica) return;
+    musica = musica || window.GingaMusica(audio);
+    musica.engega();
+  }
+
+  // ---- el reproductor de la taula -------------------------------------------------------------------------------
+  // Els passos: respira (s), aguanta (s; null a la marca: compta endavant fins que toques «He respirat») i lenta (s).
+  function passos(m) {
+    if (m === "marca") return [{ t: "respira", s: dades.marca.respira }, { t: "aguanta", s: null }];
+    if (m === "lenta") return [{ t: "lenta", s: dades.lenta.minuts * 60 }];
+    var surt = [];
+    taula().series.forEach(function (s) { surt.push({ t: "respira", s: s.r }, { t: "aguanta", s: aguanta(s.a) }); });
+    return surt;
+  }
+  var jugant = null, idTick = null, bloqueig = null, nRelaxa = 0;
+  // jugant: { mode, passos, k, t0, pausat, dits, curtes, apnees }
+  function ara() { return performance.now(); }
+  function passat() { return ((jugant.pausat || ara()) - jugant.t0) / 1000; }
+  function mantenEncesa() {
+    try { if (navigator.wakeLock && !bloqueig) navigator.wakeLock.request("screen").then(function (b) { bloqueig = b; b.addEventListener("release", function () { bloqueig = null; }); }, function () {}); } catch (err) {}
+  }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && jugant) mantenEncesa(); });
+
+  function comenca(m) {
+    preparaSo(); engegaMusica(); mantenEncesa();
+    var ps = passos(m);
+    jugant = { mode: m, passos: ps, k: -1, t0: 0, pausat: null, dits: {}, curtes: 0,
+               apnees: ps.filter(function (p) { return p.t === "aguanta"; }).length };
+    $("j-titol").textContent = m === "marca" ? "La teva marca" : m === "lenta" ? "Respiració lenta" : taula().nom;
+    $("j-resultat").hidden = true; $("j-controls").hidden = false; $("j-pausa").textContent = "Pausa";
+    $("jugador").hidden = false; document.body.style.overflow = "hidden";
+    entra(0);
+    clearInterval(idTick); idTick = setInterval(avanca, 200);
+    requestAnimationFrame(dibuixa);
+  }
+  function entra(k) {
+    var j = jugant, p = j.passos[k], ultimaRespira = j.mode !== "marca" && k === j.passos.length - 2;
+    j.k = k; j.t0 = ara(); j.pausat = null; j.dits = {};
+    var nApnea = j.passos.slice(0, k + 1).filter(function (x) { return x.t === "aguanta"; }).length;
+    $("j-serie").textContent = j.mode === "lenta" ? "" : j.mode === "marca" ? (p.t === "respira" ? "Respiració tranquil·la" : "Fins on puguis, sense forçar")
+      : "Apnea " + Math.max(1, p.t === "respira" ? nApnea + 1 : nApnea) + " de " + j.apnees;
+    var seg = j.passos[k + 1];
+    $("j-seg").textContent = seg && seg.t === "aguanta" ? (seg.s ? "Després: aguanta " + mmss(seg.s) : "Després: aguanta fins on puguis")
+      : seg ? "Després: respira " + mmss(seg.s) : "";
+    $("j-respirat").hidden = p.t !== "aguanta";
+    $("j-mig").classList.toggle("aguanta", p.t === "aguanta");
+    if (p.t === "aguanta") return diu(["aguanta"]);
+    if (p.t === "lenta") return diu(["lenta_inici"]);
+    if (k === 0) return diu([j.mode === "marca" ? "marca_inici" : "taula_inici"]);
+    diu([ultimaRespira ? "respira_ultima" : p.s >= 45 ? "recupera" : "respira"]);
+  }
+  function un(clau, dir) { if (!jugant.dits[clau]) { jugant.dits[clau] = true; diu(dir || [clau]); } }
+  function avanca() {
+    var j = jugant;
+    if (!j || j.pausat || j.k < 0 || j.acabat) return;
+    var p = j.passos[j.k], t = passat(), queda = p.s != null ? p.s - t : null;
+    if (p.t === "respira" && p.s >= 15 && queda <= PREPARA_S) un("prepara");
+    if (p.t === "aguanta" && p.s != null) {
+      if (p.s >= 40 && t >= p.s / 2) un("relaxa", [["relaxa_1", "relaxa_2", "relaxa_3"][nRelaxa++ % 3]]);
+      if (p.s >= 30 && queda <= 10) un("deu");
+    }
+    if (p.t === "aguanta" && p.s == null) {                                     // la marca: una frase cada 45 s
+      var n = Math.floor(t / 45);
+      if (n > 0) un("relaxa" + n, [["relaxa_1", "relaxa_2", "relaxa_3"][(n - 1) % 3]]);
+    }
+    if (p.t === "lenta") {                                                      // inspira i expira, els 3 primers cicles
+      var l = dades.lenta, cicle = l.inspira + l.expira, c = Math.floor(t / cicle), dins = t - c * cicle;
+      if (c < 3 && t > 6) { if (dins < l.inspira) un("i" + c, ["inspira"]); else un("e" + c, ["expira"]); }
+    }
+    if (queda != null && queda <= 0) seguent(false);
+  }
+  function seguent(aviat) {
+    var j = jugant, p = j.passos[j.k];
+    if (p.t === "aguanta" && j.mode === "marca") return resultatMarca(passat());
+    if (p.t === "aguanta" && aviat) j.curtes++;
+    if (j.k + 1 < j.passos.length) return entra(j.k + 1);
+    acaba();
+  }
+  function acaba() {
+    var j = jugant;
+    j.acabat = true; clearInterval(idTick);
+    if (j.mode === "lenta") diu(["lenta_final"]); else diu(["taula_final"]);
+    if (j.mode === "co2" || j.mode === "o2") desa(CLAU_FET, { dia: avui(), clau: j.mode });
+    $("j-fase").textContent = "Fet"; $("j-temps").textContent = "";
+    $("j-sub").textContent = j.mode === "lenta" ? "Torna al teu ritme." : j.apnees + " apnees" + (j.curtes ? " (" + j.curtes + (j.curtes === 1 ? " més curta" : " més curtes") + ": cap problema)" : "") + ".";
+    $("j-seg").textContent = "Queda't uns minuts respirant tranquil abans d'aixecar-te.";
+    $("j-serie").textContent = ""; $("j-respirat").hidden = true; $("j-pausa").hidden = true;
+    $("j-surt").textContent = "Tanca";
+    $("j-mig").classList.remove("aguanta");
+    if (musica) musica.atura(15);
+    pintaAvui();
+  }
+  function resultatMarca(s) {
+    var j = jugant;
+    j.acabat = true; clearInterval(idTick);
+    diu(["marca_final"]);
+    j.resultat = Math.round(s);
+    $("j-fase").textContent = "Respira"; $("j-temps").textContent = mmss(j.resultat); $("j-sub").textContent = "";
+    $("j-seg").textContent = ""; $("j-respirat").hidden = true; $("j-controls").hidden = true;
+    $("j-resultat-txt").textContent = marca ? "La d'abans: " + mmss(marca.s) + "." : "És la primera.";
+    $("j-resultat").hidden = false;
+    $("j-mig").classList.remove("aguanta");
+  }
+  function tanca() {
+    clearInterval(idTick); calla();
+    if (musica) musica.atura(1.5);
+    try { if (bloqueig) bloqueig.release(); } catch (err) {}
+    jugant = null; $("jugador").hidden = true; document.body.style.overflow = "";
+    $("j-pausa").hidden = false; $("j-surt").textContent = "Surt";
+  }
+  $("j-respirat").addEventListener("click", function () { if (jugant && !jugant.acabat) seguent(true); });
+  $("j-pausa").addEventListener("click", function () {
+    var j = jugant;
+    if (!j || j.acabat) return;
+    if (j.pausat) { j.t0 += ara() - j.pausat; j.pausat = null; $("j-pausa").textContent = "Pausa"; }
+    else { j.pausat = ara(); calla(); $("j-pausa").textContent = "Continua"; }
+  });
+  $("j-surt").addEventListener("click", tanca);
+  $("j-desa").addEventListener("click", function () {
+    marca = { s: jugant.resultat, dia: avui() }; desa(CLAU_MARCA, marca); pintaMarca(); pintaAvui(); tanca();
+  });
+  $("j-no-desis").addEventListener("click", tanca);
+  $("comenca").addEventListener("click", function () { if (dades && (mode === "lenta" || marca)) comenca(mode); });
+  $("mesura").addEventListener("click", function () {
+    if (!dades) return;
+    if (marca && marca.dia && diesDes(marca.dia) < 7 &&
+        !confirm("La teva marca és de fa menys d'una setmana. Les apnees màximes, com a molt un cop a la setmana. La mesures igualment?")) return;
+    comenca("marca");
+  });
+
+  // el cercle: a respirar, s'infla en inspirar i es desinfla en expirar; els últims segons abans d'aguantar, expira
+  // (7 s) i fa una bona inspiració (5 s). A aguantar, quiet i ple, i l'anell diu quant n'has fet.
+  function dibuixa() {
+    var j = jugant;
+    if (!j) return;
+    requestAnimationFrame(dibuixa);
+    if (j.acabat) { $("j-pulmo").style.transform = "scale(.7)"; $("j-anell").style.strokeDashoffset = 295.3; return; }
+    var p = j.passos[j.k], t = passat(), queda = p.s != null ? p.s - t : null, escala = 1, fase = "", sub = "";
+    var l = dades.lenta, cicle = l.inspira + l.expira;
+    function ona(x) { return 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, x))); }
+    if (p.t === "aguanta") {
+      fase = "Aguanta"; escala = 1;
+      $("j-anell").style.strokeDashoffset = p.s ? 295.3 * (1 - Math.min(1, t / p.s)) : 295.3 * (1 - (t % 60) / 60);
+    } else {
+      $("j-anell").style.strokeDashoffset = 295.3;
+      fase = p.t === "lenta" ? "Respira lent" : "Respira";
+      if (p.t === "respira" && p.s >= 15 && queda <= PREPARA_S) {
+        var dins = PREPARA_S - queda;
+        fase = "Prepara't";
+        if (dins < CICLE_PREPARA[0]) { escala = 1 - 0.4 * ona(dins / CICLE_PREPARA[0]); sub = "Deixa anar l'aire"; }
+        else { escala = 0.6 + 0.4 * ona((dins - CICLE_PREPARA[0]) / CICLE_PREPARA[1]); sub = "Una bona inspiració"; }
+      } else {
+        var x = t % cicle;
+        if (x < l.inspira) { escala = 0.6 + 0.4 * ona(x / l.inspira); sub = "Inspira"; }
+        else { escala = 1 - 0.4 * ona((x - l.inspira) / l.expira); sub = "Expira"; }
+      }
+    }
+    $("j-pulmo").style.transform = "scale(" + escala.toFixed(3) + ")";
+    $("j-fase").textContent = j.pausat ? "En pausa" : fase;
+    $("j-temps").textContent = mmss(queda != null ? Math.ceil(queda) : t);
+    $("j-sub").textContent = j.pausat ? "" : sub;
+  }
+
+  // ---- la preparació (al reproductor, com el ioga) ----------------------------------------------------------------
+  var triats = null, enllacPrep = function () {};
+  function tria(n, evita) {
+    var opcions = [];
+    for (var i = 0; i < n; i++) if (i !== evita) opcions.push(i);
+    return opcions.length ? opcions[Math.floor(Math.random() * opcions.length)] : 0;
+  }
+  function pauta(e) { return e.s + " × " + (e.u === "r" ? String(e.q) : e.q + " s") + (e.c ? " per costat" : ""); }
+  function minutsPrep(es) {
+    var t = 0;
+    es.forEach(function (e) {
+      var q = e.q * (e.u === "r" ? 3 : 1);
+      t += e.s * ((e.c ? 2 * q + CANVI_COSTAT_S : q) + e.d) + 8;               // 8: la preparació (web/motor.js)
+    });
+    return Math.max(1, Math.round(t / 60));
+  }
+  function pintaPrep() {
+    var fases = dades.preparacio, dia = avui();
+    desa(CLAU_PREP, { dia: dia, triats: triats });
+    var es = fases.map(function (f, i) { return f.exercicis[triats[i]]; }), llista = $("prep");
+    llista.textContent = "";
+    fases.forEach(function (f, i) {
+      var e = es[i], c = el("div", "card");
+      c.appendChild(el("span", "num", String(i + 1)));
+      c.appendChild(el("span", "eyebrow", f.nom));
+      c.appendChild(el("span", "pauta", pauta(e)));
+      c.appendChild(el("h3", null, e.n));
+      c.appendChild(el("p", "muted", e.x));
+      if (f.exercicis.length > 1) {
+        var b = el("button", "canvia", "Canvia aquest");
+        b.type = "button";
+        b.addEventListener("click", function () { triats[i] = tria(f.exercicis.length, triats[i]); pintaPrep(); });
+        c.appendChild(b);
+      }
+      llista.appendChild(c);
+    });
+    $("prep-intro").textContent = "Abans de la taula, si vols: " + es.length + " exercicis, uns " + minutsPrep(es) +
+      " minuts, per obrir el tòrax i les costelles respirant amb el moviment. S'obre al reproductor, amb vídeos, veu i música.";
+    enllacPrep = function () {                       // g: guiada; a: la veu; mu: la música (web/musica.js)
+      var a = idioma === "en" ? "en" : "ca";
+      $("obre-prep").href = "../#" + codi({ t: TITOL_PREP, d: dia, l: "ca", e: es, m: NOTA_PREP, g: 1, a: "apnea/veu/" + a + "/", mu: 1 });
+    };
+    enllacPrep();
+  }
+
+  pintaOpcions(); carregaIndex();
+  fetch("sessions.json").then(function (r) {
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }).then(function (d) {
+    dades = d;
+    var guardat = llegeix(CLAU_PREP) || {}, fases = d.preparacio;
+    if (guardat.dia === avui() && guardat.triats && guardat.triats.length === fases.length) triats = guardat.triats;
+    else triats = fases.map(function (f, i) { return tria(f.exercicis.length, (guardat.triats || [])[i]); });
+    pintaMarca(); pintaAvui(); pintaPrep();
+  }).catch(function () { $("error").hidden = false; });
+})();
+</script>
+</body>
+</html>

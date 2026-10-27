@@ -1,0 +1,152 @@
+{
+ "model": "eleven_v4",
+ "veu": "River (ElevenLabs)",
+ "silenci": 0,
+ "frases": {
+  "taula_inici": {
+   "t": "Comencem. Seu o estira't còmode, tanca els ulls i respira tranquil, sense forçar.",
+   "f": "taula_inici-1ced1604.mp3",
+   "s": 6.6
+  },
+  "respira": {
+   "t": "Respira.",
+   "f": "respira-e0829aef.mp3",
+   "s": 1.0
+  },
+  "recupera": {
+   "t": "Respira. Unes respiracions de recuperació, i torna a la calma.",
+   "f": "recupera-ba49edab.mp3",
+   "s": 4.8
+  },
+  "respira_ultima": {
+   "t": "Respira. Ara ve l'última.",
+   "f": "respira_ultima-126de0dd.mp3",
+   "s": 2.2
+  },
+  "prepara": {
+   "t": "Prepara't. Deixa anar l'aire a poc a poc, i una bona inspiració, sense forçar-la.",
+   "f": "prepara-c1752d38.mp3",
+   "s": 5.9
+  },
+  "aguanta": {
+   "t": "Aguanta. Deixa anar la tensió de la cara i les espatlles.",
+   "f": "aguanta-8aea55c6.mp3",
+   "s": 4.2
+  },
+  "relaxa_1": {
+   "t": "Molt bé. Relaxa la mandíbula i les mans.",
+   "f": "relaxa_1-ea83d13e.mp3",
+   "s": 3.3
+  },
+  "relaxa_2": {
+   "t": "Deixa que el cos es faci pesat.",
+   "f": "relaxa_2-c0c3d4e2.mp3",
+   "s": 2.3
+  },
+  "relaxa_3": {
+   "t": "Estàs bé. Quiet, i tranquil.",
+   "f": "relaxa_3-1b680530.mp3",
+   "s": 3.1
+  },
+  "deu": {
+   "t": "Deu segons.",
+   "f": "deu-e10bccad.mp3",
+   "s": 1.2
+  },
+  "taula_final": {
+   "t": "Taula acabada. Queda't uns minuts respirant tranquil abans d'aixecar-te. Bona feina.",
+   "f": "taula_final-c169accd.mp3",
+   "s": 5.8
+  },
+  "comencem": {
+   "t": "Comencem.",
+   "f": "comencem-a7137f32.mp3",
+   "s": 1.1
+  },
+  "ara_s": {
+   "t": "Som-hi. Aguanta la postura i respira a poc a poc.",
+   "f": "ara_s-2fd3429f.mp3",
+   "s": 4.1
+  },
+  "ara_r": {
+   "t": "Som-hi. Segueix el ritme de la respiració.",
+   "f": "ara_r-2a247366.mp3",
+   "s": 3.2
+  },
+  "primer_s": {
+   "t": "Primer costat. Aguanta i respira.",
+   "f": "primer_s-3c0a7f48.mp3",
+   "s": 3.3
+  },
+  "primer_r": {
+   "t": "Primer costat. Al ritme de la respiració.",
+   "f": "primer_r-c8480112.mp3",
+   "s": 3.0
+  },
+  "canvi": {
+   "t": "Amb calma, canvia de costat.",
+   "f": "canvi-916f930a.mp3",
+   "s": 2.3
+  },
+  "segon": {
+   "t": "Segon costat.",
+   "f": "segon-90dcfa89.mp3",
+   "s": 1.3
+  },
+  "un_cop_mes": {
+   "t": "Un cop més.",
+   "f": "un_cop_mes-7287ead5.mp3",
+   "s": 1.2
+  },
+  "descans": {
+   "t": "Molt bé. Deixa anar, i descansa uns segons.",
+   "f": "descans-85f38ef1.mp3",
+   "s": 3.3
+  },
+  "respira_1": {
+   "t": "Inspira pel nas... i, quan deixis anar l'aire, entra una mica més a la postura.",
+   "f": "respira_1-41ae09c5.mp3",
+   "s": 5.6
+  },
+  "respira_2": {
+   "t": "Relaxa les espatlles i la mandíbula. Respira.",
+   "f": "respira_2-764f13c2.mp3",
+   "s": 3.9
+  },
+  "respira_3": {
+   "t": "Amb cada expiració, deixa que la tensió es fongui.",
+   "f": "respira_3-eea17457.mp3",
+   "s": 3.7
+  },
+  "final": {
+   "t": "Sessió acabada. Queda't uns segons estirat, amb els ulls tancats, i respira. Bona feina.",
+   "f": "final-8b33ccde.mp3",
+   "s": 6.8
+  },
+  "ex-3TF3q7LWCUU": {
+   "t": "Gat-vaca. Arqueja i arrodoneix l'esquena amb la respiració.",
+   "f": "ex-3TF3q7LWCUU-8fb6ba3d.mp3",
+   "s": 4.2
+  },
+  "ex-BbHzhZakamk": {
+   "t": "Gambada amb rotació. Peu entre les mans, i obre el braç.",
+   "f": "ex-BbHzhZakamk-cf7c41d5.mp3",
+   "s": 4.5
+  },
+  "ex-65wv7PURy2w": {
+   "t": "Cobra. Malucs a terra, i aixeca el pit a poc a poc.",
+   "f": "ex-65wv7PURy2w-b903aae6.mp3",
+   "s": 4.4
+  },
+  "ex-d2-djDRFMdY": {
+   "t": "Torsió. Braços en creu, i deixa caure el genoll.",
+   "f": "ex-d2-djDRFMdY-91b9455d.mp3",
+   "s": 3.7
+  },
+  "ex-u3BbO6JWEBc": {
+   "t": "Postura del nen. Seu sobre els talons i estira els braços.",
+   "f": "ex-u3BbO6JWEBc-76a23440.mp3",
+   "s": 4.2
+  }
+ }
+}

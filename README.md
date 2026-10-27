@@ -27,6 +27,16 @@ Cada dia una sessió de ioga per corredors (una postura de cada fase d'`estirame
 reproductor. No l'enllaça cap correu. El botó TV de dalt connecta la tele des d'aquí, i en tocar Comença el
 reproductor recupera la connexió i hi passa la sessió (a la tele, el vídeo sense so: parla la veu guia del mòbil).
 
+Si l'enllaç porta `mu: 1` (ara, només la preparació d'`apnea/`), sona música ambiental generada al navegador
+(`musica.js`: acords lents, onades i alguna campaneta, sense fitxers), que arrenca amb el primer toc, baixa mentre parla
+la veu, es pot apagar (botó «Música») i s'apaga a poc a poc al final.
+
+## Apnea en sec (`apnea/`)
+
+Taules de CO2 i d'O2 amb la marca de cadascú (desada només al mòbil), la marca, respiració lenta i una preparació que
+s'obre guiada al reproductor. Tot en sec, assegut o estirat. Té el seu reproductor a pantalla sencera (un cercle que
+guia la respiració, el temps, la veu de `apnea/veu/<idioma>/` i la música de `musica.js`). No l'enllaça cap correu.
+
 ## Rutes (`rutes/`)
 
 Per a cada sessió de córrer o de bici, l'atleta tria d'on surt i la pàgina li proposa circuits que encaixen amb la

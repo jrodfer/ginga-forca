@@ -175,6 +175,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   </div>
 
   <button class="btn sec veu" id="veu" type="button" hidden aria-pressed="true">Veu guia: sí</button>
+  <button class="btn sec veu" id="musica" type="button" hidden aria-pressed="true">Música: sí</button>
   <div class="demo" id="avis-demo" hidden>Sessió d'exemple. Les teves arriben amb l'enllaç del correu setmanal de Ginga.</div>
 
   <!-- Resum de la sessió -->
@@ -265,6 +266,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 </main>
 
 <script src="motor.js"></script>
+<script src="musica.js"></script>
 <script>
 (function () {
   "use strict";
@@ -343,7 +345,29 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   function preparaSo() {
     try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (err) {}
     precarregaVeu();
+    engegaMusica();
   }
+
+  // ---- música ambiental (només si la sessió porta `mu`: la preparació de l'apnea). La fa musica.js al navegador;
+  // arrenca amb el primer toc, baixa mentre parla la veu i s'apaga al final.
+  var musicaSi = true, musica = null, musicaAcabada = false;
+  try { musicaSi = localStorage.getItem("ginga-musica") !== "no"; } catch (err) {}
+  function engegaMusica() {
+    if (!sessio.mu || !musicaSi || musicaAcabada || !audio || !window.GingaMusica) return;
+    musica = musica || window.GingaMusica(audio);
+    musica.engega();
+  }
+  function pintaMusica() {
+    $("musica").hidden = !sessio.mu;
+    $("musica").textContent = "Música: " + (musicaSi ? "sí" : "no");
+    $("musica").setAttribute("aria-pressed", musicaSi ? "true" : "false");
+  }
+  $("musica").addEventListener("click", function () {
+    musicaSi = !musicaSi;
+    try { localStorage.setItem("ginga-musica", musicaSi ? "si" : "no"); } catch (err) {}
+    if (musicaSi) preparaSo(); else if (musica) musica.atura(1);
+    pintaMusica();
+  });
 
   // ---- veu guia (només a les sessions guiades, sessio.g: la pàgina de ioga). Diu cada pas, com un vídeo de ioga.
   // Són frases gravades amb una veu neural (estiraments/veu.py): sessio.a és la carpeta, amb index.json, que diu
@@ -374,6 +398,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   function calla() {
     torn++;
     if (font) { try { font.onended = null; font.stop(); } catch (err) {} font = null; }
+    if (musica) musica.atenua(false);
   }
   function diu(claus) {                                    // les frases una darrere l'altra; talla el que deia
     if (!sessio.g || !veu || !frases || !audio) return;
@@ -385,7 +410,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
         if (meu !== torn) return;
         if (!s) return seguent(n + 1);
         font = audio.createBufferSource(); font.buffer = s; font.connect(audio.destination);
-        font.onended = function () { font = null; seguent(n + 1); };
+        if (musica) musica.atenua(true);
+        font.onended = function () { font = null; if (musica && n + 1 >= claus.length) musica.atenua(false); seguent(n + 1); };
         font.start(0, 0, Math.max(0.2, s.duration - silenci));   // sense el silenci del final (index.json)
       });
     })(0);
@@ -568,6 +594,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     if (f.vista === "resum") { mostra("vista-resum"); compte = null; return pintaLlista(f); }
     if (f.vista === "final") {
       mostra("vista-final"); compte = null; guia(f);
+      if (musica && !musicaAcabada) { musicaAcabada = true; musica.atura(12); }
       $("final-txt").textContent = suma(f.fetes) + " sèries de " + sessio.e.length + " exercicis.";
       preparaValoracio();
       try { if (bloqueig && !remot) bloqueig.release(); } catch (err) {}
@@ -749,7 +776,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   $("tele-play").addEventListener("click", function () { envia({ tipus: "video", accio: "play" }); });
   $("tele-pausa").addEventListener("click", function () { envia({ tipus: "video", accio: "pausa" }); });
 
-  pintaVeu();
+  pintaVeu(); pintaMusica();
   motorLocal(desat ? { i: desat.i, fetes: desat.fetes, vista: "resum" } : null);
 })();
 </script>

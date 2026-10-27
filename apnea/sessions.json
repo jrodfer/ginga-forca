@@ -1,0 +1,224 @@
+{
+ "taules": [
+  {
+   "clau": "co2",
+   "nom": "Taula de CO2",
+   "per_a": "Aguantes sempre el mateix (la meitat de la marca) i cada vegada respires menys: el cos s'acostuma al CO2.",
+   "series": [
+    {
+     "r": 120,
+     "a": 0.5
+    },
+    {
+     "r": 105,
+     "a": 0.5
+    },
+    {
+     "r": 90,
+     "a": 0.5
+    },
+    {
+     "r": 75,
+     "a": 0.5
+    },
+    {
+     "r": 60,
+     "a": 0.5
+    },
+    {
+     "r": 45,
+     "a": 0.5
+    },
+    {
+     "r": 30,
+     "a": 0.5
+    },
+    {
+     "r": 15,
+     "a": 0.5
+    }
+   ]
+  },
+  {
+   "clau": "o2",
+   "nom": "Taula d'O2",
+   "per_a": "Respires sempre 2 minuts i cada vegada aguantes més, fins al 80% de la marca: apnees llargues i tranquil·les.",
+   "series": [
+    {
+     "r": 120,
+     "a": 0.4
+    },
+    {
+     "r": 120,
+     "a": 0.45
+    },
+    {
+     "r": 120,
+     "a": 0.5
+    },
+    {
+     "r": 120,
+     "a": 0.55
+    },
+    {
+     "r": 120,
+     "a": 0.6
+    },
+    {
+     "r": 120,
+     "a": 0.65
+    },
+    {
+     "r": 120,
+     "a": 0.7
+    },
+    {
+     "r": 120,
+     "a": 0.8
+    }
+   ]
+  }
+ ],
+ "marca": {
+  "respira": 120
+ },
+ "lenta": {
+  "inspira": 4,
+  "expira": 6,
+  "minuts": 5
+ },
+ "preparacio": [
+  {
+   "fase": "tora",
+   "nom": "Mobilitat del tòrax",
+   "exercicis": [
+    {
+     "n": "Gat-vaca",
+     "v": "3TF3q7LWCUU",
+     "s": 2,
+     "q": 8,
+     "u": "r",
+     "c": 0,
+     "d": 10,
+     "x": "a quatre suports; arquejar inspirant i arrodonir expirant, a poc a poc, amb tota la columna",
+     "i": "Comença a quatre grapes, amb les mans i els genolls a terra. Inspira, arqueja l'esquena i deixa caure la panxa (postura de la vaca). Expira, arrodoneix la columna i amaga la barbeta (postura del gat). Passa d'una postura a l'altra amb cada respiració. Concentra't en moviments fluids i controlats.",
+     "p": 3
+    },
+    {
+     "n": "Corró a l'esquena alta",
+     "v": "inYkxnD_tUA",
+     "s": 2,
+     "q": 8,
+     "u": "r",
+     "c": 0,
+     "d": 10,
+     "x": "el corró sota l'esquena alta, les mans al clatell; roda amunt i avall i obre el pit sobre el corró",
+     "i": "Estira't amb un corró de foam col·locat horitzontalment sota la part alta de l'esquena. Sosté el cap amb les mans, amb els colzes doblegats. Aixeca els malucs del terra i comença a rodar amunt i avall per la part alta de l'esquena. Atura't en els punts tensos i respira profundament per alliberar la tensió.",
+     "p": 3
+    },
+    {
+     "n": "Gambada amb rotació des del gos",
+     "v": "BbHzhZakamk",
+     "s": 2,
+     "q": 8,
+     "u": "r",
+     "c": 1,
+     "d": 10,
+     "x": "del gos, el peu entre les mans i obre el braç cap amunt; inspira obrint, expira tancant",
+     "i": "Comença en posició de gos cap avall, formant una V invertida amb les mans a l'amplada de les espatlles i els malucs elevats. Avança un peu entre les mans i fes una gambada, baixant el genoll de darrere fins a terra. Col·loca una mà a terra per donar suport i gira el tronc, estirant l'altra mà cap al sostre. Mantén la rotació breument, notant l'estirament de la columna i les espatlles. Torna la mà a terra i retorna a gos cap avall.",
+     "p": 3
+    }
+   ]
+  },
+  {
+   "fase": "costelles",
+   "nom": "Costelles i costats",
+   "exercicis": [
+    {
+     "n": "Estirament lateral",
+     "v": "MnXoi_JV0ec",
+     "s": 2,
+     "q": 30,
+     "u": "s",
+     "c": 1,
+     "d": 10,
+     "x": "dret, un braç per sobre del cap i inclina't cap a l'altre costat; respira cap a les costelles que s'obren",
+     "i": "Posa't dret amb els peus separats amb l'amplada dels malucs i els braços relaxats als costats. Estén un braç per sobre del cap, cap al sostre. Inclina lentament el tronc cap al costat contrari, creant un estirament suau al costat.",
+     "p": 3
+    },
+    {
+     "n": "Corró al dorsal",
+     "v": "6fDnPJWj2mc",
+     "s": 2,
+     "q": 30,
+     "u": "s",
+     "c": 1,
+     "d": 10,
+     "x": "de costat, el corró sota l'aixella i el braç estirat; aguanta on tiba i deixa que les costelles s'obrin",
+     "i": "Col·loca el corró sota l'aixella, apuntant al múscul dorsal ample. Estira't de costat amb el braç estirat per sobre del cap i el cos perpendicular al corró. Aplica una pressió suau recolzant-te sobre el corró. Rodola lentament amunt i avall del costat del tronc, des de l'aixella fins a la meitat de les costelles.",
+     "p": 3
+    }
+   ]
+  },
+  {
+   "fase": "pit",
+   "nom": "Obrir el pit",
+   "exercicis": [
+    {
+     "n": "Cobra",
+     "v": "65wv7PURy2w",
+     "s": 2,
+     "q": 30,
+     "u": "s",
+     "c": 0,
+     "d": 10,
+     "x": "panxa avall, els malucs a terra; aixeca el pit sense pressa i respira ample",
+     "i": "Estira't bocaterrosa a l'estora amb els palmells plans al terra, sota les espatlles. Prem els palmells i aixeca lentament el pit de l'estora, estirant els braços. Mantén els colzes a prop del cos i les espatlles lluny de les orelles. Allarga la columna, obrint el pit cap endavant i aixecant la mirada. Prem la part superior dels peus contra l'estora i activa els músculs de les cames.",
+     "p": 3
+    },
+    {
+     "n": "Estirament dinàmic de pit",
+     "v": "X53-qiytpyI",
+     "s": 2,
+     "q": 8,
+     "u": "r",
+     "c": 0,
+     "d": 10,
+     "x": "dret, els braços en creu; obre'ls enrere inspirant i tanca'ls expirant, amb control",
+     "i": "Posa't amb els peus a l'amplada de les espatlles. Estén els braços paral·lels al terra. Balanceja els braços endavant i enrere amb un moviment controlat. Mantén el moviment fluid i rítmic.",
+     "p": 3
+    }
+   ]
+  },
+  {
+   "fase": "calma",
+   "nom": "Rotació i calma",
+   "exercicis": [
+    {
+     "n": "Torsió supina",
+     "v": "d2-djDRFMdY",
+     "s": 2,
+     "q": 30,
+     "u": "s",
+     "c": 1,
+     "d": 10,
+     "x": "panxa amunt, els braços en creu; deixa caure el genoll cap a l'altre costat i respira cap a la panxa",
+     "i": "Estira't boca amunt amb els braços estesos als costats. Porta el genoll dret cap al pit. Gira els malucs i baixa el genoll dret creuant el cos. Mantén les espatlles a terra per fer la torsió de la columna. Aguanta l'estirament, després canvia de cama i repeteix a l'altre costat.",
+     "p": 3
+    },
+    {
+     "n": "Postura del nen",
+     "v": "u3BbO6JWEBc",
+     "s": 2,
+     "q": 30,
+     "u": "s",
+     "c": 0,
+     "d": 10,
+     "x": "assegut sobre els talons, els braços endavant; respira cap a l'esquena i les costelles de darrere",
+     "i": "Comença a quatre grapes, amb els punys sota les espatlles. Seu sobre els talons i estén els braços cap endavant. Baixa el pit cap al terra, amb el front recolzat. Relaxa't i respira profundament, estirant l'esquena. Aguanta la postura, sentint un estirament suau.",
+     "p": 2
+    }
+   ]
+  }
+ ]
+}
