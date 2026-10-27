@@ -36,6 +36,8 @@ la veu, es pot apagar (botó «Música») i s'apaga a poc a poc al final.
 Taules de CO2 i d'O2 amb la marca de cadascú (desada només al mòbil), la marca, respiració lenta i una preparació que
 s'obre guiada al reproductor. Tot en sec, assegut o estirat. Té el seu reproductor a pantalla sencera (un cercle que
 guia la respiració, el temps, la veu de `apnea/veu/<idioma>/` i la música de `musica.js`). No l'enllaça cap correu.
+Amb l'enllaç personal (`#k=<pseudònim>.apnea&g=<signatura>`), el primer cop fa un formulari curt i desa l'estat al
+Worker (`config.json` diu on és); sense, ho desa només al mòbil.
 
 ## Rutes (`rutes/`)
 

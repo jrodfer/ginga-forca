@@ -96,6 +96,13 @@ td.ag { font-weight: 800; }
   border-radius: 999px; padding: 8px 14px; font: 700 .9rem var(--display); cursor: pointer; }
 .opcions button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
 .nota { font-size: .9rem; }
+.tot { display: contents; }
+.check { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-size: .95rem; }
+.check input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--ok); }
+.camp { display: grid; gap: 6px; font-weight: 700; font-size: .95rem; }
+.camp input, .camp select { font: 700 1.05rem var(--display); padding: 10px 12px; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); }
+.opcions label { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; }
 .peu { font-size: .85rem; }
 
 /* el reproductor de la taula: pantalla sencera, fosca i tranquil·la */
@@ -142,6 +149,27 @@ td.ag { font-weight: 800; }
       vista s'estreny, respira i para.</span>
   </div>
 
+  <section class="bloc" id="alta" hidden aria-labelledby="t-alta">
+    <h2 id="t-alta">Abans de començar</h2>
+    <p class="muted nota">Només el primer cop. Es desa al teu enllaç i no t'ho tornarem a preguntar.</p>
+    <label class="check"><input type="checkbox" id="alta-declaracio">
+      <span>Ho faré en sec, assegut o estirat: mai a l'aigua, dret ni conduint, i sense hiperventilar. Si tinc algun
+        problema de cor o de pressió, ho parlaré abans amb el metge.</span></label>
+    <label class="camp" for="alta-marca">La teva marca en sec, si la saps (si no, la mesures després)
+      <input id="alta-marca" inputmode="numeric" autocomplete="off" placeholder="2:30"></label>
+    <label class="camp" for="alta-dies">Quants dies a la setmana vols fer taules?
+      <select id="alta-dies"><option value="2">2 dies</option><option value="3" selected>3 dies</option><option value="4">4 dies</option></select></label>
+    <div class="opcions" role="radiogroup" aria-label="Veu guia">
+      <span class="eyebrow">Veu guia</span>
+      <label><input type="radio" name="alta-veu" value="ca" checked> Català</label>
+      <label><input type="radio" name="alta-veu" value="en"> English</label>
+      <label><input type="radio" name="alta-veu" value="no"> Sense veu</label>
+    </div>
+    <p class="nota" id="alta-error" role="alert" style="color:var(--accent)"></p>
+    <button class="btn" type="button" id="alta-envia">Comença</button>
+  </section>
+
+  <div id="tot" class="tot">
   <section class="bloc" aria-labelledby="t-marca">
     <h2 id="t-marca">La teva marca</h2>
     <div class="marca">
@@ -149,7 +177,9 @@ td.ag { font-weight: 800; }
       <button class="btn sec petit" type="button" id="desa-marca">Desa</button>
       <button class="btn sec petit" type="button" id="mesura">Mesura-la</button>
     </div>
-    <p class="muted nota" id="marca-txt">L'apnea més llarga que fas en sec, ara. Es desa només en aquest mòbil.</p>
+    <p class="muted nota" id="marca-txt">L'apnea més llarga que fas en sec, ara.</p>
+    <p class="muted nota" id="historial" hidden></p>
+    <p class="muted nota" id="desat"></p>
   </section>
 
   <section class="bloc" aria-labelledby="t-avui">
@@ -190,6 +220,7 @@ td.ag { font-weight: 800; }
 
   <p class="muted" id="error" hidden>No s'han pogut carregar les taules. Torna-ho a provar d'aquí a una estona.</p>
   <p class="muted peu">Una taula al dia com a molt, i la de CO2 i la d'O2 en dies diferents. La marca, un dia descansat i com a molt un cop a la setmana. A les taules no es busca el límit: si no arribes, toca «He respirat» i la taula continua.</p>
+  </div>
 </main>
 
 <div class="jugador" id="jugador" hidden role="dialog" aria-modal="true" aria-labelledby="j-titol">
@@ -236,10 +267,10 @@ td.ag { font-weight: 800; }
 <script>
 (function () {
   "use strict";
-  var CLAU_MARCA = "ginga-apnea-marca", CLAU_MODE = "ginga-apnea-mode", CLAU_IDIOMA = "ginga-apnea-idioma",
-      CLAU_FET = "ginga-apnea-fet", CLAU_PREP = "ginga-apnea-prep", CLAU_MUSICA = "ginga-musica";
+  var CLAU_PREP = "ginga-apnea-prep", CLAU_MUSICA = "ginga-musica", MAX_HISTORIAL = 120;
   var PREPARA_S = 12, CICLE_PREPARA = [7, 5], CANVI_COSTAT_S = 5, TITOL_PREP = "Preparació per a l'apnea";
   var NOTA_PREP = "Respira amb el moviment, a poc a poc. Fins a notar tensió, sense dolor.";
+  var DIES_CURTS = ["dg", "dl", "dt", "dc", "dj", "dv", "ds"];
   var DIES = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
   var MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"];
 
@@ -262,26 +293,124 @@ td.ag { font-weight: 800; }
     return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
-  var dades = null, mode = llegeix(CLAU_MODE) || "co2", marca = llegeix(CLAU_MARCA);   // marca: { s, dia }
-  var idioma = "ca", musicaSi = true;
-  try { idioma = { en: "en", no: "no" }[localStorage.getItem(CLAU_IDIOMA)] || "ca"; } catch (err) {}
+  // L'estat de cadascú: el formulari del primer dia (alta), la marca ({ s, dia }) i les d'abans (marques), el que ha
+  // fet (fetes: { dia, t, curtes }), i l'idioma, la música i què fa avui; ts, quan ha canviat. Amb l'enllaç personal
+  // (#k=<pseudònim>.apnea&g=<signatura>, el fa python -m apnea enllac) es desa també al Worker i es troba a qualsevol
+  // mòbil; si no, només en aquest. Quan es carrega, mana el més nou dels dos.
+  var personal = (function () {
+    var p = new URLSearchParams((location.hash || "").slice(1)), k = p.get("k") || "", g = p.get("g") || "";
+    return /^[0-9a-f]{16}\.apnea$/.test(k) && /^[A-Za-z0-9_-]{43}$/.test(g) ? { k: k, g: g } : null;
+  })();
+  var CLAU = personal ? "ginga-apnea:" + personal.k : "ginga-apnea";
+  var DESAT = "Es desa al teu enllaç: obre'l a qualsevol mòbil i hi trobaràs la marca i el que has fet.";
+  function net(e) { e = e && typeof e === "object" ? e : {}; e.marques = e.marques || []; e.fetes = e.fetes || []; return e; }
+  var estat = net(llegeix(CLAU));
+  var dades = null, mode, marca, idioma, musicaSi = true;
   try { musicaSi = localStorage.getItem(CLAU_MUSICA) !== "no"; } catch (err) {}
+  function deEstat() {
+    mode = estat.mode || "co2"; marca = estat.marca || null; idioma = estat.idioma || "ca";
+    if (estat.musica != null) musicaSi = estat.musica;
+  }
+  deEstat();
+  function guarda() {
+    estat.mode = mode; estat.idioma = idioma; estat.musica = musicaSi;
+    if (marca) estat.marca = marca;
+    estat.marques = estat.marques.slice(-MAX_HISTORIAL); estat.fetes = estat.fetes.slice(-MAX_HISTORIAL);
+    estat.ts = new Date().toISOString();
+    desa(CLAU, estat);
+    envia();
+  }
+  function fet(t, curtes) { estat.fetes.push({ dia: avui(), t: t, curtes: curtes || 0 }); }
+  function darrera(t) {
+    for (var i = estat.fetes.length - 1; i >= 0; i--) if (estat.fetes[i].t === t) return estat.fetes[i].dia;
+    return null;
+  }
+
+  // ---- el Worker (../config.json diu on és, com a la pàgina de sol·licituds) ----------------------------------------
+  var worker = null, idEnvia = null, llegit = !personal;
+  function pintaDesat(text) { $("desat").textContent = text; }
+  function envia() {
+    if (!personal || !worker) return;
+    clearTimeout(idEnvia);
+    idEnvia = setTimeout(function () {
+      fetch(worker + "/apnea", { method: "POST", headers: { "content-type": "application/json" },
+                                 body: JSON.stringify({ k: personal.k, g: personal.g, dades: estat }) })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (r) { if (r.ts) { estat.ts = r.ts; desa(CLAU, estat); } pintaDesat(DESAT); })
+        .catch(function () { pintaDesat("Sense connexió: es desa en aquest mòbil i s'enviarà la pròxima vegada."); });
+    }, 800);
+  }
+  function connecta() {
+    if (!personal) return pintaDesat("Es desa només en aquest mòbil.");
+    pintaDesat("Carregant les teves dades…");
+    fetch("../config.json", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (c) {
+      worker = c && c.worker;
+      if (!worker) throw new Error("worker");
+      return fetch(worker + "/apnea?k=" + encodeURIComponent(personal.k) + "&g=" + encodeURIComponent(personal.g));
+    }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (s) {
+      if (s && s.ts && !(estat.ts && estat.ts > s.ts)) {            // el del Worker és més nou (o és el primer cop aquí)
+        var abans = idioma;
+        estat = net(s); desa(CLAU, estat); deEstat();
+        if (idioma !== abans) carregaIndex();
+        pintaDesat(DESAT);
+      } else if (estat.ts) envia();                                  // el d'aquest mòbil és més nou: el puja
+      else pintaDesat(DESAT);
+    }).catch(function () {
+      pintaDesat("No s'han pogut llegir les teves dades: de moment, les d'aquest mòbil.");
+    }).then(function () { llegit = true; pintaTot(); });
+  }
+  function pintaTot() { pintaAlta(); pintaMarca(); pintaAvui(); pintaOpcions(); enllacPrep(); }
+
+  // ---- el primer cop: el formulari (alta). Sense acceptar l'avís de seguretat no es pot començar. -----------------
+  function pintaAlta() {
+    var cal = personal && llegit && !(estat.alta && estat.alta.declaracio);
+    $("alta").hidden = !cal; $("tot").hidden = !!cal || (personal && !llegit);
+    if (cal && marca) $("alta-marca").value = mmss(marca.s);
+  }
+  $("alta-envia").addEventListener("click", function () {
+    var text = $("alta-marca").value.trim(), s = text ? llegeixMarca(text) : null, dies = +$("alta-dies").value;
+    if (!$("alta-declaracio").checked) return ($("alta-error").textContent = "Cal que ho llegeixis i ho marquis per començar.");
+    if (text && !s) return ($("alta-error").textContent = "La marca, en minuts i segons (2:30), o deixa-la en blanc.");
+    $("alta-error").textContent = "";
+    estat.alta = { dia: avui(), declaracio: true, dies: dies };
+    if (s) novaMarca(s);
+    var v = document.querySelector("[name=alta-veu]:checked");
+    if (v) idioma = v.value;
+    guarda(); carregaIndex(); pintaTot(); window.scrollTo(0, 0);
+  });
+
   var d0 = new Date();
   $("data").textContent = "Apnea en sec · " + DIES[d0.getDay()] + " " + d0.getDate() + " de " + MESOS[d0.getMonth()];
 
   // ---- la marca -------------------------------------------------------------------------------------------------
+  function dataCurta(dia) { var d = new Date(dia + "T12:00:00"); return d.getDate() + "/" + (d.getMonth() + 1); }
   function pintaMarca() {
     if (marca && marca.s) {
       $("marca").value = mmss(marca.s);
-      var fa = marca.dia ? diesDes(marca.dia) : null;
-      $("marca-txt").textContent = "Les taules es fan amb aquesta marca" + (fa != null ? " (" + (fa === 0 ? "d'avui" : fa === 1 ? "d'ahir" : "de fa " + fa + " dies") + ")" : "") + ". Es desa només en aquest mòbil." +
-        (fa != null && fa < 7 ? " La pròxima, d'aquí a " + (7 - fa) + (7 - fa === 1 ? " dia" : " dies") + " com a mínim." : "");
+      var fa = marca.dia ? diesDes(marca.dia) : null, ultima = darrera("marca"), des = ultima ? diesDes(ultima) : 99;
+      $("marca-txt").textContent = "Les taules es fan amb aquesta marca" + (fa != null ? " (" + (fa === 0 ? "d'avui" : fa === 1 ? "d'ahir" : "de fa " + fa + " dies") + ")" : "") + "." +
+        (des < 7 ? " La pròxima vegada que la busquis, d'aquí a " + (7 - des) + (7 - des === 1 ? " dia" : " dies") + " com a mínim." : "");
     }
+    var marques = estat.marques.slice(-5).map(function (m) { return mmss(m.s) + " (" + dataCurta(m.dia) + ")"; });
+    var NOMS = { co2: "CO2", o2: "O2", lenta: "respiració", marca: "marca" };
+    var setmana = estat.fetes.filter(function (f) { return diesDes(f.dia) < 7; });
+    var taules = setmana.filter(function (f) { return f.t === "co2" || f.t === "o2"; }).length;
+    var text = (marques.length > 1 ? "Les teves marques: " + marques.join(" · ") + ". " : "") +
+      (setmana.length ? "Els últims 7 dies: " + setmana.map(function (f) {
+        return NOMS[f.t] + " " + DIES_CURTS[new Date(f.dia + "T12:00:00").getDay()];
+      }).join(", ") + "." : "") +
+      (estat.alta && estat.alta.dies ? " Taules: " + taules + " de " + estat.alta.dies + "." : "");
+    $("historial").textContent = text.trim(); $("historial").hidden = !text.trim();
+  }
+  function novaMarca(s) {
+    if (marca && marca.s === s) return;
+    marca = { s: s, dia: avui() };
+    estat.marques.push({ s: s, dia: marca.dia });
   }
   $("desa-marca").addEventListener("click", function () {
     var s = llegeixMarca($("marca").value);
     if (!s) { $("marca-txt").textContent = "Escriu-la en minuts i segons (2:30), entre 0:20 i 15:00."; return; }
-    marca = { s: s, dia: (marca && marca.s === s && marca.dia) || avui() }; desa(CLAU_MARCA, marca); pintaMarca(); pintaAvui();
+    novaMarca(s); guarda(); pintaMarca(); pintaAvui();
   });
   $("marca").addEventListener("keydown", function (ev) { if (ev.key === "Enter") $("desa-marca").click(); });
 
@@ -294,7 +423,8 @@ td.ag { font-weight: 800; }
       b.setAttribute("aria-pressed", b.getAttribute("data-mode") === mode ? "true" : "false");
     });
     if (!dades) return;
-    var t = taula(), files = $("files"), fet = llegeix(CLAU_FET);
+    var t = taula(), files = $("files");
+    var feta = estat.fetes.filter(function (f) { return f.dia === avui() && (f.t === "co2" || f.t === "o2"); }).pop();
     files.textContent = "";
     $("taula").hidden = !t || !marca;
     if (!t) {
@@ -321,11 +451,11 @@ td.ag { font-weight: 800; }
       }
     }
     var avis = "";
-    if (t && fet && fet.dia === avui()) avis = "Avui ja has fet la " + (fet.clau === "co2" ? "taula de CO2" : "taula d'O2") + ": una al dia.";
+    if (t && feta) avis = "Avui ja has fet la " + (feta.t === "co2" ? "taula de CO2" : "taula d'O2") + ": una al dia.";
     $("avis-avui").textContent = avis; $("avis-avui").hidden = !avis;
   }
   Array.prototype.forEach.call(document.querySelectorAll(".tria button"), function (b) {
-    b.addEventListener("click", function () { mode = b.getAttribute("data-mode"); desa(CLAU_MODE, mode); pintaAvui(); });
+    b.addEventListener("click", function () { mode = b.getAttribute("data-mode"); guarda(); pintaAvui(); });
   });
 
   // ---- veu guia i música ----------------------------------------------------------------------------------------
@@ -340,13 +470,13 @@ td.ag { font-weight: 800; }
   Array.prototype.forEach.call(document.querySelectorAll("[data-idioma]"), function (b) {
     b.addEventListener("click", function () {
       idioma = b.getAttribute("data-idioma");
-      try { localStorage.setItem(CLAU_IDIOMA, idioma); } catch (err) {}
-      carregaIndex(); pintaOpcions(); enllacPrep();
+      guarda(); carregaIndex(); pintaOpcions(); enllacPrep();
     });
   });
   function posaMusica(si) {
     musicaSi = si;
-    try { localStorage.setItem(CLAU_MUSICA, si ? "si" : "no"); } catch (err) {}
+    try { localStorage.setItem(CLAU_MUSICA, si ? "si" : "no"); } catch (err) {}   // el reproductor també la mira
+    guarda();
     if (!si && musica) musica.atura(1);
     if (si && jugant) engegaMusica();
     pintaOpcions();
@@ -508,7 +638,7 @@ td.ag { font-weight: 800; }
     var j = jugant;
     j.acabat = true; clearInterval(idTick);
     if (j.mode === "lenta") diu(["lenta_final"]); else diu(["taula_final"]);
-    if (j.mode === "co2" || j.mode === "o2") desa(CLAU_FET, { dia: avui(), clau: j.mode });
+    fet(j.mode, j.curtes); guarda(); pintaMarca();
     $("j-fase").textContent = "Fet"; $("j-temps").textContent = "";
     $("j-sub").textContent = j.mode === "lenta" ? "Torna al teu ritme." : j.apnees + " apnees" + (j.curtes ? " (" + j.curtes + (j.curtes === 1 ? " més curta" : " més curtes") + ": cap problema)" : "") + ".";
     $("j-seg").textContent = "Queda't uns minuts respirant tranquil abans d'aixecar-te.";
@@ -523,6 +653,7 @@ td.ag { font-weight: 800; }
     j.acabat = true; clearInterval(idTick);
     diu(["marca_final"]);
     j.resultat = Math.round(s);
+    fet("marca"); guarda(); pintaMarca();                 // una apnea màxima, la desi o no
     $("j-fase").textContent = "Respira"; $("j-temps").textContent = mmss(j.resultat); $("j-sub").textContent = "";
     $("j-seg").textContent = ""; $("j-respirat").hidden = true; $("j-controls").hidden = true;
     $("j-resultat-txt").textContent = marca ? "La d'abans: " + mmss(marca.s) + "." : "És la primera.";
@@ -545,14 +676,15 @@ td.ag { font-weight: 800; }
   });
   $("j-surt").addEventListener("click", tanca);
   $("j-desa").addEventListener("click", function () {
-    marca = { s: jugant.resultat, dia: avui() }; desa(CLAU_MARCA, marca); pintaMarca(); pintaAvui(); tanca();
+    novaMarca(jugant.resultat); guarda(); pintaMarca(); pintaAvui(); tanca();
   });
   $("j-no-desis").addEventListener("click", tanca);
   $("comenca").addEventListener("click", function () { if (dades && (mode === "lenta" || marca)) comenca(mode); });
   $("mesura").addEventListener("click", function () {
     if (!dades) return;
-    if (marca && marca.dia && diesDes(marca.dia) < 7 &&
-        !confirm("La teva marca és de fa menys d'una setmana. Les apnees màximes, com a molt un cop a la setmana. La mesures igualment?")) return;
+    var ultima = darrera("marca");
+    if (ultima && diesDes(ultima) < 7 &&
+        !confirm("L'última vegada que la vas buscar fa menys d'una setmana. Les apnees màximes, com a molt un cop a la setmana. La mesures igualment?")) return;
     comenca("marca");
   });
 
@@ -634,7 +766,7 @@ td.ag { font-weight: 800; }
     enllacPrep();
   }
 
-  pintaOpcions(); carregaIndex();
+  pintaOpcions(); carregaIndex(); pintaAlta(); pintaMarca(); connecta();
   fetch("sessions.json").then(function (r) {
     if (!r.ok) throw new Error(r.status);
     return r.json();
@@ -643,7 +775,7 @@ td.ag { font-weight: 800; }
     var guardat = llegeix(CLAU_PREP) || {}, fases = d.preparacio;
     if (guardat.dia === avui() && guardat.triats && guardat.triats.length === fases.length) triats = guardat.triats;
     else triats = fases.map(function (f, i) { return tria(f.exercicis.length, (guardat.triats || [])[i]); });
-    pintaMarca(); pintaAvui(); pintaPrep();
+    pintaPrep(); pintaTot();
   }).catch(function () { $("error").hidden = false; });
 })();
 </script>
