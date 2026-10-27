@@ -126,7 +126,36 @@
       if (ultima && ini <= ultima.fi) { ultima.ini = Math.min(ultima.ini, ini); ultima.fi = i; }   // la mateixa volta
       else trobades.push({ ini, fi: i });
     }
-    return trobades.map((v) => ({ ...v, metres: acc[v.fi] - acc[v.ini] }));
+    return trobades.map((v) => {
+      let punta = v.ini;                             // el punt més lluny d'on comença: on gira
+      for (let k = v.ini; k <= v.fi; k++) if (dist(coords[v.ini], coords[k]) > dist(coords[v.ini], coords[punta])) punta = k;
+      return { ...v, punta, metres: acc[v.fi] - acc[v.ini] };
+    });
+  }
+
+  // Per reparar-les (bici de carretera), es torna a demanar el circuit sense punts de pas dins de les voltes i
+  // evitant-ne la punta: entre punts de pas, openrouteservice ja va pel camí directe. Només la punta de les que
+  // s'allunyen MIN_PUNTA m o més, i que no queda a prop de la resta del circuit: el quadrat que s'evita (70 m de
+  // costat, worker/rutes.js) no pot tapar la cruïlla d'on surt la volta ni un altre tram.
+  const MIN_PUNTA = 100, LLUNY_PUNTA = 80;
+
+  /** Els punts que són dins d'alguna volta per allargar (on no pot anar cap punt de pas). */
+  function dinsVoltes(coords, vs) {
+    const dins = new Array(coords.length).fill(false);
+    for (const v of vs) for (let k = v.ini + 1; k < v.fi; k++) dins[k] = true;
+    return dins;
+  }
+
+  /** La punta de cada volta prou llarga, per evitar-la en reparar el circuit. */
+  function puntesVoltes(r) {
+    const punts = [];
+    for (const v of r.voltes || []) {
+      const p = r.coords[v.punta];
+      if (dist(r.coords[v.ini], p) < MIN_PUNTA) continue;
+      if (r.coords.some((c, k) => (k < v.ini || k > v.fi) && dist(c, p) < LLUNY_PUNTA)) continue;
+      punts.push([p[0], p[1]]);
+    }
+    return punts;
   }
 
   // ---------- puntuació ----------
@@ -223,7 +252,7 @@
       const objectiu = (total * k) / (n + 1);
       let millor = -1;
       for (let i = 0; i < r.coords.length; i++) {
-        if (r.dolents[i] || r.principalLlarg[i]) continue;
+        if (r.dolents[i] || r.principalLlarg[i] || (r.dinsVolta && r.dinsVolta[i])) continue;
         if (millor < 0 || Math.abs(r.acc[i] - objectiu) < Math.abs(r.acc[millor] - objectiu)) millor = i;
       }
       if (millor >= 0) via.push([r.coords[millor][0], r.coords[millor][1]]);
@@ -279,8 +308,9 @@
     for (const [v, x] of Object.entries(surface)) if (SURFACE_SENSE_PAVIMENTAR.has(Number(v))) senseAsfalt += x;
     const fora = foraCarretera(coords, acc, extras);
     const princ = perTransit(coords, acc, passos, extras.waytype || extras.waytypes);
+    const vs = voltes(coords, acc);
     return {
-      voltes: voltes(coords, acc),
+      voltes: vs, dinsVolta: dinsVoltes(coords, vs),
       coords, acc, km,
       dolents: fora.dolents, foraCarretera: fora.metres,
       transit: princ.transit, principal: princ.metres / (acc[acc.length - 1] || 1), principalLlarg: princ.llarg,
@@ -589,6 +619,7 @@ out tags geom qt;`;
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa, voltes,
+    puntesVoltes,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;

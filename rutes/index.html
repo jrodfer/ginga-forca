@@ -606,8 +606,11 @@ async function repara(c, sessio) {
   const afegeix = (punts, max) => { const n = evita.length; for (const p of punts) if (evita.length < max) evita.push(p); return evita.length > n; };
   // amb molta terra, un punt cada més de 60 m, perquè la terra no s'acabi els punts de les principals
   const cada = (r, max) => Math.max(60, r.foraCarretera / Math.max(1, max - evita.length));
-  for (let passada = 0; passada < REPARACIONS && actual.r.foraCarretera; passada++) {
+  for (let passada = 0; passada < REPARACIONS && (actual.r.foraCarretera || actual.r.voltes.length); passada++) {
     const max = MAX_EVITA - RESERVA_PRINCIPALS;
+    // les voltes per allargar (des del 26/10 no es proposen), com la terra: sense punts de pas a dins, i evitant-ne
+    // la punta (abans, un circuit net de terra però amb una volta es llençava i a la bici gairebé no en quedava cap)
+    afegeix(Motor.puntesVoltes(actual.r), max);
     afegeix(Motor.puntsAEvitar(actual.r, cada(actual.r, max), false), max);
     const nou = await demana(c.seed, c.factor, Motor.puntsDePas(actual.r), evita);
     if (!nou) break;
@@ -668,8 +671,8 @@ async function buscaCircuits(sessio) {
     cands.sort((a, b) => a.pena - b.pena);
     if (Motor.esCarretera(sessio)) {
       // 100% per carretera: els que ja ho són, i els millors dels altres, reparats
-      // els nets i per carreteres locals ja valen; els 3 millors dels altres es reparen
-      const bo = (c) => !c.r.foraCarretera && !c.r.tramsPrincipals;
+      // els nets, per carreteres locals i sense voltes ja valen; els 3 millors dels altres es reparen
+      const bo = (c) => !c.r.foraCarretera && !c.r.tramsPrincipals && !c.r.voltes.length;
       // esglaonades, perquè no arribin totes alhora al límit per minut d'openrouteservice
       const reparats = await Promise.all(cands.filter((c) => !bo(c)).slice(0, 3)
         .map((c, i) => new Promise((ok) => setTimeout(ok, i * ESGLAO_MS)).then(() => repara(c, sessio))));
