@@ -309,7 +309,9 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
   }
   if (demana.material) {
     opcions("material", "On faràs la força?", [["gimnas", "Al gimnàs"], ["casa_pes", "A casa, amb manuelles o gomes"],
-      ["casa_res", "A casa, sense material"]], true);
+      ["casa_res", "A casa, sense material"]], true,
+      "La força és part del pla i hi suma: córrer i pedalar et costaran menys energia al mateix ritme (l'economia millora " +
+      "un 2-8%) i els esportistes que en fan es lesionen molt menys. Són 1 o 2 sessions a la setmana, amb vídeos.");
     caselles("material_casa", "Què tens a casa?", [["manuelles", "Manuelles"], ["gomes", "Gomes"], ["trx", "TRX o anelles"],
       ["kettlebell", "Kettlebell"], ["pilota", "Pilota medicinal"], ["barra", "Barra i discos"], ["banc", "Banc"],
       ["fitball", "Fitball"]], "Si vas al gimnàs, el que tens per als dies que la facis a casa.");
@@ -317,8 +319,10 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
   }
   if (demana.estiraments) {
     opcions("estiraments", "Vols fer també estiraments? Són sessions curtes a part, amb vídeos.", [["si", "Sí"], ["no", "No, gràcies"]], false,
-      "Et recomanem 2 o 3 dies a la setmana, després d'entrenar o al vespre, i mai just abans d'una sessió dura o d'una cursa. " +
-      "Uns 10-15 minuts, fins a notar tensió i sense dolor. Milloren la mobilitat; no eviten lesions ni treuen les agulletes.");
+      "No formen part del pla ni hi sumen: no s'ha vist que facin anar més ràpid, no eviten lesions ni treuen les agulletes. Serveixen per " +
+      "guanyar mobilitat (moure't amb més recorregut). Tria els dies que vulguis: com més sovint, més mobilitat (per al màxim, " +
+      "cada dia). Després d'entrenar o al vespre, mai just abans d'una sessió dura o d'una cursa. Uns 10-15 minuts, fins a " +
+      "notar tensió i sense dolor.");
     caselles("estiraments_dies", "Quins dies?", ["dl", "dt", "dc", "dj", "dv", "ds", "dg"].map(function (d) { return [d, d.charAt(0).toUpperCase() + d.slice(1)]; }))
       .querySelector(".tria").className = "tria dies";
     caselles("rigidesa", "On et notes més rígid/a o carregat/da? (opcional)", [["coll_espatlles", "Coll i espatlles"],
