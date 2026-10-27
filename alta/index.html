@@ -325,6 +325,10 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
       ["esquena", "Esquena"], ["malucs", "Malucs"], ["cuixes_darrere", "Darrere de les cuixes"], ["cuixes_davant", "Davant de les cuixes"],
       ["bessons", "Bessons i turmells"]]);
     obligatoris.push("estiraments");
+    opcions("ioga", "I ioga, en vols fer? Una sessió a terra, amb vídeos, quan vulguis.", [["si", "Sí"], ["no", "No, gràcies"]], false,
+      "És fora del pla: no suma per al teu objectiu ni per a la força, es fa només si et ve de gust. Uns 15-20 minuts, " +
+      "no just abans d'una sessió dura o d'una cursa. Millora la flexibilitat i l'equilibri; que millori el rendiment, " +
+      "els pocs estudis amb esportistes no ho demostren.");
   }
   if (demana.edat) {
     opcions("edat", "Quants anys tens?", [["menor", "Menys de 18"], ["18-39", "18 a 39"], ["40-49", "40 a 49"], ["50-59", "50 a 59"], ["60+", "60 o més"]]);
@@ -357,6 +361,7 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     var mostra = function (id, si) { var q = $("q-" + id); if (q) q.hidden = !si; };
     mostra("estiraments_dies", valor("estiraments") === "si");
     mostra("rigidesa", valor("estiraments") === "si");
+    mostra("ioga", ["en_curs", "torno"].indexOf(valor("lesio")) < 0 && valor("edat") !== "60+");   // ho parla l'entrenador
     var les = valor("lesio");
     ["lesio_zona", "lesio_desde", "lesio_professional", "lesio_quan", "lesio_detall"].forEach(function (k) { mostra(k, les && les !== "cap"); });
     ["tornada_setmanes", "alta_lesio"].forEach(function (k) { mostra(k, les === "torno"); });
@@ -404,7 +409,7 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     ev.preventDefault();
     var r = {};
     ["esport", "dies", "temporades", "lesio", "lesio_desde", "lesio_professional", "lesio_quan", "tornada_setmanes",
-     "alta_lesio", "forca", "forca_dies", "material", "estiraments", "edat", "sexe", "maternitat", "postpart_setmanes"].forEach(function (k) {
+     "alta_lesio", "forca", "forca_dies", "material", "estiraments", "ioga", "edat", "sexe", "maternitat", "postpart_setmanes"].forEach(function (k) {
       var q = $("q-" + k); if (q && !q.hidden && valor(k)) r[k] = valor(k);
     });
     if (r.lesio && r.lesio !== "cap" && valor("lesio_zona")) r.lesio_zona = valor("lesio_zona");
