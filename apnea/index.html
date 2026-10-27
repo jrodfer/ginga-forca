@@ -60,9 +60,10 @@ p { margin: 0; }
 .avis strong { font-weight: 800; }
 .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .marca { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.marca input { font: 800 1.4rem var(--display); width: 6.5ch; padding: 8px 10px; border-radius: 12px;
+.temps { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--muted); }
+.temps input, .camp .temps input { font: 800 1.4rem var(--display); width: 3.6ch; padding: 8px 4px; border-radius: 12px;
   border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); text-align: center; }
-.marca input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+.temps input:focus-visible, .camp .temps input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
 .tria { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--bg); border-radius: 14px; padding: 4px;
   border: 1px solid var(--line); }
 .tria button { appearance: none; border: 0; background: transparent; color: var(--fg); border-radius: 10px; padding: 10px 4px;
@@ -152,11 +153,13 @@ td.ag { font-weight: 800; }
   <section class="bloc" id="alta" hidden aria-labelledby="t-alta">
     <h2 id="t-alta">Abans de començar</h2>
     <p class="muted nota">Només el primer cop. Es desa al teu enllaç i no t'ho tornarem a preguntar.</p>
+    <label class="camp" for="alta-nom">Nom i cognoms
+      <input id="alta-nom" autocomplete="name" maxlength="80" placeholder="Nom Cognom Cognom"></label>
     <label class="check"><input type="checkbox" id="alta-declaracio">
       <span>Ho faré en sec, assegut o estirat: mai a l'aigua, dret ni conduint, i sense hiperventilar. Si tinc algun
         problema de cor o de pressió, ho parlaré abans amb el metge.</span></label>
-    <label class="camp" for="alta-marca">La teva marca en sec, si la saps (si no, la mesures després)
-      <input id="alta-marca" inputmode="numeric" autocomplete="off" placeholder="2:30"></label>
+    <div class="camp"><span>La teva marca en sec, si la saps (si no, la mesures després)</span>
+      <span class="temps" id="alta-marca"><input id="alta-marca-min" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="2" aria-label="Minuts"><span>min</span><input id="alta-marca-seg" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="30" aria-label="Segons"><span>s</span></span></div>
     <label class="camp" for="alta-dies">Quants dies a la setmana vols fer taules?
       <select id="alta-dies"><option value="2">2 dies</option><option value="3" selected>3 dies</option><option value="4">4 dies</option></select></label>
     <div class="opcions" role="radiogroup" aria-label="Veu guia">
@@ -173,7 +176,7 @@ td.ag { font-weight: 800; }
   <section class="bloc" aria-labelledby="t-marca">
     <h2 id="t-marca">La teva marca</h2>
     <div class="marca">
-      <input id="marca" inputmode="numeric" autocomplete="off" placeholder="2:30" aria-label="La teva marca, en minuts i segons">
+      <span class="temps" id="marca"><input id="marca-min" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="2" aria-label="Minuts"><span>min</span><input id="marca-seg" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="30" aria-label="Segons"><span>s</span></span>
       <button class="btn sec petit" type="button" id="desa-marca">Desa</button>
       <button class="btn sec petit" type="button" id="mesura">Mesura-la</button>
     </div>
@@ -278,14 +281,29 @@ td.ag { font-weight: 800; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function llegeix(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (err) { return null; } }
   function desa(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (err) {} }
+  function dataLlarga(d) {                                 // "dimarts 27 d'octubre"
+    var mes = MESOS[d.getMonth()];
+    return DIES[d.getDay()] + " " + d.getDate() + (/^[aeiou]/.test(mes) ? " d'" : " de ") + mes;
+  }
   function avui() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
   function diesDes(dia) { return Math.round((new Date(avui() + "T12:00:00") - new Date(dia + "T12:00:00")) / 864e5); }
   function mmss(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2); }
-  function llegeixMarca(text) {                             // "2:30", "2.30", "150" -> segons
-    var t = String(text || "").trim().replace(/[.,'’]/g, ":"), m = t.match(/^(\d{1,2}):(\d{1,2})$/);
-    var s = m ? +m[1] * 60 + +m[2] : (/^\d{1,3}$/.test(t) ? +t : NaN);
-    return s >= 20 && s <= 900 ? s : null;
+  // la marca, en dues caselles (minuts i segons) amb el teclat numèric: el del mòbil no té els dos punts.
+  // Buides: "" (no l'ha posada); malament: null; si no, els segons.
+  function llegeixTemps(id) {
+    var m = $(id + "-min").value.trim(), s = $(id + "-seg").value.trim();
+    if (!m && !s) return "";
+    if (!/^\d{0,2}$/.test(m) || !/^\d{0,2}$/.test(s) || +s > 59) return null;
+    var t = (+m || 0) * 60 + (+s || 0);
+    return t >= 20 && t <= 900 ? t : null;
   }
+  function posaTemps(id, t) { $(id + "-min").value = Math.floor(t / 60); $(id + "-seg").value = ("0" + t % 60).slice(-2); }
+  ["marca", "alta-marca"].forEach(function (id) {             // dels minuts als segons, sol
+    $(id + "-min").addEventListener("input", function () {
+      var v = this.value;
+      if (v.length >= 2 || (v.length === 1 && +v > 1)) $(id + "-seg").focus();
+    });
+  });
   // el mateix codi que coach/forca.py: JSON en UTF-8, base64url sense "="
   function codi(dades) {
     var bytes = new TextEncoder().encode(JSON.stringify(dades)), bin = "";
@@ -363,16 +381,20 @@ td.ag { font-weight: 800; }
 
   // ---- el primer cop: el formulari (alta). Sense acceptar l'avís de seguretat no es pot començar. -----------------
   function pintaAlta() {
-    var cal = personal && llegit && !(estat.alta && estat.alta.declaracio);
+    var a = estat.alta || {}, cal = personal && llegit && !(a.declaracio && a.nom);   // el nom, també als d'abans
     $("alta").hidden = !cal; $("tot").hidden = !!cal || (personal && !llegit);
-    if (cal && marca) $("alta-marca").value = mmss(marca.s);
+    if (cal && marca) posaTemps("alta-marca", marca.s);
+    if (cal && a.dies) $("alta-dies").value = String(a.dies);
+    var d = new Date();
+    $("data").textContent = (a.nom ? a.nom : "Apnea en sec") + " · " + dataLlarga(d);
   }
   $("alta-envia").addEventListener("click", function () {
-    var text = $("alta-marca").value.trim(), s = text ? llegeixMarca(text) : null, dies = +$("alta-dies").value;
+    var nom = $("alta-nom").value.trim().replace(/\s+/g, " "), s = llegeixTemps("alta-marca"), dies = +$("alta-dies").value;
+    if (nom.length < 3 || nom.indexOf(" ") < 0) return ($("alta-error").textContent = "Escriu el teu nom i cognoms.");
     if (!$("alta-declaracio").checked) return ($("alta-error").textContent = "Cal que ho llegeixis i ho marquis per començar.");
-    if (text && !s) return ($("alta-error").textContent = "La marca, en minuts i segons (2:30), o deixa-la en blanc.");
+    if (s === null) return ($("alta-error").textContent = "La marca, en minuts i segons (entre 0:20 i 15:00), o deixa-la en blanc.");
     $("alta-error").textContent = "";
-    estat.alta = { dia: avui(), declaracio: true, dies: dies };
+    estat.alta = { dia: (estat.alta && estat.alta.dia) || avui(), declaracio: true, dies: dies, nom: nom };
     if (s) novaMarca(s);
     var v = document.querySelector("[name=alta-veu]:checked");
     if (v) idioma = v.value;
@@ -380,13 +402,13 @@ td.ag { font-weight: 800; }
   });
 
   var d0 = new Date();
-  $("data").textContent = "Apnea en sec · " + DIES[d0.getDay()] + " " + d0.getDate() + " de " + MESOS[d0.getMonth()];
+  $("data").textContent = "Apnea en sec · " + dataLlarga(d0);
 
   // ---- la marca -------------------------------------------------------------------------------------------------
   function dataCurta(dia) { var d = new Date(dia + "T12:00:00"); return d.getDate() + "/" + (d.getMonth() + 1); }
   function pintaMarca() {
     if (marca && marca.s) {
-      $("marca").value = mmss(marca.s);
+      posaTemps("marca", marca.s);
       var fa = marca.dia ? diesDes(marca.dia) : null, ultima = darrera("marca"), des = ultima ? diesDes(ultima) : 99;
       $("marca-txt").textContent = "Les taules es fan amb aquesta marca" + (fa != null ? " (" + (fa === 0 ? "d'avui" : fa === 1 ? "d'ahir" : "de fa " + fa + " dies") + ")" : "") + "." +
         (des < 7 ? " La pròxima vegada que la busquis, d'aquí a " + (7 - des) + (7 - des === 1 ? " dia" : " dies") + " com a mínim." : "");
@@ -408,11 +430,11 @@ td.ag { font-weight: 800; }
     estat.marques.push({ s: s, dia: marca.dia });
   }
   $("desa-marca").addEventListener("click", function () {
-    var s = llegeixMarca($("marca").value);
-    if (!s) { $("marca-txt").textContent = "Escriu-la en minuts i segons (2:30), entre 0:20 i 15:00."; return; }
+    var s = llegeixTemps("marca");
+    if (!s) { $("marca-txt").textContent = "Escriu-la en minuts i segons, entre 0:20 i 15:00."; return; }
     novaMarca(s); guarda(); pintaMarca(); pintaAvui();
   });
-  $("marca").addEventListener("keydown", function (ev) { if (ev.key === "Enter") $("desa-marca").click(); });
+  $("marca-seg").addEventListener("keydown", function (ev) { if (ev.key === "Enter") $("desa-marca").click(); });
 
   // ---- què fem avui ---------------------------------------------------------------------------------------------
   function taula() { return dades && dades.taules.filter(function (t) { return t.clau === mode; })[0]; }
