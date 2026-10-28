@@ -61,6 +61,11 @@ p { margin: 0; }
 .lockup .lk-i { fill: var(--accent); }   /* el punt de la i, taronja */
 .cap .lockup { width: 116px; }
 .cap .eyebrow { margin: 0; }
+/* Garmin, a dalt a la dreta: «Connecta Garmin», o de qui és el que hi ha connectat */
+.garmin-boto { appearance: none; font: 800 .8rem/1 var(--display); padding: 9px 12px; border-radius: 99px; cursor: pointer;
+  border: 1.5px solid var(--line); background: transparent; color: var(--fg); white-space: nowrap; max-width: 200px;
+  overflow: hidden; text-overflow: ellipsis; }
+.garmin-boto.connectat { border-color: var(--ok); color: var(--ok); }
 #segueix .lockup { width: 72px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
 .avis { background: var(--warn-soft); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
@@ -119,7 +124,8 @@ details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; 
 <main id="app">
   <header class="cap">
     <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
-    <span class="eyebrow">Rutes</span>
+    <span class="eyebrow" id="cap-rutes">Rutes</span>
+    <button class="garmin-boto" type="button" id="b-garmin" hidden></button>
   </header>
   <div>
     <div class="eyebrow" id="quan"></div>
@@ -127,7 +133,10 @@ details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; 
   </div>
 
   <section class="card" id="error" hidden><p id="error-text"></p></section>
-  <section class="card" id="garmin" hidden aria-live="polite"><p id="garmin-text"></p></section>
+  <section class="card" id="garmin" hidden aria-live="polite">
+    <p id="garmin-text"></p>
+    <button class="btn sec petit" type="button" id="b-garmin-fora" hidden></button>
+  </section>
 
   <section class="card" id="sessio" hidden>
     <div class="xifres" id="xifres"></div>
@@ -154,7 +163,6 @@ details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; 
     <details>
       <summary id="t-rellotge"></summary>
       <ul id="rellotges"></ul>
-      <button class="btn sec petit" type="button" id="b-garmin-fora" hidden></button>
     </details>
   </section>
 </main>
@@ -246,6 +254,8 @@ const T = {
     garminError: "No he pogut enviar-la a Garmin ara mateix. Torna-ho a provar d'aquí a una estona o descarrega el GPX.",
     garminPermis: "A Garmin no has deixat marcat el permís de recorreguts. Desconnecta Garmin i torna-hi, amb el permís marcat.",
     garminDesconnecta: "Desconnecta Garmin", garminDesconnectat: "Garmin desconnectat: Ginga ja no hi té accés.",
+    garminConnecta: "Connecta Garmin", garminDe: "✓ Garmin {n} connectat",
+    garminEstat: "Garmin {n} connectat. «Envia al Garmin» hi posa la ruta directament.",
     km: "km", min: "min", dPos: "m D+", senseAsfalt: "{x}% sense asfalt", carretera: "{x}% per carretera",
     pujada: "Pujada al km {a}: {m} m al {g}%", senseAPujada: "Cap pujada clara del pendent que toca; la més semblant, al km {a}: {m} m al {g}%",
     pistaA: "a {d}", arribar: "Com hi arribo", accesPrivat: "accés restringit",
@@ -273,7 +283,7 @@ const T = {
     llarga: "La sessió fa més de 100 km: et proposo un circuit de 100 km; la resta, d'anada i tornada.",
     rellotge: "Com la poso al rellotge o al comptador?",
     rellotges: [
-      "<b>Garmin</b> (Forerunner, Fenix, Edge…): «Envia al Garmin» la posa als teus recorreguts. La primera vegada et demana connectar el compte, i queda guardat. Obre l'app Garmin Connect amb el rellotge a prop perquè se sincronitzi, i la trobaràs a Navegació > Recorreguts. També pots descarregar el GPX i importar-lo a Garmin Connect.",
+      "<b>Garmin</b> (Forerunner, Fenix, Edge…): «Envia al Garmin» la posa als teus recorreguts. Connecta el compte amb el botó de dalt (o la primera vegada que l'envies), i queda guardat. Obre l'app Garmin Connect amb el rellotge a prop perquè se sincronitzi, i la trobaràs a Navegació > Recorreguts. També pots descarregar el GPX i importar-lo a Garmin Connect.",
       "<b>Entrenament i ruta alhora (Garmin)</b>: l'entrenament ja t'arriba al rellotge pel calendari i la ruta, amb «Envia al Garmin»: són dues coses diferents i no es poden ajuntar en una. Al rellotge, comença l'entrenament (Entrenament > Entrenaments, o el del dia al calendari) i després, des del menú de l'activitat, Navegació > Recorreguts. Si el teu model no et deixa afegir-lo, fes-ho al revés: primer el recorregut i després l'entrenament.",
       "<b>Apple Watch</b>: obre el GPX amb una app que segueixi rutes, com WorkOutDoors o Footpath.",
       "<b>Coros, Suunto, Polar, Wahoo</b>: la seva app importa el GPX com a ruta o recorregut.",
@@ -312,6 +322,8 @@ const T = {
     garminError: "I couldn't send it to Garmin right now. Try again in a while or download the GPX.",
     garminPermis: "The courses permission isn't ticked on Garmin. Disconnect Garmin and connect again with it ticked.",
     garminDesconnecta: "Disconnect Garmin", garminDesconnectat: "Garmin disconnected: Ginga no longer has access.",
+    garminConnecta: "Connect Garmin", garminDe: "✓ Garmin {n} connected",
+    garminEstat: "Garmin {n} connected. «Send to Garmin» puts the route there directly.",
     km: "km", min: "min", dPos: "m climbing", senseAsfalt: "{x}% unpaved", carretera: "{x}% on roads",
     pujada: "Climb at km {a}: {m} m at {g}%", senseAPujada: "No clear climb at the right gradient; the closest, at km {a}: {m} m at {g}%",
     pistaA: "{d} away", arribar: "Directions", accesPrivat: "restricted access",
@@ -339,7 +351,7 @@ const T = {
     llarga: "The session is over 100 km: here's a 100 km loop; add the rest as an out-and-back.",
     rellotge: "How do I get it onto my watch or bike computer?",
     rellotges: [
-      "<b>Garmin</b> (Forerunner, Fenix, Edge…): «Send to Garmin» adds it to your courses. The first time, it asks you to connect your account, and it stays saved. Open the Garmin Connect app with your watch nearby so it syncs, and you'll find it under Navigation > Courses. You can also download the GPX and import it into Garmin Connect.",
+      "<b>Garmin</b> (Forerunner, Fenix, Edge…): «Send to Garmin» adds it to your courses. Connect your account with the button at the top (or the first time you send one), and it stays saved. Open the Garmin Connect app with your watch nearby so it syncs, and you'll find it under Navigation > Courses. You can also download the GPX and import it into Garmin Connect.",
       "<b>Workout and route together (Garmin)</b>: the workout already reaches your watch through the calendar, and the route through «Send to Garmin»: they are two separate things and can't be merged into one. On the watch, start the workout (Training > Workouts, or today's from the calendar) and then, from the activity menu, Navigation > Courses. If your model doesn't let you add it, do it the other way round: first the course, then the workout.",
       "<b>Apple Watch</b>: open the GPX with a route app such as WorkOutDoors or Footpath.",
       "<b>Coros, Suunto, Polar, Wahoo</b>: their app imports the GPX as a route or course.",
@@ -859,20 +871,31 @@ const signat = Boolean(lectura && lectura.sig);
 const titularGarmin = () => ({ h: signat ? `${lectura.codi}.${lectura.sig}` : undefined, sessio: recupera(GARMIN) || undefined });
 // connectar només es pot des d'un enllaç signat (el Worker ho comprova); enviar, també amb una sessió ja connectada
 const ambGarmin = () => Boolean(PROXY && (signat || recupera(GARMIN)));
-let garminConnectat = false;
+let garminConnectat = null;
 
 function rutaGarmin(p, n) {
   return { nom: nomRuta(n), tipus: TIPUS_GARMIN[S.o] || (S.s === "ride" ? "ROAD_CYCLING" : "RUNNING"),
     punts: p.r.coords.map((c) => c.slice(0, 3).map((x) => Math.round(x * 1e6) / 1e6)) };
 }
 
+// les inicials de l'atleta (camp n de l'enllaç: Garmin no en dona el nom, i a l'enllaç no hi va cap nom)
+const inicialsGarmin = () => String((S && S.n) || "").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 3);
+
+/** El botó de dalt: «Garmin JR connectat», o «Connecta Garmin» si es pot connectar des d'aquí (enllaç signat).
+    null: encara no se sap. */
 function marcaGarmin(connectat) {
   garminConnectat = connectat;
-  $("b-garmin-fora").hidden = !connectat;
+  const b = $("b-garmin");
+  b.hidden = !(connectat || (connectat === false && signat));
+  b.classList.toggle("connectat", Boolean(connectat));
+  b.textContent = connectat ? omple(t.garminDe, { n: inicialsGarmin() }).replace(/ {2}/, " ") : t.garminConnecta;
+  $("cap-rutes").hidden = !b.hidden;
+  if (!connectat) $("b-garmin-fora").hidden = true;
 }
 
-function avisGarmin(text) {
+function avisGarmin(text, ambFora = false) {
   $("garmin-text").textContent = text;
+  $("b-garmin-fora").hidden = !ambFora;
   $("garmin").hidden = false;
   $("garmin").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
@@ -885,7 +908,10 @@ async function demanaGarmin(cos) {
 }
 
 function connectaGarmin(ruta) {
-  try { sessionStorage.setItem(GARMIN_PENDENT, JSON.stringify(ruta)); } catch (e) {}
+  try {
+    if (ruta) sessionStorage.setItem(GARMIN_PENDENT, JSON.stringify(ruta));
+    else sessionStorage.removeItem(GARMIN_PENDENT);
+  } catch (e) {}
   location.href = `${PROXY}garmin/connecta?h=${encodeURIComponent(titularGarmin().h)}`;
 }
 
@@ -910,15 +936,16 @@ async function enviaGarmin(ruta, boto) {
   if (boto) { boto.disabled = false; boto.textContent = abans; }
 }
 
-/** En tornar de Garmin (?garmin=ok, <sessió>, no o error): desa la sessió si n'hi ha i envia la ruta que esperava. */
+/** En tornar de Garmin (?garmin=ok, <sessió>, no o error): desa la sessió si n'hi ha i envia la ruta que esperava.
+    true si ara se sap que està connectat (no cal preguntar-ho al Worker). */
 function tornaDeGarmin() {
   const r = new URLSearchParams(location.search).get("garmin");
   if (r == null) return false;
   history.replaceState(null, "", location.pathname + location.hash);
   let pendent = null;
   try { pendent = JSON.parse(sessionStorage.getItem(GARMIN_PENDENT)); sessionStorage.removeItem(GARMIN_PENDENT); } catch (e) {}
-  if (r === "no") { avisGarmin(t.garminNo); return true; }
-  if (r !== "ok" && r.length < 30) { avisGarmin(t.garminError); return true; }
+  if (r === "no") { avisGarmin(t.garminNo); return false; }          // false: a dalt, l'estat de sempre
+  if (r !== "ok" && r.length < 30) { avisGarmin(t.garminError); return false; }
   if (r !== "ok") guarda(GARMIN, r);
   marcaGarmin(true);
   if (pendent) enviaGarmin(pendent, null);
@@ -926,11 +953,17 @@ function tornaDeGarmin() {
   return true;
 }
 
-/** En obrir la pàgina: si ja té Garmin connectat, s'ensenya «Desconnecta Garmin». */
+/** En obrir la pàgina: a dalt, si ja té Garmin connectat (i de qui) o el botó per connectar-lo. */
 async function miraGarmin() {
   if (!ambGarmin()) return;
-  try { marcaGarmin((await demanaGarmin({ garmin: "estat" })).connectat === true); } catch (e) {}
+  try { marcaGarmin((await demanaGarmin({ garmin: "estat" })).connectat === true); } catch (e) { marcaGarmin(false); }
 }
+
+$("b-garmin").addEventListener("click", () => {
+  if (!garminConnectat) return connectaGarmin(null);
+  if (!$("garmin").hidden && !$("b-garmin-fora").hidden) { $("garmin").hidden = true; return; }   // segon toc: s'amaga
+  avisGarmin(omple(t.garminEstat, { n: inicialsGarmin() }).replace(/ {2}/, " "), true);
+});
 
 $("b-garmin-fora").addEventListener("click", async () => {
   try { await demanaGarmin({ garmin: "desconnecta" }); } catch (e) {}
