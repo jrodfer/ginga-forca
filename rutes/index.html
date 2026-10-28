@@ -80,6 +80,7 @@ p { margin: 0; }
 .btn:disabled { opacity: .5; cursor: default; }
 .btn:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
 .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tipus-bici { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 
 form.cerca { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 input[type=search] { font: 600 1rem var(--display); padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line);
@@ -155,6 +156,7 @@ details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
     <button class="btn sec petit" type="button" id="b-aqui"></button>
     <div id="mapa" role="application"></div>
     <p class="muted" id="ajuda-mapa"></p>
+    <div class="tipus-bici" id="tipus-bici" role="radiogroup" hidden></div>
     <button class="btn" type="button" id="b-busca" disabled></button>
   </section>
 
@@ -237,6 +239,7 @@ const T = {
   ca: {
     dies: ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"],
     run: "córrer", ride: "bici",
+    tipusBici: "Tipus de bici", bicis: { "cycling-road": "Carretera", "cycling-regular": "Gravel", "cycling-mountain": "BTT" },
     perfil: {
       suau: "Un circuit tranquil, sense gaire desnivell.",
       pla: "Un circuit pla i amb trams seguits, per anar a ritme sense aturar-te.",
@@ -313,6 +316,7 @@ const T = {
   en: {
     dies: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     run: "run", ride: "ride",
+    tipusBici: "Type of bike", bicis: { "cycling-road": "Road", "cycling-regular": "Gravel", "cycling-mountain": "MTB" },
     perfil: {
       suau: "An easy loop without much climbing.",
       pla: "A flat loop with long uninterrupted stretches, to hold your pace without stopping.",
@@ -443,6 +447,7 @@ function iniciaMapa() {
   $("ajuda-mapa").textContent = t.ajuda;
   $("b-busca").textContent = S.p === "pista" ? t.buscaPistes : t.busca;
   $("sortida").hidden = false;
+  pintaTipusBici();
 
   const darrer = recupera("ginga-rutes-sortida");
   mapa = L_.map("mapa", { zoomControl: true }).setView(darrer ? [darrer[1], darrer[0]] : [41.6, 2.2], darrer ? 14 : 8);
@@ -488,6 +493,44 @@ function iniciaMapa() {
   $("b-busca").addEventListener("click", () => {
     S.p === "pista" ? buscaPistes() : buscaCircuits(S);
   });
+}
+
+// ---------- el tipus de bici ----------
+// A la bici, l'atleta tria carretera, gravel o BTT (en Joan, 28/10/2026); per defecte, el de la sessió del pla. El
+// proxy fa servir el triat (perfil a la petició, worker/rutes.js) i la pàgina hi aplica les regles de cada un: a la
+// de carretera, 100% per carretera. No es recorda: cada sessió comença amb el que diu el pla. Amb límit de cerques
+// (una per enllaç), es tria abans de buscar.
+const BICIS = ["cycling-road", "cycling-regular", "cycling-mountain"];
+
+function pintaTipusBici() {
+  const caixa = $("tipus-bici");
+  if (S.s !== "ride" || !BICIS.includes(S.o) || S.p === "pista") return;
+  caixa.setAttribute("aria-label", t.tipusBici);
+  caixa.replaceChildren(...BICIS.map((o) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn petit" + (o === S.o ? "" : " sec");
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(o === S.o));
+    b.textContent = t.bicis[o];
+    b.addEventListener("click", () => triaBici(o));
+    return b;
+  }));
+  caixa.hidden = false;
+}
+
+function triaBici(o) {
+  if (o === S.o) return;
+  S.o = o;
+  pintaTipusBici();
+  // les propostes eren d'un altre tipus de bici: fora, i a tornar a buscar
+  if (propostes.length) {
+    propostes = [];
+    triada = 0;
+    netejaCapes();
+    $("resultats").replaceChildren();
+    $("resultats").hidden = true;
+  }
 }
 
 function triaLloc(lloc) {
@@ -616,7 +659,7 @@ async function demanaTiquet() {
 async function demana(seed, factor, via, evita) {
   const r = await fetch(PROXY, {
     method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, tiquet, inici: sortida, seed, factor, via, evita }),
+    body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, tiquet, inici: sortida, seed, factor, via, evita, perfil: S.o }),
   });
   if (r.status === 410) throw new Error("caducat");
   if (r.status === 403 || r.status === 429) {
