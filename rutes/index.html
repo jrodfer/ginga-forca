@@ -242,6 +242,7 @@ const T = {
     pistaA: "a {d}", arribar: "Com hi arribo", accesPrivat: "accés restringit",
     capRuta: "No he trobat cap circuit de ~{k} km des d'aquí. Torna a buscar (seran circuits nous) o prova un punt de sortida una mica diferent.",
     capCarretera: "No he trobat cap circuit de ~{k} km 100% per carretera des d'aquí. Torna a buscar (seran circuits nous) o tria un punt de sortida en una carretera.",
+    capCorriols: "No he trobat cap circuit de ~{k} km des d'aquí que no passi per corriols que surten al mapa però potser no existeixen. Torna a buscar (seran circuits nous) o prova un punt de sortida una mica diferent.",
     carretera100: "100% per carretera",
     saturat: "Ara mateix hi ha massa cerques de rutes alhora. Torna-ho a provar d'aquí a un minut.",
     quota: "Avui ja s'han fet totes les cerques de rutes que permet el servei de mapes. Torna-ho a provar demà.",
@@ -299,6 +300,7 @@ const T = {
     pistaA: "{d} away", arribar: "Directions", accesPrivat: "restricted access",
     capRuta: "I couldn't find a ~{k} km loop from here. Search again (you'll get new loops) or try a slightly different start.",
     capCarretera: "I couldn't find a ~{k} km loop that's 100% on roads from here. Search again (you'll get new loops) or pick a start on a road.",
+    capCorriols: "I couldn't find a ~{k} km loop from here that avoids paths that are on the map but may not exist. Search again (you'll get new loops) or try a slightly different start.",
     carretera100: "100% on roads",
     saturat: "Too many route searches right now. Please try again in a minute.",
     quota: "Today's route searches with the map service are used up. Please try again tomorrow.",
@@ -513,7 +515,9 @@ async function buscaPistes() {
 // ---------- per on va la gent ----------
 // Rutes senyalitzades, vies verdes, parcs i passejos d'OpenStreetMap al voltant de la sortida. Es guarda al mòbil
 // per no tornar-ho a demanar cada cop: Overpass sovint va saturat. Si no arriba a temps, els circuits surten igual.
-const tipusGent = (sessio) => sessio.s === "run" ? "run" : sessio.o === "cycling-road" ? "road" : "ride";
+// "run2": a peu, també els corriols sense prova (els desats abans no en porten)
+const tipusGent = (sessio) => sessio.s === "run" ? "run2" : sessio.o === "cycling-road" ? "road" : "ride";
+const ambIndex = (g) => ({ ...g, idx: Motor.indexGent(g.dades), idxC: Motor.indexGent({ l: g.dades.c || [], p: [] }) });
 const serveix = (g, clau, p, radi) => Boolean(g) && g.clau === clau && Motor.dist(g.c, p) + radi <= g.r;
 
 async function carregaGent(sessio, p) {
@@ -521,7 +525,7 @@ async function carregaGent(sessio, p) {
   if (serveix(gent, clau, p, radi)) return gent;
   const desat = recupera("ginga-rutes-gent");
   if (serveix(desat, clau, p, radi) && Date.now() - desat.t < GENT_DIES * 864e5) {
-    return (gent = { ...desat, idx: Motor.indexGent(desat.dades) });
+    return (gent = ambIndex(desat));
   }
   const r = radi + GENT_MARGE;
   const consulta = Motor.consultaGent(p[1], p[0], r, sessio);
@@ -530,7 +534,7 @@ async function carregaGent(sessio, p) {
   const dades = Motor.llegeixGent(resposta);
   const nou = { clau, c: p, r, t: Date.now(), dades };
   if (JSON.stringify(dades).length < 2e6) guarda("ginga-rutes-gent", nou);    // el mòbil en guarda uns 5 MB per pàgina
-  return (gent = { ...nou, idx: Motor.indexGent(dades) });
+  return (gent = ambIndex(nou));
 }
 
 /** La gent de la zona, o null si Overpass no respon en GENT_SEGONS (llavors els circuits es trien com sempre). */
@@ -596,6 +600,8 @@ function diferents(cands) {
  * o les principals noves de l'anterior (abans, una sola passada i, si sortia un tros de terra, es llençava). Si
  * l'única manera de passar un riu o l'autopista és un pont de la C-260, evitar-la fa fer voltes de 100 km
  * (passava des de Llers).
+ *
+ * A peu, el mateix amb els corriols que potser no existeixen (valora): fora, i sense la passada de les principals.
  */
 async function repara(c, sessio) {
   const k = Math.min(sessio.k, 100);
@@ -617,7 +623,7 @@ async function repara(c, sessio) {
     actual = valora(nou, sessio);
     if (val(actual) && (!millor || actual.pena < millor.pena)) millor = actual;
   }
-  for (let passada = 0, base = millor; passada < PASSADES_TRANSIT && base && (base.r.tramsPrincipals || base.r.foraCarretera); passada++) {
+  for (let passada = 0, base = millor; Motor.esCarretera(sessio) && passada < PASSADES_TRANSIT && base && (base.r.tramsPrincipals || base.r.foraCarretera); passada++) {
     if (!afegeix(Motor.puntsAEvitar(base.r, cada(base.r, MAX_EVITA), true), MAX_EVITA)) break;   // cap punt nou: sortiria igual
     const nou = await demana(c.seed, c.factor, Motor.puntsDePas(base.r), evita);
     const x = nou && valora(nou, sessio);
@@ -631,6 +637,13 @@ async function repara(c, sessio) {
 function valora(c, sessio) {
   const r = Motor.resumeix(c.feature);
   r.gent = gentZona && !gentZona.idx.buit ? Motor.perOnVaLaGent(r.coords, r.acc, gentZona.idx) : null;
+  if (sessio.s === "run") {
+    // a peu, els trams que s'han de treure (com la terra a la bici de carretera) són els corriols sense prova
+    const ex = c.feature.properties.extras || {};
+    const d = Motor.corriolsDubtosos(r.coords, r.acc, ex.waytype || ex.waytypes, gentZona && gentZona.idxC);
+    r.dolents = d.mascara;
+    r.foraCarretera = r.corriols = d.metres;
+  }
   let pena = Motor.penalitza(r, sessio);
   let pujada = null;
   if (sessio.p === "pujades") {
@@ -669,10 +682,12 @@ async function buscaCircuits(sessio) {
       cands = cands.concat(await tanda(Math.max(0.6, Math.min(1.5, 1 / mediana)), 4));
     }
     cands.sort((a, b) => a.pena - b.pena);
-    if (Motor.esCarretera(sessio)) {
-      // 100% per carretera: els que ja ho són, i els millors dels altres, reparats
-      // els nets, per carreteres locals i sense voltes ja valen; els 3 millors dels altres es reparen
-      const bo = (c) => !c.r.foraCarretera && !c.r.tramsPrincipals && !c.r.voltes.length;
+    const trobats = cands.length;
+    // bici de carretera: 100% per carretera, per carreteres locals i sense voltes; a peu: cap corriol sense prova
+    const bo = Motor.esCarretera(sessio) ? (c) => !c.r.foraCarretera && !c.r.tramsPrincipals && !c.r.voltes.length
+      : sessio.s === "run" ? (c) => !c.r.corriols : null;
+    if (bo) {
+      // els que ja ho són valen; els 3 millors dels altres es reparen
       // esglaonades, perquè no arribin totes alhora al límit per minut d'openrouteservice
       const reparats = await Promise.all(cands.filter((c) => !bo(c)).slice(0, 3)
         .map((c, i) => new Promise((ok) => setTimeout(ok, i * ESGLAO_MS)).then(() => repara(c, sessio))));
@@ -683,7 +698,8 @@ async function buscaCircuits(sessio) {
     propostes = diferents(cands.filter((c) => err(c) <= MAX_ERR_KM && !c.r.voltes.length)).slice(0, 3);
     if (!propostes.length) {
       // amb límit de cerques, no li diem que torni a buscar
-      const cap = Motor.esCarretera(sessio) ? (ambLimit ? t.capCarreteraUna : t.capCarretera) : (ambLimit ? t.capRutaUna : t.capRuta);
+      const cap = Motor.esCarretera(sessio) ? (ambLimit ? t.capCarreteraUna : t.capCarretera)
+        : sessio.s === "run" && trobats && !ambLimit ? t.capCorriols : (ambLimit ? t.capRutaUna : t.capRuta);
       res.innerHTML = `<p>${quotaEsgotada ? t.quota : saturat ? t.saturat : omple(cap, { k: fmt(kObjectiu, 0) })}</p>`;
       res.hidden = false; netejaCapes(); return;
     }

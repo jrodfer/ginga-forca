@@ -535,17 +535,22 @@ relation["route"="bicycle"]["network"~"^(icn|ncn|rcn)$"]${a}->.bici;
 );
 out ids geom qt;
 way["leisure"="park"]${a};
+out tags geom qt;
+way["highway"~"^(path|bridleway)$"]${a}->.camins;
+(way.camins[!"sac_scale"][!"surface"][!"trail_visibility"]["foot"!="designated"]; - way(r.senders);)->.nus;
+(.nus; way.camins["informal"="yes"]; way.camins["trail_visibility"~"^(bad|horrible|no)$"];);
 out tags geom qt;`;
   }
 
-  /** {l: línies, p: parcs}, cadascun una llista de [lon, lat, lon, lat...] (compacte, per desar-lo). */
+  /** {l: línies, p: parcs, c: corriols sense prova}, cada un una llista de [lon, lat, lon, lat...] (compacte). */
   function llegeixGent(resposta) {
-    const gent = { l: [], p: [] };
+    const gent = { l: [], p: [], c: [] };
     for (const el of (resposta && resposta.elements) || []) {
       if (!el.geometry || el.geometry.length < 2) continue;
       const pla = [];
       for (const g of el.geometry) if (g) pla.push(Math.round(g.lon * 1e5) / 1e5, Math.round(g.lat * 1e5) / 1e5);
-      (el.tags && el.tags.leisure === "park" && el.geometry.length >= 4 ? gent.p : gent.l).push(pla);
+      const t = el.tags || {};
+      (t.highway ? gent.c : t.leisure === "park" && el.geometry.length >= 4 ? gent.p : gent.l).push(pla);
     }
     return gent;
   }
@@ -614,12 +619,39 @@ out tags geom qt;`;
     return idx.parcs.some((parc) => dinsParc(pt, parc));
   }
 
+  // ---------- corriols que potser no existeixen ----------
+  // A l'OpenStreetMap hi ha corriols (path) dibuixats sobre marges de camp, fileres d'arbres o olivars que al terreny
+  // no hi són. A peu, un corriol només val si en consta alguna prova: d'un sender senyalitzat, o amb la dificultat
+  // (sac_scale), la superfície o la visibilitat; els informals o poc visibles, mai. La mateixa regla que
+  // coach/correr.brf (les rutes fetes); els corriols sense prova surten d'Overpass amb per on va la gent.
+
+  const NO_CORRIOL = new Set([1, 2, 3, 5, 6, 9]);   // waytypes: carreteres, carrers, pistes, carrils bici, ferris
+  const MARGE_CORRIOL = 60;        // m del principi i del final: d'on surts no es pot evitar
+
+  /**
+   * Quins trams de la ruta van per un corriol sense prova, i quants metres en fan. Sense dades d'Overpass (idx
+   * null) no se sap quins existeixen: llavors tots els corriols compten.
+   */
+  function corriolsDubtosos(coords, acc, waytype, idx) {
+    const tipus = new Array(coords.length).fill(0);
+    for (const [ini, fi, valor] of (waytype && waytype.values) || []) for (let i = ini; i < fi; i++) tipus[i] = valor;
+    const total = acc[acc.length - 1];
+    const mascara = new Array(coords.length).fill(false);
+    let metres = 0;
+    for (let i = 0; i < coords.length - 1; i++) {
+      if (NO_CORRIOL.has(tipus[i]) || acc[i] < MARGE_CORRIOL || acc[i] > total - MARGE_CORRIOL) continue;
+      const mig = [(coords[i][0] + coords[i + 1][0]) / 2, (coords[i][1] + coords[i + 1][1]) / 2];
+      if (idx ? aPropDeGent(mig, idx) : tipus[i] === 4) { mascara[i] = true; metres += acc[i + 1] - acc[i]; }
+    }
+    return { mascara, metres };
+  }
+
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa, voltes,
-    puntesVoltes,
+    puntesVoltes, corriolsDubtosos,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;
