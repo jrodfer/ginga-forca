@@ -97,6 +97,158 @@
       senseAsfalt: 0, carretera: 0, gent: null };
   }
 
+  // ---------- BRouter, quan openrouteservice no en dona cap ----------
+
+  // A Calaf (28/10/2026) tots els circuits d'openrouteservice passaven per camins de terra i la pàgina deia «no he
+  // trobat cap circuit», amb Calaf - els Prats de Rei - Sant Martí Sesgueioles - Calaf (16,7 km, tot asfalt) al
+  // costat. BRouter (brouter.de, sense clau ni quota) va pels pobles del voltant: un circuit per dos pobles o anar a
+  // un i tornar. També quan s'acaba la quota d'openrouteservice. Els perfils, els estàndard de BRouter.
+  const PERFILS_BROUTER = { "cycling-road": "fastbike", "cycling-regular": "trekking", "cycling-mountain": "mtb",
+    "foot-walking": "hiking-mountain", "foot-hiking": "hiking-mountain" };
+  // Girs de BRouter (voicehints) -> tipus de pas d'openrouteservice, com a coach/ruta_fixa.py (GIRS)
+  const GIRS_BROUTER = { 1: 6, 2: 0, 3: 4, 4: 2, 5: 1, 6: 5, 7: 3, 8: 12, 9: 13, 10: 9, 11: 9, 13: 7, 14: 7, 15: 9 };
+  // highway d'OSM -> waytype d'openrouteservice (1 principal, 2 carretera, 3 carrer, 4 camí, 5 pista, 6 carril bici,
+  // 7 vorera, 8 escales). Una pista asfaltada és carretera (2): «si hi ha asfalt compta; el que no vull és terra»
+  // (en Joan, 28/10/2026), com els camins asfaltats d'openrouteservice
+  const WAYTYPE_OSM = { motorway: 1, trunk: 1, primary: 1, secondary: 2, tertiary: 2, unclassified: 2, road: 3,
+    residential: 3, living_street: 3, service: 3, path: 4, bridleway: 4, track: 5, cycleway: 6, footway: 7,
+    pedestrian: 7, steps: 8 };
+  // surface d'OSM -> surface d'openrouteservice (SURFACE_SENSE_PAVIMENTAR: 2 i de 8 en amunt)
+  const SURFACE_OSM = { paved: 1, unpaved: 2, asphalt: 3, chipseal: 3, concrete: 4, "concrete:plates": 4,
+    "concrete:lanes": 4, sett: 5, cobblestone: 5, unhewn_cobblestone: 5, metal: 6, wood: 7, compacted: 8,
+    fine_gravel: 9, gravel: 10, pebblestone: 10, dirt: 11, earth: 11, mud: 11, ground: 12, sand: 15,
+    woodchips: 16, grass: 17, grass_paver: 18, paving_stones: 14 };
+  const ASFALTADA = new Set([1, 3, 4, 14]);
+
+  /** Una resposta de BRouter (GeoJSON, timode=2) amb la forma d'una Feature d'openrouteservice, per a resumeix(). */
+  function deBrouter(geojson) {
+    const f = geojson.features[0];
+    const coords = f.geometry.coordinates;
+    const p = f.properties || {};
+    const acc = acumulada(coords);
+    const surface = [], waytype = [];
+    const posa = (llista, ini, fi, v) => {
+      const ultim = llista[llista.length - 1];
+      if (ultim && ultim[2] === v && ultim[1] === ini) ultim[1] = fi; else if (fi > ini) llista.push([ini, fi, v]);
+    };
+    const msgs = p.messages || [];
+    if (msgs.length > 1) {
+      const cap = msgs[0], iLo = cap.indexOf("Longitude"), iLa = cap.indexOf("Latitude");
+      const iD = cap.indexOf("Distance"), iT = cap.indexOf("WayTags");
+      let ini = 0, fet = 0;
+      for (const m of msgs.slice(1)) {
+        // cada missatge és el final d'un tram amb les mateixes etiquetes: el punt de la traça que hi coincideix o,
+        // si no n'hi ha cap, el dels metres fets
+        fet += Number(m[iD]) || 0;
+        const lon = Number(m[iLo]) / 1e6, lat = Number(m[iLa]) / 1e6;
+        let fi = -1;
+        for (let i = ini + 1; i < coords.length && fi < 0; i++) {
+          if (Math.abs(coords[i][0] - lon) < 2e-6 && Math.abs(coords[i][1] - lat) < 2e-6) fi = i;
+        }
+        if (fi < 0) { fi = ini; while (fi < coords.length - 1 && acc[fi] < fet - 1) fi++; }
+        const tags = Object.fromEntries(String(m[iT] || "").split(" ").map((t) => t.split("=")));
+        const s = SURFACE_OSM[tags.surface] || 0;
+        let w = WAYTYPE_OSM[String(tags.highway || "").replace(/_link$/, "")] || 0;
+        if (w === 5 && ASFALTADA.has(s)) w = 2;
+        posa(surface, ini, fi, s);
+        posa(waytype, ini, fi, w);
+        ini = fi;
+      }
+    }
+    const steps = (p.voicehints || []).filter((h) => GIRS_BROUTER[h[1]] != null && h[0] > 0 && h[0] < coords.length - 1)
+      .map((h) => ({ type: GIRS_BROUTER[h[1]], name: "", exit_number: h[2], way_points: [h[0], h[0]] }));
+    return { type: "Feature", geometry: { type: "LineString", coordinates: coords },
+      properties: { summary: { distance: Number(p["track-length"]) || acc[acc.length - 1] },
+        ascent: p["filtered ascend"] != null ? Number(p["filtered ascend"]) : undefined,
+        extras: { surface: { values: surface }, waytype: { values: waytype } }, segments: [{ steps }] } };
+  }
+
+  // Els pobles, de Photon (photon.komoot.io, sense clau; en dona 50 com a molt, els més a prop) i, si no respon,
+  // d'Overpass (que sovint va saturat: a Calaf, el 28/10, no en va donar cap).
+  const PHOTON = "https://photon.komoot.io/reverse";
+  const LLOCS = ["town", "village", "hamlet"];
+
+  /** Les consultes a Photon: al voltant de la sortida i, si és llarga, de quatre punts més a mig radi. */
+  function consultaPobles(lat, lon, radi) {
+    const centres = [[lat, lon]];
+    if (radi > 12000) {
+      const dLat = radi / 2 / 110540, dLon = radi / 2 / (111320 * Math.cos(rad(lat)));
+      centres.push([lat + dLat, lon], [lat - dLat, lon], [lat, lon + dLon], [lat, lon - dLon]);
+    }
+    const etiquetes = LLOCS.map((l) => `&osm_tag=place:${l}`).join("");
+    return centres.map(([a, o]) => `${PHOTON}?lat=${a.toFixed(5)}&lon=${o.toFixed(5)}&radius=${Math.ceil(radi / 1000)}&limit=50${etiquetes}`);
+  }
+
+  /** Overpass, si Photon no respon: els pobles a menys de `radi` m de la sortida. */
+  function consultaPoblesOverpass(lat, lon, radi) {
+    return `[out:json][timeout:25];node["place"~"^(${LLOCS.join("|")})$"](around:${Math.round(radi)},${lat},${lon});out;`;
+  }
+
+  /** Els pobles de respostes de Photon (GeoJSON) o d'Overpass, [[lon, lat, veinat]], sense repetir. */
+  function llegeixPobles(...respostes) {
+    const pobles = [];
+    for (const r of respostes) {
+      const punts = ((r && r.features) || []).map((f) => f.geometry && [...f.geometry.coordinates.slice(0, 2),
+        (f.properties || {}).osm_value === "hamlet"])
+        .concat(((r && r.elements) || []).map((e) => e.lat != null && [e.lon, e.lat, (e.tags || {}).place === "hamlet"]));
+      for (const p of punts) if (p && !pobles.some((q) => dist(p, q) < 100)) pobles.push(p[2] ? p : [p[0], p[1]]);
+    }
+    return pobles;
+  }
+
+  // Per carretera, entre pobles es fa un 25% més que en línia recta (criteri d'entrenador, de Calaf: 1,2-1,35)
+  const TORTUOSITAT = 1.25;
+  const MIN_POBLE = 1500;          // m: més a prop, és la mateixa sortida
+  const ANADA_PITJOR = 0.05;       // un circuit és millor que anar i tornar si s'hi acosten igual
+  // un veïnat (hamlet) sovint és al final d'un camí o d'un carrer sense sortida: un poble és millor si s'hi acosten
+  // a menys d'un 15% (a Calaf, els circuits per veïnats sortien per terra o amb voltes, i els de pobles, nets)
+  const VEINAT_PITJOR = 0.15;
+
+  /**
+   * Els recorreguts per pobles que més s'acosten als km: per dos pobles (sortida, A, B, sortida) o a un i tornar.
+   * [{via: [[lon, lat]...], anada, err}], els millors primer, i cap poble més de dues vegades.
+   */
+  function perPobles(sortida, pobles, km, n = 6) {
+    const m = km * 1000 / TORTUOSITAT;
+    const ps = pobles.filter((p) => dist(sortida, p) >= MIN_POBLE);
+    const cands = [];
+    for (let a = 0; a < ps.length; a++) {
+      const da = dist(sortida, ps[a]);
+      cands.push({ via: [ps[a]], anada: true, err: Math.abs(2 * da - m) / m + ANADA_PITJOR });
+      for (let b = a + 1; b < ps.length; b++) {
+        if (dist(ps[a], ps[b]) < MIN_POBLE) continue;
+        cands.push({ via: [ps[a], ps[b]], anada: false, err: Math.abs(da + dist(ps[a], ps[b]) + dist(ps[b], sortida) - m) / m });
+      }
+    }
+    for (const c of cands) c.err += VEINAT_PITJOR * c.via.filter((p) => p[2]).length;
+    cands.sort((x, y) => x.err - y.err);
+    const usos = new Map(), triats = [];
+    for (const c of cands) {
+      if (triats.length >= n) break;
+      if (c.via.some((p) => (usos.get(p) || 0) >= 2)) continue;
+      c.via.forEach((p) => usos.set(p, (usos.get(p) || 0) + 1));
+      triats.push(c);
+    }
+    return triats;
+  }
+
+  /**
+   * Un punt de pas al mig d'un poble o d'un veïnat fa entrar-hi i tornar a sortir pel mateix carrer (una volta per
+   * allargar): es mou a la cruïlla d'on surt la volta. Els punts de pas nous, o null si cap no queda dins d'una volta.
+   */
+  function viaForaVoltes(r, via) {
+    let canvia = false;
+    const nous = via.map((p) => {
+      let a = 0;
+      for (let i = 1; i < r.coords.length; i++) if (dist(r.coords[i], p) < dist(r.coords[a], p)) a = i;
+      const v = (r.voltes || []).find((x) => x.ini <= a && a <= x.fi);
+      if (!v) return p;
+      canvia = true;
+      return [r.coords[v.ini][0], r.coords[v.ini][1]];
+    });
+    return canvia ? nous : null;
+  }
+
   // ---------- voltes per allargar ----------
 
   // Un circuit no fa voltes només per sumar km (en Joan, 26/10/2026: «o més curt o una mica més llarg»): ni una
@@ -112,6 +264,9 @@
   // per allargar. Abans es llençaven totes, i a les zones amb poques carreteres (Calaf) no en quedava cap. Criteri
   // d'entrenador: 1 km d'anada.
   const MIN_ANADA = 1000;
+  // Sortir del poble i tornar-hi tampoc és allargar: a Calaf, BRouter fa mitja volta a una rotonda a 700 m de
+  // l'estació per agafar els carrers d'un sol sentit, i tots els circuits es llençaven. Criteri: el primer i l'últim km.
+  const MARGE_VOLTES = 1000;
 
   /** Els metres que la ruta torna per on ha vingut després de girar a la punta (seguint el tram d'anada enrere). */
   function anada(coords, acc, punta) {
@@ -131,7 +286,7 @@
   /** Les voltes per allargar, [{ini, fi, metres}] en índexs de coords, sense comptar la sortida ni l'arribada. */
   function voltes(coords, acc) {
     const total = acc[acc.length - 1];
-    const fora = (m) => m < MARGE_SORTIDA || m > total - MARGE_SORTIDA;
+    const fora = (m) => m < MARGE_VOLTES || m > total - MARGE_VOLTES;
     const trobades = [];
     for (let i = 2; i < coords.length; i++) {
       if (fora(acc[i])) continue;
@@ -671,7 +826,8 @@ out tags geom qt;`;
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa, voltes,
-    puntesVoltes, corriolsDubtosos,
+    puntesVoltes, corriolsDubtosos, PERFILS_BROUTER, deBrouter, consultaPobles, consultaPoblesOverpass, llegeixPobles,
+    perPobles, viaForaVoltes,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;

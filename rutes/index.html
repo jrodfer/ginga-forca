@@ -192,7 +192,8 @@ details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; 
 const PROXY = "https://ginga-rutes.jrodeja96.workers.dev/";   // el Worker de rutes (worker/README.md); buit = només pistes
 const TESSELES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATRIBUCIO = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · ' +
-  '<a href="https://openrouteservice.org/">openrouteservice</a> · <a href="https://www.openstreetmap.org/fixthemap">Informa d\'un error</a>';
+  '<a href="https://openrouteservice.org/">openrouteservice</a> · <a href="https://brouter.de/">BRouter</a> · ' +
+  '<a href="https://www.openstreetmap.org/fixthemap">Informa d\'un error</a>';
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 // Els servidors públics d'Overpass sovint van saturats (504): es proven per ordre, cadascun amb un temps màxim.
 const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
@@ -222,6 +223,11 @@ const MAX_ERR_KM_PRINCIPALS = 0.2;  // treure les carreteres principals només v
 const REPARACIONS = 2;          // passades per deixar un circuit de bici de carretera 100% per carretera
 const PASSADES_TRANSIT = 2;     // i passades més per treure'n els trams llargs per carretera principal
 const ESGLAO_MS = 700;          // entre reparacions que comencen alhora
+const BROUTER = "https://brouter.de/brouter";   // quan openrouteservice no en dona cap (perPobles)
+const BROUTER_N = 6;            // recorreguts per pobles que es demanen
+const BROUTER_ESGLAO_MS = 300;  // entre l'un i l'altre: el servidor de BRouter és gratuït i de tothom
+const BROUTER_SEGONS = 30;
+const POBLES_SEGONS = 10;
 const MAX_EVITA = 80;           // el màxim de punts a evitar que accepta el proxy
 const RESERVA_PRINCIPALS = 20;  // els que no gasta mai la terra: per a les principals (8 km, un punt cada 400 m)
 const MARGE_KM = 0.15;          // si cap no s'hi acosta tant, una segona tanda amb la llargada ajustada
@@ -262,8 +268,7 @@ const T = {
     capRuta: "No he trobat cap circuit de ~{k} km des d'aquí. Torna a buscar (seran circuits nous) o prova un punt de sortida una mica diferent.",
     capCarretera: "No he trobat cap circuit de ~{k} km 100% per carretera des d'aquí. Torna a buscar (seran circuits nous) o tria un punt de sortida en una carretera.",
     capCorriols: "No he trobat cap circuit de ~{k} km des d'aquí que no passi per corriols que surten al mapa però potser no existeixen. Torna a buscar (seran circuits nous) o prova un punt de sortida una mica diferent.",
-    carretera100: "100% per carretera",
-    saturat: "Ara mateix hi ha massa cerques de rutes alhora. Torna-ho a provar d'aquí a un minut.",
+    carretera100: "100% per carretera", anada: "Anada i tornada pel mateix camí",    saturat: "Ara mateix hi ha massa cerques de rutes alhora. Torna-ho a provar d'aquí a un minut.",
     quota: "Avui ja s'han fet totes les cerques de rutes que permet el servei de mapes. Torna-ho a provar demà.",
     limitEnllac: "Ja has buscat rutes per a aquesta sessió: cada enllaç en té una cerca.",
     limitDia: "Avui ja has fet les dues cerques de rutes del dia. Demà en tornes a tenir.",
@@ -330,8 +335,7 @@ const T = {
     capRuta: "I couldn't find a ~{k} km loop from here. Search again (you'll get new loops) or try a slightly different start.",
     capCarretera: "I couldn't find a ~{k} km loop that's 100% on roads from here. Search again (you'll get new loops) or pick a start on a road.",
     capCorriols: "I couldn't find a ~{k} km loop from here that avoids paths that are on the map but may not exist. Search again (you'll get new loops) or try a slightly different start.",
-    carretera100: "100% on roads",
-    saturat: "Too many route searches right now. Please try again in a minute.",
+    carretera100: "100% on roads", anada: "Out and back on the same road",    saturat: "Too many route searches right now. Please try again in a minute.",
     quota: "Today's route searches with the map service are used up. Please try again tomorrow.",
     limitEnllac: "You've already searched routes for this session: each link has one search.",
     limitDia: "You've used today's two route searches. You'll have them again tomorrow.",
@@ -494,7 +498,7 @@ function mostraRutaFixa() {
   mapa = L_.map("mapa", { zoomControl: true }).setView([41.6, 2.2], 8);
   // la ruta l'ha calculat BRouter, no openrouteservice
   L_.tileLayer(TESSELES, { maxZoom: 19, attribution: ATRIBUCIO.replace(
-    '<a href="https://openrouteservice.org/">openrouteservice</a>', '<a href="https://brouter.de/">BRouter</a>') }).addTo(mapa);
+    '<a href="https://openrouteservice.org/">openrouteservice</a> · ', "") }).addTo(mapa);
   propostes = [{ r: Motor.rutaFixa(S) }];
   pintaPropostes(S);
 }
@@ -664,6 +668,41 @@ async function repara(c, sessio) {
   return millor;
 }
 
+/**
+ * Si openrouteservice no en dona cap que quedi bé, o no queda quota: BRouter, pels pobles del voltant (Motor.perPobles).
+ * Passava a Calaf: tots els circuits per camins de terra, i per carretera n'hi havia de sobres. Les mateixes regles
+ * que els d'openrouteservice (bo, i a menys d'un MAX_ERR_KM dels km).
+ */
+async function perPobles(sessio, bo) {
+  const perfil = Motor.PERFILS_BROUTER[sessio.o];
+  if (!perfil) return [];
+  const k = Math.min(sessio.k, 100);
+  const radi = Math.min(30000, k * 1000 * 0.6);
+  const espera = { signal: AbortSignal.timeout ? AbortSignal.timeout(POBLES_SEGONS * 1000) : undefined };
+  let pobles = Motor.llegeixPobles(...await Promise.all(Motor.consultaPobles(sortida[1], sortida[0], radi)
+    .map((u) => fetch(u, espera).then((r) => r.json()).catch(() => null))));
+  if (pobles.length < 2) {
+    pobles = Motor.llegeixPobles(await overpass(Motor.consultaPoblesOverpass(sortida[1], sortida[0], radi), POBLES_SEGONS)
+      .catch(() => null));
+  }
+  const cands = Motor.perPobles(sortida, pobles, k, BROUTER_N);
+  const ruta = async (via, seed) => {
+    const punts = [sortida, ...via, sortida].map((p) => `${p[0].toFixed(6)},${p[1].toFixed(6)}`).join("|");
+    const r = await fetch(`${BROUTER}?lonlats=${punts}&profile=${perfil}&alternativeidx=0&format=geojson&timode=2`,
+      { signal: AbortSignal.timeout ? AbortSignal.timeout(BROUTER_SEGONS * 1000) : undefined }).catch(() => null);
+    const geo = r && r.ok ? await r.json().catch(() => null) : null;
+    return geo && geo.features && geo.features[0] ? valora({ feature: Motor.deBrouter(geo), seed, factor: 1 }, sessio) : null;
+  };
+  const demanaB = async (c, i) => {
+    await new Promise((ok) => setTimeout(ok, i * BROUTER_ESGLAO_MS));      // el servidor de BRouter és de tothom
+    let x = await ruta(c.via, `b${i}`);
+    const via = x && Motor.viaForaVoltes(x.r, c.via);                       // entrar al poble i tornar a sortir
+    if (via) x = (await ruta(via, `b${i}`)) || x;
+    return x && (!bo || bo(x)) && !x.r.voltes.length && Math.abs(x.r.km - k) / k <= MAX_ERR_KM ? { ...x, anada: c.anada } : null;
+  };
+  return (await Promise.all(cands.map(demanaB))).filter(Boolean).sort((a, b) => a.pena - b.pena);
+}
+
 function valora(c, sessio) {
   const r = Motor.resumeix(c.feature);
   r.gent = gentZona && !gentZona.idx.buit ? Motor.perOnVaLaGent(r.coords, r.acc, gentZona.idx) : null;
@@ -726,6 +765,7 @@ async function buscaCircuits(sessio) {
     // mai un circuit que s'allunyi massa dels km de la sessió (abans en sortien de 150 km per a una de 36), ni un
     // que faci voltes a una rotonda o anades i tornades per allargar: millor més curt o una mica més llarg
     propostes = diferents(cands.filter((c) => err(c) <= MAX_ERR_KM && !c.r.voltes.length)).slice(0, 3);
+    if (!propostes.length) propostes = diferents(await perPobles(sessio, bo)).slice(0, 3);   // BRouter
     if (!propostes.length) {
       // amb límit de cerques, no li diem que torni a buscar
       const cap = Motor.esCarretera(sessio) ? (ambLimit ? t.capCarreteraUna : t.capCarretera)
@@ -763,7 +803,7 @@ function pintaPropostes(sessio) {
     const r = p.r;
     const div = document.createElement("div");
     div.className = "proposta" + (n === triada ? " triada" : "");
-    const detalls = [];
+    const detalls = p.anada ? [t.anada] : [];
     if (Motor.esCarretera(sessio)) {
       detalls.push(t.carretera100, t.transit[Motor.grauTransit(r.transit)]);
       if (r.principal > 0.03) detalls.push(omple(t.principal, { x: Math.round(100 * r.principal) }));
