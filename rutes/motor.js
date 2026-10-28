@@ -107,6 +107,26 @@
   // torna openrouteservice a qualsevol revolt o cruïlla) no és tornar enrere.
   const A_PROP_VOLTA = 15, MIN_VOLTA = 60, MAX_VOLTA = 1000;
   const PES_VOLTA = 1;
+  // Anar i tornar pel mateix lloc sí que val (en Joan, 28/10/2026: «el que no volia era anar a una rotonda i tornar
+  // només per fer 100-200 m més»): si el tros que es repeteix fa MIN_ANADA m o més, va a algun lloc i no és una volta
+  // per allargar. Abans es llençaven totes, i a les zones amb poques carreteres (Calaf) no en quedava cap. Criteri
+  // d'entrenador: 1 km d'anada.
+  const MIN_ANADA = 1000;
+
+  /** Els metres que la ruta torna per on ha vingut després de girar a la punta (seguint el tram d'anada enrere). */
+  function anada(coords, acc, punta) {
+    let j = punta, fins = punta;
+    for (let k = punta + 1; k < coords.length; k++) {
+      let trobat = -1;
+      // els punts de la tornada poden ser més espaiats que els de l'anada: es busca tant enrere com s'ha avançat
+      for (let jj = j; jj >= 1 && acc[j] - acc[jj] <= acc[k] - acc[k - 1] + 200; jj--) {
+        if (projecta(coords[k], coords[jj - 1], coords[jj]).d <= A_PROP_VOLTA) { trobat = jj; break; }
+      }
+      if (trobat < 0) break;
+      j = trobat; fins = k;
+    }
+    return acc[fins] - acc[punta];
+  }
 
   /** Les voltes per allargar, [{ini, fi, metres}] en índexs de coords, sense comptar la sortida ni l'arribada. */
   function voltes(coords, acc) {
@@ -130,7 +150,7 @@
       let punta = v.ini;                             // el punt més lluny d'on comença: on gira
       for (let k = v.ini; k <= v.fi; k++) if (dist(coords[v.ini], coords[k]) > dist(coords[v.ini], coords[punta])) punta = k;
       return { ...v, punta, metres: acc[v.fi] - acc[v.ini] };
-    });
+    }).filter((v) => anada(coords, acc, v.punta) < MIN_ANADA);
   }
 
   // Per reparar-les (bici de carretera), es torna a demanar el circuit sense punts de pas dins de les voltes i
