@@ -190,6 +190,10 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
         pressió arterial, ni dolor al pit, marejos o desmais quan faig esforç; o que, si en tinc, el metge m'ha dit
         que puc fer exercici. Si mai en tinc durant una sessió, pararé i ho diré.</label>
       <p class="muted" style="margin:8px 0 0">Si no ho pots confirmar, no t'hi encallis: respon el correu i en parlem.</p>
+      <label class="check gran"><input type="checkbox" id="consentiment"><span>Consenteixo que Ginga faci servir les dades de
+        salut que doni aquí (embaràs o postpart, molèsties, els tests) només per adaptar-me el pla. Les guarda fins que
+        les llegeix l'entrenador, i les puc fer esborrar quan vulgui.
+        <a href="../privacitat/" target="_blank" rel="noopener">Política de privacitat</a>.</span></label>
     </section>
 
     <p class="avis" id="error" hidden></p>
@@ -422,17 +426,17 @@ input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 13
     var ambTests = calenTests();
     var tests = { cadira: $("cadira").value, tug: $("tug").value, tandem: $("tandem").value, un_peu: $("un_peu").value };
     var buits = ambTests ? Object.keys(tests).filter(function (k) { return tests[k] === ""; }) : [];
-    var declara = $("declaracio").checked;
+    var declara = $("declaracio").checked && $("consentiment").checked;
     if (perfilFalta || buits.length || !declara) {
       $("error").hidden = false;
       $("error").textContent = perfilFalta ? "Falta respondre alguna pregunta (de «Sobre tu» o de «Com ho farem»)."
         : buits.length ? "Falta algun resultat dels tests."
-        : "Per començar, cal marcar la casella de «Per començar» (o respondre el correu si no la pots marcar).";
+        : "Per començar, cal marcar les dues caselles de «Per començar» (o respondre el correu si no les pots marcar).";
       return;
     }
     $("error").hidden = true;
     $("envia").disabled = true; $("envia").textContent = "Enviant…";
-    var cos = { k: dades.k, g: dades.g, declaracio: true, perfil: p,
+    var cos = { k: dades.k, g: dades.g, declaracio: true, consentiment: true, perfil: p,
                 tests: ambTests ? { cadira: Number(tests.cadira), tug: Number(tests.tug), tandem: Number(tests.tandem),
                                     un_peu: Number(tests.un_peu), mans: $("mans").checked } : null };
     fetch(dades.u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cos) })
