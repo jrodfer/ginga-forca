@@ -105,6 +105,7 @@ ul.llocs li:first-child button { border-top: 0; }
 details summary { cursor: pointer; font-weight: 700; }
 details[open] summary { margin-bottom: 8px; }
 details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; gap: 6px; }
+details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
 
 /* seguiment: pantalla completa */
 #segueix { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: grid; grid-template-rows: auto 1fr auto; }
@@ -253,6 +254,8 @@ const T = {
     capLloc: "No he trobat aquest lloc. Prova amb el nom del poble o la ciutat.",
     capPista: "No hi ha cap pista d'atletisme a menys de 20 km. Et busco un circuit pla?",
     proposta: "Proposta {n}", veure: "Mostra-la", gpx: "GPX per al rellotge", segueix: "Segueix-la ara",
+    osmand: "Obre-la a OsmAnd",
+    osmandBaixat: "El GPX s'ha descarregat: toca'l a la notificació de descàrrega (o a la carpeta Baixades) i obre'l amb OsmAnd.",
     garmin: "Envia al Garmin", garminEnviant: "Enviant…",
     garminFet: "Ja és a Garmin Connect. Perquè arribi al rellotge, obre l'app Garmin Connect al mòbil amb el rellotge a prop (es sincronitza sol). Després, al rellotge: comença l'activitat de córrer o de bici i, al menú, Navegació > Recorreguts.",
     garminConnectat: "Garmin connectat. Queda guardat: a partir d'ara, «Envia al Garmin» hi posa la ruta directament, des de qualsevol enllaç teu.",
@@ -292,7 +295,14 @@ const T = {
       "<b>Entrenament i ruta alhora (Garmin)</b>: l'entrenament ja t'arriba al rellotge pel calendari i la ruta, amb «Envia al Garmin»: són dues coses diferents i no es poden ajuntar en una. Al rellotge, comença l'entrenament (Entrenament > Entrenaments, o el del dia al calendari) i després, des del menú de l'activitat, Navegació > Recorreguts. Si el teu model no et deixa afegir-lo, fes-ho al revés: primer el recorregut i després l'entrenament.",
       "<b>Apple Watch</b>: obre el GPX amb una app que segueixi rutes, com WorkOutDoors o Footpath.",
       "<b>Coros, Suunto, Polar, Wahoo</b>: la seva app importa el GPX com a ruta o recorregut.",
-      "<b>Sense rellotge de mapes</b>: «Segueix-la ara» t'ensenya on ets i et diu els girs en veu alta. La pantalla es queda encesa mentre la segueixes.",
+      "<b>Sense rellotge de mapes</b>: «Segueix-la ara» t'ensenya on ets i et diu els girs en veu alta, però només amb la pantalla encesa. Si bloqueges el mòbil o te'l poses a la butxaca, el navegador deixa de llegir el GPS i perds la ruta.",
+      "<b>Amb el mòbil bloquejat: OsmAnd</b> (gratuïta, per a Android i iPhone). Com s'hi posa:<ol>"
+        + "<li>A l'iPhone, «Obre-la a OsmAnd» obre el menú de compartir: tria OsmAnd (si no hi surt, mira a «Més»). A Android, el GPX es descarrega: toca'l a la notificació de descàrrega o a la carpeta Baixades, i obre'l amb OsmAnd.</li>"
+        + "<li>La traça queda a OsmAnd, a Menú > Preferits > Trajectes (a l'iPhone, Pistes), a la carpeta «import». Toca-la.</li>"
+        + "<li>A Opcions, tria «Segueix el trajecte» (a l'iPhone, «Navegació»).</li>"
+        + "<li>Quan et proposi «Circumscriu a les carreteres», accepta-ho: enganxa la traça als carrers i camins del mapa perquè et digui bé els girs i les rotondes. Si la ruta va per corriols, mira al mapa que no l'hagi passat a un camí del costat. Després, «Comença».</li>"
+        + "<li>A Android, treu OsmAnd de l'optimització de bateria (Configuració > Aplicacions > OsmAnd > Bateria), perquè el telèfon no l'aturi amb la pantalla apagada. A l'iPhone, l'aplicació no pot evitar que el sistema l'aturi.</li></ol>"
+        + "Abans de dependre'n, prova-la en una sortida curta amb el mòbil bloquejat: comprova que continua seguint-te i que et diu els girs. Si tens el mòbil en un altre idioma, els menús canvien de nom (en anglès: My Places > Tracks, Options > Follow track o Navigation, Attach to the roads, Start).",
     ],
     fet: "{x} km fets", queda: "{x} km per acabar", veuOn: "Veu: sí", veuOff: "Veu: no", atura: "Atura",
     fora: "Te n'has sortit de la ruta", foraVeu: "Te n'has sortit de la ruta", recte: "Continua",
@@ -320,6 +330,8 @@ const T = {
     capLloc: "I couldn't find that place. Try the name of the town or city.",
     capPista: "There's no athletics track within 20 km. Shall I find a flat loop?",
     proposta: "Option {n}", veure: "Show it", gpx: "GPX for your watch", segueix: "Follow it now",
+    osmand: "Open it in OsmAnd",
+    osmandBaixat: "The GPX has been downloaded: tap it in the download notification (or in your Downloads folder) and open it with OsmAnd.",
     garmin: "Send to Garmin", garminEnviant: "Sending…",
     garminFet: "It's in Garmin Connect. To get it onto your watch, open the Garmin Connect app on your phone with the watch nearby (it syncs by itself). Then, on the watch: start your run or ride activity and, in the menu, Navigation > Courses.",
     garminConnectat: "Garmin connected. It stays saved: from now on, «Send to Garmin» puts the route there directly, from any of your links.",
@@ -359,7 +371,14 @@ const T = {
       "<b>Workout and route together (Garmin)</b>: the workout already reaches your watch through the calendar, and the route through «Send to Garmin»: they are two separate things and can't be merged into one. On the watch, start the workout (Training > Workouts, or today's from the calendar) and then, from the activity menu, Navigation > Courses. If your model doesn't let you add it, do it the other way round: first the course, then the workout.",
       "<b>Apple Watch</b>: open the GPX with a route app such as WorkOutDoors or Footpath.",
       "<b>Coros, Suunto, Polar, Wahoo</b>: their app imports the GPX as a route or course.",
-      "<b>No mapping watch</b>: «Follow it now» shows where you are and speaks the turns. The screen stays on while you follow it.",
+      "<b>No mapping watch</b>: «Follow it now» shows where you are and speaks the turns, but only with the screen on. If you lock your phone or put it in your pocket, the browser stops reading the GPS and you lose the route.",
+      "<b>With your phone locked: OsmAnd</b> (free, for Android and iPhone). How to set it up:<ol>"
+        + "<li>On iPhone, «Open it in OsmAnd» opens the share menu: pick OsmAnd (if it isn't there, look under «More»). On Android, the GPX is downloaded: tap it in the download notification or in your Downloads folder, and open it with OsmAnd.</li>"
+        + "<li>In OsmAnd, the track is under Menu > My Places > Tracks, in the «import» folder. Tap it.</li>"
+        + "<li>Under Options, choose «Follow track» (on iPhone, «Navigation»).</li>"
+        + "<li>When it offers «Attach to the roads», accept it: it snaps the track to the streets and paths on the map so the turns and roundabouts are announced properly. If the route uses trails, check on the map that it hasn't moved it onto a nearby path. Then tap «Start».</li>"
+        + "<li>On Android, take OsmAnd out of battery optimisation (Settings > Apps > OsmAnd > Battery) so the phone doesn't stop it with the screen off. On iPhone, the app can't stop the system from pausing it.</li></ol>"
+        + "Before relying on it, try it on a short run or ride with your phone locked: check that it keeps following you and speaks the turns. If your phone is in another language, the menus have other names.",
     ],
     fet: "{x} km done", queda: "{x} km to go", veuOn: "Voice: on", veuOff: "Voice: off", atura: "Stop",
     fora: "You're off the route", foraVeu: "You're off the route", recte: "Continue",
@@ -823,11 +842,21 @@ function pintaPropostes(sessio) {
       ${pujada ? `<p>${pujada}</p>` : ""}
       <div class="fila"><button class="btn sec petit" type="button" data-gpx>${t.gpx}</button>
       ${ambGarmin() ? `<button class="btn sec petit" type="button" data-garmin>${t.garmin}</button>` : ""}
+      ${alMobil() ? `<button class="btn sec petit" type="button" data-osmand>${t.osmand}</button>` : ""}
       <button class="btn petit" type="button" data-segueix>${t.segueix}</button></div>`;
     if (!S.f) div.querySelector("[data-veure]").addEventListener("click", () => { triada = n; pintaPropostes(sessio); });
     div.querySelector("[data-gpx]").addEventListener("click", () => descarregaGpx(p, n));
     const bg = div.querySelector("[data-garmin]");
     if (bg) bg.addEventListener("click", () => enviaGarmin(rutaGarmin(p, n), bg));
+    // OsmAnd segueix la ruta amb el mòbil bloquejat (el navegador, no: «Segueix-la ara» vol la pantalla encesa)
+    const bOsm = div.querySelector("[data-osmand]");
+    if (bOsm) bOsm.addEventListener("click", async () => {
+      if ((await descarregaGpx(p, n)) !== "descarregat" || div.querySelector(".osmand")) return;
+      const nota = document.createElement("p");        // Android: el GPX no es pot compartir i s'ha descarregat
+      nota.className = "muted osmand";
+      nota.textContent = t.osmandBaixat;
+      div.append(nota);
+    });
     div.querySelector("[data-segueix]").addEventListener("click", () => segueix(p));
     res.append(div);
   });
@@ -882,21 +911,37 @@ function dibuixa() {
 // ---------- GPX ----------
 const nomRuta = (n) => `${nomSessio(S.t)}${propostes.length > 1 ? ` (${n + 1})` : ""}`;
 
-async function descarregaGpx(p, n) {
-  const nom = nomRuta(n);
-  const fitxer = `ginga-${S.d || "ruta"}-${n + 1}.gpx`;
-  const blob = new Blob([Motor.gpx(nom, p.r.coords)], { type: "application/gpx+xml" });
-  // al mòbil, el full de compartir porta el GPX directament a Garmin Connect, WorkOutDoors...
-  const file = new File([blob], fitxer, { type: "application/gpx+xml" });
-  if (navigator.canShare && navigator.canShare({ files: [file] }) && /Android|iPhone|iPad|iPod/.test(navigator.userAgent)) {
-    try { await navigator.share({ files: [file], title: nom }); return; } catch (e) { if (e.name === "AbortError") return; }
+const GPX = "application/gpx+xml";
+
+/** Al mòbil, si el navegador diu que pot compartir el fitxer: el full de compartir del telèfon. */
+const potCompartir = (file) => Boolean(navigator.canShare && navigator.canShare({ files: [file] })
+  && /Android|iPhone|iPad|iPod/.test(navigator.userAgent));
+const alMobil = () => potCompartir(new File([""], "ruta.gpx", { type: GPX }));
+
+/**
+ * Comparteix el fitxer (al mòbil) i, si no es pot, el descarrega. Torna "compartit", "cancel·lat" o "descarregat".
+ * Chrome d'Android no deixa compartir GPX (només imatges, àudio, vídeo, PDF i text: ShareServiceImpl de Chromium):
+ * share() hi falla i es descarrega. Safari (iPhone) sí que el comparteix.
+ */
+async function comparteix(file, nom) {
+  if (potCompartir(file)) {
+    try { await navigator.share({ files: [file], title: nom }); return "compartit"; }
+    catch (e) { if (e.name === "AbortError") return "cancel·lat"; }
   }
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = fitxer;
+  a.href = URL.createObjectURL(file);
+  a.download = file.name;
   document.body.append(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  return "descarregat";
+}
+
+/** El GPX de la proposta: al mòbil, al full de compartir (Garmin Connect, WorkOutDoors, OsmAnd...); si no, descarregat. */
+function descarregaGpx(p, n) {
+  const nom = nomRuta(n);
+  const file = new File([Motor.gpx(nom, p.r.coords)], `ginga-${S.d || "ruta"}-${n + 1}.gpx`, { type: GPX });
+  return comparteix(file, nom);
 }
 
 // ---------- Garmin ----------
