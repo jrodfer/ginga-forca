@@ -47,8 +47,9 @@ La sessió també va dins l'enllaç; els circuits els calcula openrouteservice a
 respon als enllaços signats. A peu, cap circuit passa per corriols del mapa que potser no existeixen. Una ruta ja feta (`python -m coach.ruta_fixa` al repositori privat) va sencera dins
 l'enllaç, i la pàgina l'ensenya directament, amb el GPX i el mode de seguir-la.
 
-Sense res darrere del #, és la **ruta a mida**: s'hi tria l'esport, el terreny, els km i el desnivell (de-a), la
-sortida, els punts de pas i l'arribada, i la calcula BRouter des del navegador (`correr.brf` és el perfil per córrer).
+Amb l'enllaç personal de la **ruta a mida** (`python -m coach.ruta_oberta`, signat) s'hi tria l'esport, el terreny,
+els km i el desnivell (de-a), la sortida, els punts de pas i l'arribada, i la calcula BRouter a través del proxy, que
+només respon als enllaços signats (`correr.brf` és el perfil per córrer). Sense enllaç, la pàgina no fa res.
 Si amb aquests km no es pot sortir d'on es vol, la sortida s'acosta als punts de pas, i la pàgina ho diu.
 
 ## No editis res aquí

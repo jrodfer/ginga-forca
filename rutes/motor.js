@@ -833,9 +833,9 @@ out tags geom qt;`;
   }
 
   // ---------- ruta a mida ----------
-  // La pàgina sense sessió (rutes/ sense res darrere del #, o l'enllaç personal de coach/ruta_oberta.py): l'atleta
-  // tria l'esport, el terreny, els km i el desnivell (de-a), la sortida, els punts de pas i l'arribada (sense, torna
-  // a la sortida). La calcula BRouter des del navegador (encamina, a la pàgina), sense proxy ni quota. Si amb aquests
+  // L'enllaç personal de coach/ruta_oberta.py (signat, sense sessió): l'atleta tria l'esport, el terreny, els km i el
+  // desnivell (de-a), la sortida, els punts de pas i l'arribada (sense, torna a la sortida). La calcula BRouter a través
+  // del proxy (encamina, a la pàgina), sense gastar la quota d'openrouteservice. Si amb aquests
   // km no es pot sortir d'on vol perquè els punts de pas queden massa lluny, la sortida i l'arribada s'hi acosten
   // pel mateix camí fins que surt, com la llarga d'Avinyonet (24/10/2026): des de Figueres eren 20,6 km, en volia 18
   // i es va sortir d'un camí de Vilafant (en Joan, 28/10/2026). Els pesos són criteri d'entrenador.

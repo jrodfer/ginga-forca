@@ -453,8 +453,7 @@ const T = {
 // ---------- estat ----------
 const $ = (id) => document.getElementById(id);
 const lectura = Motor.llegeixHash(location.hash);
-// sense res darrere del #, la ruta a mida (com amb l'enllaç personal de coach/ruta_oberta.py, que porta x)
-const S = lectura ? lectura.sessio : location.hash.length > 1 ? null : { x: 1 };
+const S = lectura && lectura.sessio;
 const L = S && T[S.l] ? S.l : (navigator.language || "ca").startsWith("en") ? "en" : "ca";
 const t = T[L];
 document.documentElement.lang = L;
@@ -629,10 +628,11 @@ function mostraRutaFixa() {
 }
 
 // ---------- ruta a mida ----------
-// La pàgina sense sessió (rutes/ sola, o l'enllaç personal de coach/ruta_oberta.py, perquè Garmin sigui de l'atleta):
-// l'esport, el terreny, els km i el desnivell (de-a), i la sortida, els punts de pas i l'arribada al mapa. BRouter la
-// calcula des d'aquí (Motor.rutaOberta, sense proxy ni quota): a peu, amb el nostre perfil (correr.brf, també per
-// asfalt); en bici, amb els seus. Es recorda en aquest navegador el que es tria (no els punts).
+// L'enllaç personal de coach/ruta_oberta.py (camp x, signat; Garmin a nom de l'atleta): l'esport, el terreny, els km i
+// el desnivell (de-a), i la sortida, els punts de pas i l'arribada al mapa. La calcula BRouter (Motor.rutaOberta), a
+// través del proxy, que només respon als enllaços signats per Ginga (tots ho han de ser: en Joan, 29/10/2026); no
+// gasta la quota d'openrouteservice. A peu, amb el nostre perfil (correr.brf, també per asfalt), que es puja a BRouter
+// abans; en bici, amb els de BRouter. Es recorda en aquest navegador el que es tria (no els punts).
 const OBERTA = "ginga-rutes-oberta";
 const MOGUT_M = 150;            // m: més a prop, és la sortida que volia
 const oberta = { s: "run", run: "camins", ride: "cycling-road", km: [8, 10], d: [null, null], ...(recupera(OBERTA) || {}) };
@@ -732,27 +732,27 @@ function pintaPunts() {
   $("b-busca").disabled = !punts.some((x) => x.rol === "sortida");
 }
 
-/** encamina(punts, alternativa) per a Motor.rutaOberta: BRouter, esglaonat i sense repetir cap petició. */
+/** encamina(punts, alternativa) per a Motor.rutaOberta: BRouter pel proxy, esglaonat i sense repetir cap petició. */
 async function encaminador(p) {
-  let perfil = Motor.PERFILS_BROUTER[p.o], extra = "";
+  let perfil = Motor.PERFILS_BROUTER[p.o];
   if (p.s === "run") {
     const brf = await (await fetch("correr.brf")).text();
     const r = await (await fetch(`${BROUTER}/profile`, { method: "POST", headers: { "content-type": "text/plain" }, body: brf })).json();
     if (!r.profileid || r.error) throw new Error("perfil");
     perfil = r.profileid;
-    if (p.asfalt) extra = "&profile:asfalt=1";
   }
   const fetes = new Map();
   let proxima = 0;
   return (via, alt = 0) => {
-    const lonlats = via.map((q) => `${q[0].toFixed(6)},${q[1].toFixed(6)}`).join("|");
-    const clau = `${lonlats}/${alt}`;
+    const clau = `${via.map((q) => `${q[0].toFixed(6)},${q[1].toFixed(6)}`).join("|")}/${alt}`;
     if (!fetes.has(clau)) fetes.set(clau, (async () => {
       const ara = Date.now(), quan = Math.max(ara, proxima);
       proxima = quan + BROUTER_ESGLAO_MS;                  // el servidor de BRouter és de tothom
       await new Promise((ok) => setTimeout(ok, quan - ara));
-      const r = await fetch(`${BROUTER}?lonlats=${lonlats}&profile=${perfil}&alternativeidx=${alt}&format=geojson&timode=2${extra}`,
-        { signal: AbortSignal.timeout ? AbortSignal.timeout(BROUTER_SEGONS * 1000) : undefined }).catch(() => null);
+      const r = await fetch(PROXY, { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, brouter: { punts: via, perfil, alt, asfalt: p.asfalt } }),
+        signal: AbortSignal.timeout ? AbortSignal.timeout(BROUTER_SEGONS * 1000) : undefined }).catch(() => null);
+      if (r && r.status === 403) throw new Error("signatura");
       const geo = r && r.ok ? await r.json().catch(() => null) : null;
       return geo && geo.features && geo.features[0] ? Motor.resumeix(Motor.deBrouter(geo)) : null;
     })());
@@ -765,6 +765,7 @@ async function buscaOberta(mes = false) {
   const diu = (text) => { netejaCapes(); res.replaceChildren(Object.assign(document.createElement("p"), { textContent: text })); res.hidden = false; };
   const de = (rol) => (punts.find((x) => x.rol === rol) || {}).p || null;
   const [k0, k1] = oberta.km, [d0, d1] = oberta.d;
+  if (!PROXY || !lectura.sig) return diu(t.senseSignatura);
   if (!de("sortida")) return diu(t.oFalta);
   if (!(k0 > 0 && k1 >= k0 && k1 <= 200)) return diu(t.oKmMal);
   llavorOberta = mes ? llavorOberta + 1 : 0;
@@ -789,7 +790,7 @@ async function buscaOberta(mes = false) {
     res.prepend(...notes.filter(Boolean).map((x) => Object.assign(document.createElement("p"), { className: "avis", textContent: x })));
   } catch (e) {
     console.error(e);
-    diu(t.oError);
+    diu(e.message === "signatura" ? t.senseSignatura : t.oError);
   } finally {
     b.disabled = false; b.textContent = t.busca;
   }
@@ -1447,7 +1448,7 @@ if (!tornaDeGarmin()) miraGarmin();
 if (!S) {
   error(t.senseSessio);
 } else if (S.x) {
-  iniciaOberta();
+  lectura.sig ? iniciaOberta() : error(t.senseSignatura);
 } else if (Motor.caducada(S, new Date().toISOString().slice(0, 10))) {
   pintaSessio();
   error(omple(t.caducat, { d: S.d }));
