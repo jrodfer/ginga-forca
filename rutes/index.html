@@ -378,7 +378,7 @@ const t = T[L];
 document.documentElement.lang = L;
 let mapa, sortida, capes = [], propostes = [], triada = 0, llavor = 0, saturat = false, quotaEsgotada = false;
 let tiquet = null;              // el de la cerca d'ara (el proxy el demana si l'enllaç té límit de cerques)
-const ambLimit = Boolean(S && S.a);   // l'enllaç porta l'atleta: una cerca per enllaç i dues per dia (worker/rutes.js)
+const ambLimit = Boolean(S && typeof S.a === "string");   // l'enllaç porta l'atleta: una cerca per enllaç i dues per dia (worker/rutes.js)
 let gent = null;                // per on va la gent a la zona: {clau, c, r, t, dades, idx}
 let gentZona = null;            // la que s'ha fet servir per a les propostes d'ara (null: no ha arribat)
 
@@ -408,7 +408,8 @@ function pintaSessio() {
   const q = r.u === "m" ? (r.q >= 1000 && r.q % 1000 === 0 ? `${r.q / 1000} km` : `${r.q} m`) : durada(r.q || 0);
   const g = r.g ? (r.g[0] === r.g[1] ? r.g[0] : `${r.g[0]}-${r.g[1]}`) : "";
   let que = omple(t.perfil[S.p] || t.perfil.suau, { n: r.n, q, m: r.m, g });
-  if (S.p === "desnivell" && S.a) que += " " + omple(t.desnivellM, { a: S.a[0] === S.a[1] ? S.a[0] : `${S.a[0]}-${S.a[1]}` });
+  const rang = Motor.rangDesnivell(S);
+  if (S.p === "desnivell" && rang) que += " " + omple(t.desnivellM, { a: rang[0] === rang[1] ? rang[0] : `${rang[0]}-${rang[1]}` });
   $("que-busquem").textContent = S.f ? t.fixa : que;
   if (S.k > 100) { $("avis").textContent = t.llarga; $("avis").hidden = false; }
   $("sessio").hidden = false;

@@ -513,9 +513,17 @@
     return GRAUS_TRANSIT.filter((g) => (transit || 0) >= g).length;
   }
 
+  /** El desnivell de la nota (m D+, [mín, màx]) o null: camp e; els enllaços d'abans el portaven a a, que ara és
+      només el pseudònim de l'atleta (un text). */
+  function rangDesnivell(sessio) {
+    const r = sessio.e || (Array.isArray(sessio.a) ? sessio.a : null);
+    return r ? [r[0], r[1]] : null;
+  }
+
   /** Desnivell que busquem (m), segons la sessió. */
   function desnivellObjectiu(sessio) {
-    if (sessio.a) return [sessio.a[0], sessio.a[1]];
+    const rang = rangDesnivell(sessio);
+    if (rang) return rang;
     const perKm = { suau: [0, 10], pla: [0, 5], pista: [0, 5], desnivell: [15, 30], pujades: [8, 30] }[sessio.p];
     const bici = sessio.s === "ride" ? 0.6 : 1;          // en bici, el mateix desnivell pesa menys per km
     return [perKm[0] * sessio.k * bici, perKm[1] * sessio.k * bici];
@@ -822,7 +830,7 @@ out tags geom qt;`;
   }
 
   const api = {
-    llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, desnivellObjectiu, penalitza,
+    llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, rangDesnivell, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa, voltes,
