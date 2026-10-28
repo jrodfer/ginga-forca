@@ -25,7 +25,8 @@
     const [codi, sig] = net.split(".");
     try {
       const sessio = JSON.parse(b64url(codi));
-      if (!sessio || typeof sessio.k !== "number" || !(sessio.p || typeof sessio.f === "string")) return null;
+      // x: la ruta a mida amb l'enllaç personal de l'atleta (coach/ruta_oberta.py), sense cap sessió
+      if (!sessio || (sessio.x !== 1 && (typeof sessio.k !== "number" || !(sessio.p || typeof sessio.f === "string")))) return null;
       return { sessio, codi, sig: sig || "" };
     } catch (e) {
       return null;
@@ -538,6 +539,8 @@
     if (sessio.s === "ride") {
       pena += (sessio.o === "cycling-road" ? 3 : 0.5) * r.senseAsfalt + (sessio.o === "cycling-road" ? 1.5 : 0) * r.camins;
       if (sessio.o === "cycling-road") pena += PES_TRANSIT * (r.transit || 0);   // com menys trànsit, millor
+    } else if (sessio.asfalt) {
+      pena += 2 * r.senseAsfalt + 2 * r.escales;        // ruta a mida per asfalt: la terra, només per enllaçar
     } else {
       pena += 0.8 * r.carretera + 2 * r.escales;        // córrer lluny del trànsit, i sense escales
     }
@@ -806,7 +809,7 @@ out tags geom qt;`;
   // A l'OpenStreetMap hi ha corriols (path) dibuixats sobre marges de camp, fileres d'arbres o olivars que al terreny
   // no hi són. A peu, un corriol només val si en consta alguna prova: d'un sender senyalitzat, o amb la dificultat
   // (sac_scale), la superfície o la visibilitat; els informals o poc visibles, mai. La mateixa regla que
-  // coach/correr.brf (les rutes fetes); els corriols sense prova surten d'Overpass amb per on va la gent.
+  // correr.brf (les rutes fetes i la ruta a mida); els corriols sense prova surten d'Overpass amb per on va la gent.
 
   const NO_CORRIOL = new Set([1, 2, 3, 5, 6, 9]);   // waytypes: carreteres, carrers, pistes, carrils bici, ferris
   const MARGE_CORRIOL = 60;        // m del principi i del final: d'on surts no es pot evitar
@@ -829,13 +832,151 @@ out tags geom qt;`;
     return { mascara, metres };
   }
 
+  // ---------- ruta a mida ----------
+  // La pàgina sense sessió (rutes/ sense res darrere del #, o l'enllaç personal de coach/ruta_oberta.py): l'atleta
+  // tria l'esport, el terreny, els km i el desnivell (de-a), la sortida, els punts de pas i l'arribada (sense, torna
+  // a la sortida). La calcula BRouter des del navegador (encamina, a la pàgina), sense proxy ni quota. Si amb aquests
+  // km no es pot sortir d'on vol perquè els punts de pas queden massa lluny, la sortida i l'arribada s'hi acosten
+  // pel mateix camí fins que surt, com la llarga d'Avinyonet (24/10/2026): des de Figueres eren 20,6 km, en volia 18
+  // i es va sortir d'un camí de Vilafant (en Joan, 28/10/2026). Els pesos són criteri d'entrenador.
+
+  const RUMBS = 6;                 // un circuit sense punts de pas: un triangle cap a cada 60°
+  const TRAMS_ALLARGA = 3;         // una ruta curta: un punt de pas més, a cada costat dels 3 trams més llargs
+  const BISECCIONS = 5;            // per acostar la sortida: fins a 1/32 del camí que hi ha fins al primer punt
+  const PES_MOGUT = 2;             // moure la sortida un 10% dels km pesa com un 7% de desviació dels km
+
+  /** El punt [lon, lat] a `m` metres del principi de la ruta. */
+  function puntA(coords, acc, m) {
+    const x = Math.max(0, Math.min(m, acc[acc.length - 1]));
+    let i = 1;
+    while (i < acc.length - 1 && acc[i] < x) i++;
+    const t = acc[i] > acc[i - 1] ? (x - acc[i - 1]) / (acc[i] - acc[i - 1]) : 0;
+    return [coords[i - 1][0] + t * (coords[i][0] - coords[i - 1][0]), coords[i - 1][1] + t * (coords[i][1] - coords[i - 1][1])];
+  }
+
+  /** L'índex del punt de la ruta més a prop de `punt`, a partir de `des`. */
+  function mesAProp(coords, punt, des = 0) {
+    let millor = des;
+    for (let i = des; i < coords.length; i++) if (dist(coords[i], punt) < dist(coords[millor], punt)) millor = i;
+    return millor;
+  }
+
+  function desplaca(p, m, graus) {
+    return [p[0] + (m * Math.sin(rad(graus))) / (111320 * Math.cos(rad(p[1]))), p[1] + (m * Math.cos(rad(graus))) / 110540];
+  }
+
+  const rumb = (a, b) => (Math.atan2((b[0] - a[0]) * Math.cos(rad(a[1])), b[1] - a[1]) * 180) / Math.PI;
+
+  /** Un punt de pas que allarga el tram a-b uns `extra` metres (en línia recta): a la fracció t, de costat (±1). */
+  function desviament(a, b, extra, costat, t = 0.5) {
+    const d = dist(a, b);
+    const mig = [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])];
+    return desplaca(mig, Math.sqrt(extra * (2 * d + extra)) / 2, (d > 1 ? rumb(a, b) : 0) + 90 * costat);
+  }
+
+  /** Els dos vèrtexs d'un triangle equilàter des de `s`, de `perimetre` metres, cap a `graus`. */
+  const triangle = (s, perimetre, graus) => [desplaca(s, perimetre / 3, graus - 30), desplaca(s, perimetre / 3, graus + 30)];
+
+  /** La petició com una sessió, per valorar-ne les rutes amb penalitza(). */
+  function sessioOberta(p) {
+    return { s: p.s, o: p.o, asfalt: Boolean(p.asfalt), p: "suau", k: (p.km[0] + p.km[1]) / 2, e: p.desnivell || [0, 1e9] };
+  }
+
+  function penaOberta(c, p) {
+    const [kMin, kMax] = p.km, km = c.r.km;
+    const fora = km < kMin ? (kMin - km) / kMin : km > kMax ? (km - kMax) / kMax : 0;
+    return penalitza(c.r, sessioOberta(p)) + 3 * fora + (PES_MOGUT * c.mogut) / ((kMin + kMax) * 500);
+  }
+
+  const mateixa = (a, b) => Math.abs(a.km - b.km) / a.km < 0.03
+    && dist(a.coords[Math.floor(a.coords.length / 2)], b.coords[Math.floor(b.coords.length / 2)]) < 150;
+
+  /**
+   * La ruta a mida. p = {s, o, asfalt, sortida, arribada (null: torna a la sortida), pas: [[lon, lat]...],
+   * km: [mín, màx], desnivell: [mín, màx] o null}; encamina(punts, alternativa) -> Promise del resum de la ruta
+   * (resumeix) o null. Torna {propostes: [{r, punts, mogut (m que s'ha mogut la sortida o l'arribada), pena}], motiu}:
+   * "lluny" si els punts de pas ja fan més km que el màxim (llavors, les que més s'hi acosten), "fora" si cap no
+   * queda dins dels km, "cap" si no n'ha sortit cap. llavor: «més opcions» (uns altres rumbs i desviaments).
+   */
+  async function rutaOberta(p, encamina, llavor = 0) {
+    const [kMin, kMax] = p.km, obj = ((kMin + kMax) / 2) * 1000;
+    const circuit = !p.arribada, fi = p.arribada || p.sortida;
+    const seq = [p.sortida, ...p.pas, fi];
+    const cands = [];
+    const prova = async (punts, mogut = 0, alt = 0) => {
+      const r = await encamina(punts, alt);
+      if (r) cands.push({ r, punts, mogut });
+      return r;
+    };
+    const dins = (c) => c.r.km >= kMin && c.r.km <= kMax;
+    let motiu = null;
+    const base = circuit && !p.pas.length ? null : await prova(seq);
+    if (!base && (p.pas.length || !circuit)) return { propostes: [], motiu: "cap" };
+
+    if (base && base.km > kMax) {
+      // massa llarga: la sortida (i l'arribada) s'acosten als punts de pas pel mateix camí, fins que hi cap
+      const { coords, acc } = base, total = acc[acc.length - 1];
+      const i0 = p.pas.length ? mesAProp(coords, p.pas[0]) : 0;
+      const i1 = p.pas.length ? mesAProp(coords, p.pas[p.pas.length - 1], i0) : 0;
+      const fins = p.pas.length ? acc[i0] : total / 2, des = p.pas.length ? total - acc[i1] : total / 2;
+      const loop = (s) => ({ punts: [s, ...p.pas, s], mogut: dist(p.sortida, s) });
+      const camins = circuit
+        ? [[fins, (x) => loop(puntA(coords, acc, x))], [des, (x) => loop(puntA(coords, acc, total - x))]]
+        : [[Math.max(fins, des), (x) => {
+          const s = puntA(coords, acc, Math.min(x, fins)), f = puntA(coords, acc, total - Math.min(x, des));
+          return { punts: [s, ...p.pas, f], mogut: Math.max(dist(p.sortida, s), dist(fi, f)) };
+        }]];
+      const surt = await Promise.all(camins.map(async ([max, fes]) => {
+        const cap = async (x) => { const c = fes(x); const r = await prova(c.punts, c.mogut); return r && r.km <= kMax; };
+        if (!(await cap(max))) return false;         // ni sortint del primer punt de pas
+        let lo = 0, hi = max;
+        for (let n = 0; n < BISECCIONS; n++) {
+          const mig = (lo + hi) / 2;
+          if (await cap(mig)) hi = mig; else lo = mig;
+        }
+        return true;
+      }));
+      if (!surt.some(Boolean)) motiu = "lluny";
+    } else if (!base || base.km < kMin) {
+      // massa curta, o un circuit sense punts de pas: un punt de pas més, i un segon intent amb el que ha allargat
+      const L = base ? base.km * 1000 : 0;
+      let intents;
+      if (!base) {
+        intents = Array.from({ length: RUMBS }, (_, i) => (x) =>
+          [p.sortida, ...triangle(p.sortida, x, (i * 360) / RUMBS + llavor * 30), p.sortida]);
+      } else {
+        const t = [0.5, 0.3, 0.7][llavor % 3];
+        intents = seq.slice(1).map((b, i) => ({ i, d: dist(seq[i], b) })).sort((a, b) => b.d - a.d).slice(0, TRAMS_ALLARGA)
+          .flatMap(({ i }) => [1, -1].map((costat) => (x) =>
+            [...seq.slice(0, i + 1), desviament(seq[i], seq[i + 1], x, costat, t), ...seq.slice(i + 1)]));
+      }
+      const x0 = (obj - L) / TORTUOSITAT;
+      await Promise.all(intents.map(async (fes) => {
+        const r = await prova(fes(x0));
+        const afegit = r ? r.km * 1000 - L : 0;
+        if (afegit > 0 && (r.km < kMin || r.km > kMax)) await prova(fes((x0 * (obj - L)) / afegit));
+      }));
+    }
+    // poques que valguin: les alternatives de BRouter de la millor
+    const pena = (c) => (c.pena = c.pena != null ? c.pena : penaOberta(c, p));
+    const bones = () => cands.filter(dins).sort((a, b) => pena(a) - pena(b));
+    if (bones().length && bones().length < 3) {
+      const c = bones()[0];
+      await Promise.all([1, 2].map((alt) => prova(c.punts, c.mogut, alt)));
+    }
+    const ordre = (bones().length ? bones() : cands.sort((a, b) => pena(a) - pena(b)));
+    const propostes = [];
+    for (const c of ordre) if (propostes.length < 3 && !propostes.some((x) => mateixa(x.r, c.r))) propostes.push(c);
+    return { propostes, motiu: motiu || (!cands.length ? "cap" : bones().length ? null : "fora") };
+  }
+
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, rangDesnivell, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa, voltes,
     puntesVoltes, corriolsDubtosos, PERFILS_BROUTER, deBrouter, consultaPobles, consultaPoblesOverpass, llegeixPobles,
-    perPobles, viaForaVoltes,
+    perPobles, viaForaVoltes, puntA, mesAProp, desviament, triangle, sessioOberta, penaOberta, rutaOberta,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Motor = api;

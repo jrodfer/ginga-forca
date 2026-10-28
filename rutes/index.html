@@ -81,6 +81,23 @@ p { margin: 0; }
 .btn:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
 .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .tipus-bici { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+/* ruta a mida */
+.tria { display: flex; gap: 8px; }
+.tria .btn { flex: 1; min-width: 0; }
+.camp { display: grid; gap: 6px; font-weight: 700; font-size: .92rem; }
+.rang { display: flex; align-items: center; gap: 6px; }
+.rang input { width: 100%; min-width: 0; font: 700 1rem var(--display); padding: 10px; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); }
+ol.punts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ol.punts li { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; font-size: .92rem; }
+ol.punts .nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ol.punts select { font: 700 .85rem var(--display); padding: 6px; border-radius: 10px; border: 1.5px solid var(--line);
+  background: var(--bg); color: var(--fg); }
+ol.punts .treu { all: unset; cursor: pointer; padding: 4px 8px; font-weight: 900; color: var(--muted); }
+.marca-punt { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 900 .8rem/1 var(--display);
+  color: #fff; background: var(--accent); border: 2px solid #fff; box-shadow: 0 0 0 1.5px rgba(0,0,0,.3); }
+.marca-punt.sortida { background: #00996B; }
+.marca-punt.arribada { background: #10231D; }
 
 form.cerca { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 input[type=search] { font: 600 1rem var(--display); padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line);
@@ -146,6 +163,15 @@ details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
     <p class="avis" id="avis" hidden></p>
   </section>
 
+  <section class="card" id="oberta" hidden>
+    <div class="tria" id="o-esport" role="radiogroup"></div>
+    <div class="tria" id="o-terreny" role="radiogroup"></div>
+    <div class="fila">
+      <div class="camp"><span id="o-t-km"></span><span class="rang"><input type="number" id="o-km0" inputmode="decimal" min="1" max="200" step="0.5">–<input type="number" id="o-km1" inputmode="decimal" min="1" max="200" step="0.5"></span></div>
+      <div class="camp"><span id="o-t-d"></span><span class="rang"><input type="number" id="o-d0" inputmode="numeric" min="0" step="10">–<input type="number" id="o-d1" inputmode="numeric" min="0" step="10"></span></div>
+    </div>
+  </section>
+
   <section class="card" id="sortida" hidden>
     <h2 id="t-sortida"></h2>
     <form class="cerca" id="cerca">
@@ -154,8 +180,10 @@ details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
     </form>
     <ul class="llocs" id="llocs" hidden></ul>
     <button class="btn sec petit" type="button" id="b-aqui"></button>
+    <div class="tria" id="o-posa" role="radiogroup" hidden></div>
     <div id="mapa" role="application"></div>
     <p class="muted" id="ajuda-mapa"></p>
+    <ol class="punts" id="o-punts" hidden></ol>
     <div class="tipus-bici" id="tipus-bici" role="radiogroup" hidden></div>
     <button class="btn" type="button" id="b-busca" disabled></button>
   </section>
@@ -197,6 +225,8 @@ const TESSELES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATRIBUCIO = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · ' +
   '<a href="https://openrouteservice.org/">openrouteservice</a> · <a href="https://brouter.de/">BRouter</a> · ' +
   '<a href="https://www.openstreetmap.org/fixthemap">Informa d\'un error</a>';
+// les rutes fetes i la ruta a mida: només BRouter
+const ATRIBUCIO_BROUTER = ATRIBUCIO.replace('<a href="https://openrouteservice.org/">openrouteservice</a> · ', "");
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 // Els servidors públics d'Overpass sovint van saturats (504): es proven per ordre, cadascun amb un temps màxim.
 const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
@@ -312,6 +342,20 @@ const T = {
     final: "Final del recorregut", enM: "D'aquí a {m} metres, ", senseGps: "Aquest mòbil no deixa saber la posició. Pots seguir-la amb el rellotge.",
     esperantGps: "Buscant el GPS…",
     gpsDenegat: "Cal que deixis que la pàgina sàpiga on ets per seguir la ruta. No es guarda enlloc.",
+    aMida: "Ruta a mida", oEsport: { run: "Córrer", ride: "Bici" }, oTerreny: { camins: "Camins", asfalt: "Asfalt" },
+    oKm: "Distància (km)", oD: "Desnivell (m D+)", oDe: "de", oA: "a", terreny: "Terreny",
+    oPerOn: "Per on?", onSoc: "On sóc", treu: "Treu-lo",
+    oAjuda: "Toca el mapa per posar-hi la sortida, els punts de pas (en ordre) i l'arribada; sense arribada, torna a la sortida. Els pots moure arrossegant-los.",
+    rols: { sortida: "Sortida", pas: "Punt de pas", arribada: "Arribada" }, lletres: { sortida: "S", arribada: "A" },
+    oFalta: "Posa la sortida: «Surto d'on sóc ara», cerca un lloc o toca el mapa.",
+    oKmMal: "Posa de quants a quants km (fins a 200).",
+    oMogut: "Sortida a {d} d'on volies", oMogutAB: "Sortida i arribada a {d} d'on volies, com a molt",
+    oMogutNota: "Amb aquests km i aquests punts de pas, d'on volies no surt: la sortida és el punt més a prop d'on sí que surt.",
+    oLluny: "Els punts de pas ja queden massa lluny entre ells per a {k} km: aquesta és la més curta que hi passa.",
+    oFora: "Cap no queda entre {a} i {b} km: aquestes són les que més s'hi acosten.",
+    oCap: "No he pogut fer cap ruta per aquí. Mou una mica els punts (que siguin en un camí o un carrer).",
+    oError: "El servei de rutes (BRouter) no respon ara mateix. Torna-ho a provar d'aquí a una estona.",
+    oDFora: "fora del desnivell que volies",
   },
   en: {
     dies: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
@@ -389,13 +433,28 @@ const T = {
     final: "End of the route", enM: "In {m} metres, ", senseGps: "This phone won't share its position. You can follow it on your watch.",
     esperantGps: "Finding GPS…",
     gpsDenegat: "Let the page know where you are to follow the route. It isn't stored anywhere.",
+    aMida: "Custom route", oEsport: { run: "Run", ride: "Ride" }, oTerreny: { camins: "Trails", asfalt: "Roads" },
+    oKm: "Distance (km)", oD: "Climbing (m)", oDe: "from", oA: "to", terreny: "Terrain",
+    oPerOn: "Which way?", onSoc: "Where I am", treu: "Remove it",
+    oAjuda: "Tap the map to set the start, the points to pass (in order) and the finish; without a finish, it goes back to the start. You can drag them.",
+    rols: { sortida: "Start", pas: "Via point", arribada: "Finish" }, lletres: { sortida: "S", arribada: "F" },
+    oFalta: "Set the start: «Start from where I am», search for a place or tap the map.",
+    oKmMal: "Set the distance: from how many to how many km (up to 200).",
+    oMogut: "Start {d} from where you wanted", oMogutAB: "Start and finish at most {d} from where you wanted",
+    oMogutNota: "With this distance and these via points it can't start where you wanted: the start is the closest point where it can.",
+    oLluny: "The via points are already too far apart for {k} km: this is the shortest route through them.",
+    oFora: "None is between {a} and {b} km: these are the closest.",
+    oCap: "I couldn't make any route here. Move the points a little (onto a path or a street).",
+    oError: "The routing service (BRouter) isn't responding right now. Please try again in a while.",
+    oDFora: "outside the climbing you wanted",
   },
 };
 
 // ---------- estat ----------
 const $ = (id) => document.getElementById(id);
 const lectura = Motor.llegeixHash(location.hash);
-const S = lectura && lectura.sessio;
+// sense res darrere del #, la ruta a mida (com amb l'enllaç personal de coach/ruta_oberta.py, que porta x)
+const S = lectura ? lectura.sessio : location.hash.length > 1 ? null : { x: 1 };
 const L = S && T[S.l] ? S.l : (navigator.language || "ca").startsWith("en") ? "en" : "ca";
 const t = T[L];
 document.documentElement.lang = L;
@@ -440,20 +499,20 @@ function pintaSessio() {
 
 // ---------- el punt de sortida ----------
 function iniciaMapa() {
-  $("t-sortida").textContent = t.sortida;
+  $("t-sortida").textContent = S.x ? t.oPerOn : t.sortida;
   $("q").placeholder = t.placeholder;
   $("b-cerca").textContent = t.cerca;
   $("b-aqui").textContent = t.aqui;
-  $("ajuda-mapa").textContent = t.ajuda;
+  $("ajuda-mapa").textContent = S.x ? t.oAjuda : t.ajuda;
   $("b-busca").textContent = S.p === "pista" ? t.buscaPistes : t.busca;
   $("sortida").hidden = false;
   pintaTipusBici();
 
   const darrer = recupera("ginga-rutes-sortida");
   mapa = L_.map("mapa", { zoomControl: true }).setView(darrer ? [darrer[1], darrer[0]] : [41.6, 2.2], darrer ? 14 : 8);
-  L_.tileLayer(TESSELES, { maxZoom: 19, attribution: ATRIBUCIO }).addTo(mapa);
-  if (darrer) posaSortida(darrer, false);
-  mapa.on("click", (e) => posaSortida([e.latlng.lng, e.latlng.lat]));
+  L_.tileLayer(TESSELES, { maxZoom: 19, attribution: S.x ? ATRIBUCIO_BROUTER : ATRIBUCIO }).addTo(mapa);
+  if (darrer && !S.x) posaSortida(darrer, false);
+  mapa.on("click", (e) => (S.x ? afegeixPunt : posaSortida)([e.latlng.lng, e.latlng.lat]));
 
   $("cerca").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -486,12 +545,15 @@ function iniciaMapa() {
   $("b-aqui").addEventListener("click", () => {
     if (!navigator.geolocation) return error(t.senseGps);
     navigator.geolocation.getCurrentPosition(
-      (p) => { posaSortida([p.coords.longitude, p.coords.latitude]); mapa.setView([p.coords.latitude, p.coords.longitude], 15); },
+      (p) => {
+        const aqui = [p.coords.longitude, p.coords.latitude];
+        S.x ? afegeixPunt(aqui, "sortida", t.onSoc) : posaSortida(aqui);
+        mapa.setView([p.coords.latitude, p.coords.longitude], 15); },
       () => error(t.gpsDenegat), { enableHighAccuracy: true, timeout: 15000 });
   });
 
   $("b-busca").addEventListener("click", () => {
-    S.p === "pista" ? buscaPistes() : buscaCircuits(S);
+    S.x ? buscaOberta() : S.p === "pista" ? buscaPistes() : buscaCircuits(S);
   });
 }
 
@@ -523,20 +585,22 @@ function triaBici(o) {
   if (o === S.o) return;
   S.o = o;
   pintaTipusBici();
-  // les propostes eren d'un altre tipus de bici: fora, i a tornar a buscar
-  if (propostes.length) {
-    propostes = [];
-    triada = 0;
-    netejaCapes();
-    $("resultats").replaceChildren();
-    $("resultats").hidden = true;
-  }
+  oblidaPropostes();             // eren d'un altre tipus de bici: a tornar a buscar
+}
+
+function oblidaPropostes() {
+  if (!propostes.length) return;
+  propostes = [];
+  triada = 0;
+  netejaCapes();
+  $("resultats").replaceChildren();
+  $("resultats").hidden = true;
 }
 
 function triaLloc(lloc) {
   const p = [Number(lloc.lon), Number(lloc.lat)];
   mapa.setView([p[1], p[0]], 15);
-  posaSortida(p);
+  S.x ? afegeixPunt(p, posa, String(lloc.display_name || "").split(",")[0]) : posaSortida(p);
 }
 
 let marcaSortida;
@@ -559,11 +623,176 @@ function mostraRutaFixa() {
   for (const id of ["t-sortida", "cerca", "b-aqui", "ajuda-mapa", "b-busca"]) $(id).hidden = true;
   $("sortida").hidden = false;
   mapa = L_.map("mapa", { zoomControl: true }).setView([41.6, 2.2], 8);
-  // la ruta l'ha calculat BRouter, no openrouteservice
-  L_.tileLayer(TESSELES, { maxZoom: 19, attribution: ATRIBUCIO.replace(
-    '<a href="https://openrouteservice.org/">openrouteservice</a> · ', "") }).addTo(mapa);
+  L_.tileLayer(TESSELES, { maxZoom: 19, attribution: ATRIBUCIO_BROUTER }).addTo(mapa);   // la ruta és de BRouter
   propostes = [{ r: Motor.rutaFixa(S) }];
   pintaPropostes(S);
+}
+
+// ---------- ruta a mida ----------
+// La pàgina sense sessió (rutes/ sola, o l'enllaç personal de coach/ruta_oberta.py, perquè Garmin sigui de l'atleta):
+// l'esport, el terreny, els km i el desnivell (de-a), i la sortida, els punts de pas i l'arribada al mapa. BRouter la
+// calcula des d'aquí (Motor.rutaOberta, sense proxy ni quota): a peu, amb el nostre perfil (correr.brf, també per
+// asfalt); en bici, amb els seus. Es recorda en aquest navegador el que es tria (no els punts).
+const OBERTA = "ginga-rutes-oberta";
+const MOGUT_M = 150;            // m: més a prop, és la sortida que volia
+const oberta = { s: "run", run: "camins", ride: "cycling-road", km: [8, 10], d: [null, null], ...(recupera(OBERTA) || {}) };
+let punts = [];                 // [{p: [lon, lat], rol: "sortida" | "pas" | "arribada", nom, marca}]
+let posa = "sortida";           // què posa un toc al mapa
+let llavorOberta = 0;
+let obertaAB = false;           // la de les propostes d'ara acaba en un altre lloc
+const distancia = (m) => m < 1000 ? `${Math.round(m / 10) * 10} m` : `${fmt(m / 1000)} km`;
+
+function botons(caixa, opcions, actiu, tria) {
+  caixa.replaceChildren(...opcions.map(([v, text]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn petit" + (v === actiu ? "" : " sec");
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(v === actiu));
+    b.textContent = text;
+    b.addEventListener("click", () => tria(v));
+    return b;
+  }));
+}
+
+function pintaOberta() {
+  const canvia = (camp) => (v) => { oberta[camp] = v; guarda(OBERTA, oberta); oblidaPropostes(); pintaOberta(); };
+  botons($("o-esport"), Object.entries(t.oEsport), oberta.s, canvia("s"));
+  botons($("o-terreny"), oberta.s === "run" ? Object.entries(t.oTerreny) : BICIS.map((o) => [o, t.bicis[o]]),
+    oberta[oberta.s], canvia(oberta.s));
+  $("o-terreny").setAttribute("aria-label", oberta.s === "run" ? t.terreny : t.tipusBici);
+  botons($("o-posa"), Object.entries(t.rols), posa, (v) => { posa = v; pintaOberta(); });
+}
+
+function iniciaOberta() {
+  $("titol").textContent = t.aMida;
+  $("o-t-km").textContent = t.oKm;
+  $("o-t-d").textContent = t.oD;
+  const camps = [["o-km0", "km", 0], ["o-km1", "km", 1], ["o-d0", "d", 0], ["o-d1", "d", 1]];
+  for (const [id, camp, i] of camps) {
+    const input = $(id);
+    input.setAttribute("aria-label", `${camp === "km" ? t.oKm : t.oD}: ${i ? t.oA : t.oDe}`);
+    if (oberta[camp][i] != null) input.value = oberta[camp][i];
+    input.addEventListener("change", () => {
+      const v = parseFloat(input.value);
+      oberta[camp][i] = Number.isFinite(v) && v >= 0 ? v : null;
+      guarda(OBERTA, oberta);
+      oblidaPropostes();
+    });
+  }
+  $("oberta").hidden = false;
+  pintaOberta();
+  iniciaMapa();
+  $("o-posa").hidden = false;
+  pintaPunts();
+}
+
+const lletra = (x) => t.lletres[x.rol] || String(punts.filter((y) => y.rol === "pas").indexOf(x) + 1);
+const iconaPunt = (x) => L_.divIcon({ className: "", html: `<div class="marca-punt ${x.rol}">${lletra(x)}</div>`, iconSize: [26, 26] });
+
+/** Un punt nou al mapa. Sortida i arribada, només una de cada (la d'abans passa a ser un punt de pas). */
+function afegeixPunt(p, rol = posa, nom = "") {
+  for (const y of punts) if (rol !== "pas" && y.rol === rol) y.rol = "pas";
+  const x = { p, rol, nom };
+  x.marca = L_.marker([p[1], p[0]], { draggable: true, icon: L_.divIcon({ className: "" }) }).addTo(mapa);
+  x.marca.on("dragend", () => { const ll = x.marca.getLatLng(); x.p = [ll.lng, ll.lat]; x.nom = ""; oblidaPropostes(); pintaPunts(); });
+  punts.push(x);
+  if (rol === "sortida") guarda("ginga-rutes-sortida", p);
+  if (rol !== "pas") posa = "pas";
+  oblidaPropostes();
+  pintaPunts();
+  pintaOberta();
+}
+
+function pintaPunts() {
+  const ordre = { sortida: 0, pas: 1, arribada: 2 };
+  punts.sort((a, b) => ordre[a.rol] - ordre[b.rol]);       // els de pas, en l'ordre que s'han posat
+  $("o-punts").replaceChildren(...punts.map((x) => {
+    x.marca.setIcon(iconaPunt(x));
+    const li = document.createElement("li");
+    const marca = Object.assign(document.createElement("span"), { className: `marca-punt ${x.rol}`, textContent: lletra(x) });
+    const nom = Object.assign(document.createElement("span"), { className: "nom",
+      textContent: x.nom || `${x.p[1].toFixed(5)}, ${x.p[0].toFixed(5)}` });
+    const rol = document.createElement("select");
+    rol.setAttribute("aria-label", nom.textContent);
+    for (const [v, text] of Object.entries(t.rols)) rol.add(new Option(text, v, false, v === x.rol));
+    rol.addEventListener("change", () => {
+      for (const y of punts) if (rol.value !== "pas" && y.rol === rol.value) y.rol = "pas";
+      x.rol = rol.value;
+      oblidaPropostes();
+      pintaPunts();
+    });
+    const treu = Object.assign(document.createElement("button"), { type: "button", className: "treu", textContent: "✕" });
+    treu.setAttribute("aria-label", `${t.treu}: ${nom.textContent}`);
+    treu.addEventListener("click", () => { x.marca.remove(); punts = punts.filter((y) => y !== x); oblidaPropostes(); pintaPunts(); });
+    li.append(marca, nom, rol, treu);
+    return li;
+  }));
+  $("o-punts").hidden = !punts.length;
+  $("b-busca").disabled = !punts.some((x) => x.rol === "sortida");
+}
+
+/** encamina(punts, alternativa) per a Motor.rutaOberta: BRouter, esglaonat i sense repetir cap petició. */
+async function encaminador(p) {
+  let perfil = Motor.PERFILS_BROUTER[p.o], extra = "";
+  if (p.s === "run") {
+    const brf = await (await fetch("correr.brf")).text();
+    const r = await (await fetch(`${BROUTER}/profile`, { method: "POST", headers: { "content-type": "text/plain" }, body: brf })).json();
+    if (!r.profileid || r.error) throw new Error("perfil");
+    perfil = r.profileid;
+    if (p.asfalt) extra = "&profile:asfalt=1";
+  }
+  const fetes = new Map();
+  let proxima = 0;
+  return (via, alt = 0) => {
+    const lonlats = via.map((q) => `${q[0].toFixed(6)},${q[1].toFixed(6)}`).join("|");
+    const clau = `${lonlats}/${alt}`;
+    if (!fetes.has(clau)) fetes.set(clau, (async () => {
+      const ara = Date.now(), quan = Math.max(ara, proxima);
+      proxima = quan + BROUTER_ESGLAO_MS;                  // el servidor de BRouter és de tothom
+      await new Promise((ok) => setTimeout(ok, quan - ara));
+      const r = await fetch(`${BROUTER}?lonlats=${lonlats}&profile=${perfil}&alternativeidx=${alt}&format=geojson&timode=2${extra}`,
+        { signal: AbortSignal.timeout ? AbortSignal.timeout(BROUTER_SEGONS * 1000) : undefined }).catch(() => null);
+      const geo = r && r.ok ? await r.json().catch(() => null) : null;
+      return geo && geo.features && geo.features[0] ? Motor.resumeix(Motor.deBrouter(geo)) : null;
+    })());
+    return fetes.get(clau);
+  };
+}
+
+async function buscaOberta(mes = false) {
+  const res = $("resultats");
+  const diu = (text) => { netejaCapes(); res.replaceChildren(Object.assign(document.createElement("p"), { textContent: text })); res.hidden = false; };
+  const de = (rol) => (punts.find((x) => x.rol === rol) || {}).p || null;
+  const [k0, k1] = oberta.km, [d0, d1] = oberta.d;
+  if (!de("sortida")) return diu(t.oFalta);
+  if (!(k0 > 0 && k1 >= k0 && k1 <= 200)) return diu(t.oKmMal);
+  llavorOberta = mes ? llavorOberta + 1 : 0;
+  const p = {
+    s: oberta.s, o: oberta.s === "run" ? (oberta.run === "asfalt" ? "foot-walking" : "foot-hiking") : oberta.ride,
+    asfalt: oberta.s === "run" && oberta.run === "asfalt", sortida: de("sortida"), arribada: de("arribada"),
+    pas: punts.filter((x) => x.rol === "pas").map((x) => x.p), km: [k0, k1],
+    desnivell: d0 != null || d1 != null ? [d0 || 0, d1 != null ? d1 : 1e9] : null,
+  };
+  Object.assign(S, { s: p.s, o: p.o, k: (k0 + k1) / 2, t: t.aMida });     // per al GPX, Garmin i les propostes
+  const b = $("b-busca");
+  b.disabled = true; b.textContent = t.buscant;
+  try {
+    const { propostes: ps, motiu } = await Motor.rutaOberta(p, await encaminador(p), llavorOberta);
+    if (!ps.length) return diu(t.oCap);
+    obertaAB = Boolean(p.arribada);
+    propostes = ps.map((c) => ({ r: c.r, mogut: c.mogut, ab: obertaAB, d: p.desnivell }));
+    triada = 0;
+    pintaPropostes(S);
+    const notes = [motiu === "lluny" ? omple(t.oLluny, { k: `${fmt(k0)}-${fmt(k1)}` })
+      : motiu === "fora" ? omple(t.oFora, { a: fmt(k0), b: fmt(k1) }) : "", ps[0].mogut > MOGUT_M ? t.oMogutNota : ""];
+    res.prepend(...notes.filter(Boolean).map((x) => Object.assign(document.createElement("p"), { className: "avis", textContent: x })));
+  } catch (e) {
+    console.error(e);
+    diu(t.oError);
+  } finally {
+    b.disabled = false; b.textContent = t.busca;
+  }
 }
 
 // ---------- pistes ----------
@@ -867,6 +1096,8 @@ function pintaPropostes(sessio) {
     const div = document.createElement("div");
     div.className = "proposta" + (n === triada ? " triada" : "");
     const detalls = p.anada ? [t.anada] : [];
+    if (p.mogut > MOGUT_M) detalls.push(omple(p.ab ? t.oMogutAB : t.oMogut, { d: distancia(p.mogut) }));
+    if (p.d && (r.desnivell < p.d[0] || r.desnivell > p.d[1])) detalls.push(t.oDFora);
     if (Motor.esCarretera(sessio)) {
       detalls.push(t.carretera100, t.transit[Motor.grauTransit(r.transit)]);
       if (r.principal > 0.03) detalls.push(omple(t.principal, { x: Math.round(100 * r.principal) }));
@@ -915,7 +1146,7 @@ function pintaPropostes(sessio) {
     mes.className = "btn sec petit";
     mes.type = "button";
     mes.textContent = L === "en" ? "More options" : "Més opcions";
-    mes.addEventListener("click", () => { triada = 0; buscaCircuits(sessio); });
+    mes.addEventListener("click", () => { triada = 0; S.x ? buscaOberta(true) : buscaCircuits(sessio); });
     res.append(mes);
   }
   res.hidden = false;
@@ -944,6 +1175,11 @@ function dibuixa() {
   const p = propostes[triada];
   const linia = L_.polyline(p.r.coords.map((c) => [c[1], c[0]]), { color: getVar("--ruta"), weight: 5 }).addTo(mapa);
   capes.push(linia);
+  if (p.mogut > MOGUT_M) {           // ruta a mida: on és ara la sortida (i l'arribada)
+    for (const c of [p.r.coords[0], p.r.coords[p.r.coords.length - 1]]) {
+      capes.push(L_.circleMarker([c[1], c[0]], { radius: 8, color: "#00996B", weight: 3, fillColor: "#fff", fillOpacity: 1 }).addTo(mapa));
+    }
+  }
   if (p.pujada) {
     capes.push(L_.polyline(p.r.coords.slice(p.pujada.ini, p.pujada.fi + 1).map((c) => [c[1], c[0]]),
       { color: getVar("--pujada"), weight: 8 }).addTo(mapa));
@@ -1210,6 +1446,8 @@ $("b-garmin-fora").textContent = t.garminDesconnecta;
 if (!tornaDeGarmin()) miraGarmin();
 if (!S) {
   error(t.senseSessio);
+} else if (S.x) {
+  iniciaOberta();
 } else if (Motor.caducada(S, new Date().toISOString().slice(0, 10))) {
   pintaSessio();
   error(omple(t.caducat, { d: S.d }));
