@@ -756,8 +756,40 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     if (vista !== vistaActual) window.scrollTo(0, 0);
     vistaActual = vista;
   }
+  // ---- el seguiment de la sessió, sense preguntar res (només amb la clau signada, f): quan s'obre, cada exercici
+  // acabat, el final, i si es tanca a mitges. Els segons actius no compten les aturades de més de 5 minuts. L'hora
+  // d'obrir-la i la de l'última activitat les posa el Worker.
+  var seguiment = { actiu: 0, ultim: 0, enviat: null }, ATURADA_MAX_MS = 5 * 60 * 1000;
+  function compteActiu() {
+    var ara = Date.now();
+    if (seguiment.ultim && ara - seguiment.ultim < ATURADA_MAX_MS) seguiment.actiu += ara - seguiment.ultim;
+    seguiment.ultim = ara;
+  }
+  function enviaSeguiment(f, sempre) {
+    if (!valora || !f || f.vista === "resum" || !seguiment.ultim) return;
+    compteActiu();
+    var fe = {}, fetes = 0, total = 0, acabats = 0;
+    sessio.e.forEach(function (e, i) {
+      var n = G.passos(sessio, e), x = Math.min(f.fetes[i] || 0, n), per = e.c === 1 ? 2 : 1;   // per costat: 2 passos
+      fetes += Math.floor(x / per); total += Math.floor(n / per);
+      if (x >= n) acabats++;
+      if (e.id && x) fe[e.id] = Math.floor(x / per);
+    });
+    var s = { actiu: Math.min(21600, Math.round(seguiment.actiu / 1000)), fetes: fetes, total: total,
+              acabada: f.vista === "final", fe: fe };
+    var clauS = acabats + "|" + s.acabada;
+    if (!sempre && clauS === seguiment.enviat) return;
+    seguiment.enviat = clauS;
+    try {
+      fetch(valora.u, { method: "POST", keepalive: true, headers: { "content-type": "text/plain" },   // sense preflight
+                        body: JSON.stringify({ k: valora.k, g: valora.g, s: s }) }).catch(function () {});
+    } catch (err) {}
+  }
+  document.addEventListener("visibilitychange", function () { if (document.hidden && foto) enviaSeguiment(foto, true); });
+
   function pinta(f) {
     foto = f;
+    if (f.vista !== "resum") { if (!seguiment.ultim) compteActiu(); enviaSeguiment(f); compteActiu(); }
     try { localStorage.setItem(clau, JSON.stringify({ i: f.i, fetes: f.fetes })); } catch (err) {}
     if (f.vista === "resum") { mostra("vista-resum"); compte = null; return pintaLlista(f); }
     if (f.vista === "final") {
