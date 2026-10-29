@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="https://jrodfer.github.io/ginga-forca/icona.svg">
+<link rel="apple-touch-icon" href="https://jrodfer.github.io/ginga-forca/icona-180.png">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#10231D">
+<title>Ginga · La teva setmana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap">
+<style>
+/* L'àrea de l'atleta: el que toca avui, la resta de la setmana i les seves eines, amb els enllaços del correu. Ginga
+   hi desa la setmana cada diumenge (coach/area.py, al Worker de valoracions); la pàgina la llegeix amb l'enllaç
+   personal (#k=<pseudònim>.area&g=<signatura>), que arriba al correu i el navegador recorda: sense usuari ni
+   contrasenya. Qui no el té el demana amb el seu correu. No hi ha cap dada de salut. */
+:root {
+  --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1; --accent: #FF6A2B; --ok: #00996B;
+  --suau: #F4F3EF; --card-glass: rgba(255,255,255,0.72);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F; --accent: #FF6A2B; --ok: #2DBF8C;
+    --suau: #152822; --card-glass: rgba(26,44,38,0.72); color-scheme: dark;
+  }
+}
+/* el logo, igual que al reproductor de força */
+.lockup { display: block; height: auto; width: 120px; }
+.lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lockup .lk-g { stroke: var(--accent); stroke-width: 28; }
+.lockup .lk-t { stroke: #00996B; stroke-width: 24; }
+.lockup .lk-p { fill: #00996B; }
+.lockup .lk-i { fill: var(--accent); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 300 17px/1.55 var(--sans); }
+main { max-width: 640px; margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 40px); }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0 20px; }
+p { margin: 0 0 10px; }
+a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+[hidden] { display: none !important; }
+.muted { color: var(--muted); }
+.petit { font-size: 14px; }
+.card { background: var(--card-glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin: 0 0 16px; }
+.etiqueta { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font: 500 11px/1 var(--sans);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.etiqueta::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
+.etiqueta.verd::before { background: var(--ok); }
+h1 { margin: 0 0 6px; }
+h2 { font-size: 1.6rem; margin: 0 0 4px; }
+.btn { display: block; width: 100%; text-align: center; padding: 15px 18px; margin: 10px 0 0; background: var(--accent);
+  color: #10231D; text-decoration: none; font-size: 13px; border: 0; cursor: pointer; }
+.btn.sec { background: var(--suau); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; }
+.enllac { background: none; border: 0; padding: 6px 0; color: var(--muted); font: 400 13px/1 var(--sans); cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px; }
+
+/* el compte enrere */
+.compte { display: flex; align-items: baseline; gap: 12px; }
+.compte b { font: 400 52px/1 var(--serif); letter-spacing: -0.02em; }
+
+/* les sessions */
+.sessio { padding: 14px 0; border-top: 1px solid var(--line); }
+.sessio:first-of-type { border-top: 0; padding-top: 4px; }
+.sessio .nom { font-weight: 500; }
+.clau { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--accent);
+  color: #10231D; font: 500 10px/1.6 var(--sans); letter-spacing: .08em; text-transform: uppercase; vertical-align: 2px; }
+.nota { white-space: pre-line; font-size: 14px; color: var(--muted); margin-top: 4px; }
+.accio { margin-top: 12px; }
+.accio .titol { font-weight: 500; font-size: 15px; }
+.accio .resum { font-size: 14px; color: var(--muted); }
+
+/* la setmana, dia a dia */
+.dia { border-top: 1px solid var(--line); }
+.dia:first-child { border-top: 0; }
+.dia summary { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 12px 0; cursor: pointer; list-style: none; }
+.dia summary::-webkit-details-marker { display: none; }
+.dia .quan { font-weight: 500; }
+.dia .quan small { display: block; font-weight: 300; color: var(--muted); font-size: 13px; }
+.dia.passat summary { color: var(--muted); }
+.dia.avui .quan { color: var(--accent); }
+.dia .cos { padding: 0 0 14px 124px; }
+@media (max-width: 420px) { .dia .cos { padding-left: 0; } }
+
+/* les eines */
+.eina { display: block; padding: 14px 0; border-top: 1px solid var(--line); text-decoration: none; }
+.eina:first-of-type { border-top: 0; padding-top: 4px; }
+.eina .titol { font-weight: 500; }
+.eina .titol::after { content: " →"; color: var(--accent); }
+
+input[type="email"] { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans); color: var(--fg); background: var(--card);
+  border: 1px solid var(--line); border-radius: 6px; }
+.parany { position: absolute; left: -9999px; }
+</style>
+<link rel="stylesheet" href="../marca.css">
+</head>
+<body>
+<main>
+  <header>
+    <a href="../ginga/" aria-label="Ginga"><svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg></a>
+    <button type="button" class="enllac" id="surt" hidden>Tanca la sessió</button>
+  </header>
+
+  <p id="carregant" class="muted">Carregant la teva setmana…</p>
+
+  <section id="entra" hidden>
+    <div class="card">
+      <p class="etiqueta">La teva setmana a Ginga</p>
+      <h1>Entra amb el teu correu</h1>
+      <p class="muted" id="entra-motiu">Sense contrasenya: et enviem un enllaç al correu amb què entrenes amb Ginga. Obre'l en
+        aquest mòbil i ja no te'l tornarem a demanar.</p>
+      <form id="form-entra" novalidate>
+        <label class="petit muted" for="email">Correu</label>
+        <input type="email" id="email" autocomplete="email" maxlength="120" required>
+        <input type="text" class="parany" name="web" id="web" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button type="submit" class="btn">Envia'm l'enllaç</button>
+      </form>
+      <p id="entra-fet" class="petit" hidden></p>
+    </div>
+    <p class="petit muted">Encara no entrenes amb Ginga? <a href="../solicitud/">Vull entrenar amb Ginga</a></p>
+  </section>
+
+  <section id="area" hidden>
+    <div class="card" id="compte" hidden></div>
+    <div class="card" id="avui"></div>
+    <div class="card" id="setmana"><p class="etiqueta verd">Aquesta setmana</p><div id="dies"></div></div>
+    <div class="card" id="ve" hidden><p class="etiqueta verd">La setmana que ve</p><div id="dies-ve"></div></div>
+    <div class="card" id="eines" hidden><p class="etiqueta">Les teves eines</p><div id="llista-eines"></div></div>
+    <p class="petit muted" id="peu">Es posa al dia sola cada diumenge, amb el correu.</p>
+  </section>
+</main>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var DESAT = "ginga-area", COPIA = "ginga-area-copia";
+  var DIES = ["Diumenge", "Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte"];
+  var MESOS = ["de gener", "de febrer", "de març", "d'abril", "de maig", "de juny", "de juliol", "d'agost", "de setembre",
+               "d'octubre", "de novembre", "de desembre"];
+
+  function llegeix(c) { try { return JSON.parse(localStorage.getItem(c) || "null"); } catch (e) { return null; } }
+  function desa(c, v) { try { localStorage.setItem(c, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  function oblida() { try { localStorage.removeItem(DESAT); localStorage.removeItem(COPIA); } catch (e) {} }
+
+  // L'enllaç del correu (#k=<pseudònim>.area&g=<signatura>): es desa i es treu de la barra d'adreces, perquè la
+  // pàgina quedi sempre a la mateixa adreça. Si el navegador no deixa desar, es queda a l'adreça.
+  var sessio = (function () {
+    var p = new URLSearchParams((location.hash || "").slice(1)), k = p.get("k") || "", g = p.get("g") || "";
+    if (/^[0-9a-f]{16}\.area$/.test(k) && /^[A-Za-z0-9_-]{43}$/.test(g)) {
+      var s = { k: k, g: g };
+      if (desa(DESAT, s)) history.replaceState(null, "", location.pathname + location.search);
+      return s;
+    }
+    var d = llegeix(DESAT);
+    return d && /^[0-9a-f]{16}\.area$/.test(d.k || "") ? d : null;
+  })();
+
+  function iso(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function data(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function mes(s, dies) { var d = data(s); d.setDate(d.getDate() + dies); return iso(d); }
+  function llarg(s) { var d = data(s); return DIES[d.getDay()] + ", " + d.getDate() + " " + MESOS[d.getMonth()]; }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function segur(url) { return typeof url === "string" && /^https:\/\//.test(url) ? url : null; }
+
+  function sessions(dia, cont) {
+    (dia.sessions || []).forEach(function (s) {
+      var c = el("div", "sessio"), nom = el("div", "nom", s.nom);
+      if (s.clau) nom.appendChild(el("span", "clau", "Sessió clau"));
+      c.appendChild(nom);
+      if (s.nota) c.appendChild(el("div", "nota", s.nota));
+      cont.appendChild(c);
+    });
+    (dia.accions || []).forEach(function (a) {
+      var url = segur(a.url);
+      if (!url) return;
+      var c = el("div", "accio");
+      c.appendChild(el("div", "titol", a.titol));
+      if (a.resum) c.appendChild(el("div", "resum", a.resum));
+      var b = el("a", "btn", a.boto || "Obre-la");
+      b.href = url;
+      c.appendChild(b);
+      cont.appendChild(c);
+    });
+  }
+  function resum(dia) {
+    var n = (dia.sessions || []).map(function (s) { return s.nom; });
+    return n.length ? n.join(" · ") : "Descans";
+  }
+
+  function pintaAvui(setmana, avui) {
+    var cont = $("avui");
+    cont.textContent = "";
+    cont.appendChild(el("p", "etiqueta", "Avui"));
+    cont.appendChild(el("h1", null, llarg(avui)));
+    var dia = setmana && setmana.dies.filter(function (d) { return d.data === avui; })[0];
+    if (dia && ((dia.sessions || []).length || (dia.accions || []).length)) return sessions(dia, cont);
+    cont.appendChild(el("p", "muted", "Avui no tens cap sessió: descansa, que també és entrenar."));
+    var seguent = setmana && setmana.dies.filter(function (d) { return d.data > avui && (d.sessions || []).length; })[0];
+    if (seguent) cont.appendChild(el("p", "petit", DIES[data(seguent.data).getDay()] + ": " + resum(seguent)));
+  }
+
+  function pintaDies(setmana, cont, avui) {
+    cont.textContent = "";
+    setmana.dies.forEach(function (d) {
+      var det = el("details", "dia" + (d.data === avui ? " avui" : d.data < avui ? " passat" : ""));
+      var sum = el("summary"), quan = el("span", "quan", DIES[data(d.data).getDay()]);
+      quan.appendChild(el("small", null, data(d.data).getDate() + " " + MESOS[data(d.data).getMonth()]));
+      sum.appendChild(quan);
+      sum.appendChild(el("span", null, resum(d)));
+      det.appendChild(sum);
+      var cos = el("div", "cos");
+      sessions(d, cos);
+      if (cos.childNodes.length) det.appendChild(cos);
+      cont.appendChild(det);
+    });
+  }
+
+  function pinta(doc) {
+    var avui = iso(new Date()), setmanes = (doc && doc.setmanes) || [];
+    var actual = setmanes.filter(function (s) { return s.inici <= avui && avui < mes(s.inici, 7); })[0];
+    var ve = setmanes.filter(function (s) { return s.inici > avui; })[0];
+    $("carregant").hidden = true; $("entra").hidden = true; $("area").hidden = false; $("surt").hidden = false;
+
+    var cursa = doc && doc.cursa, compte = $("compte");
+    var falten = cursa ? Math.round((data(cursa.data) - data(avui)) / 864e5) : -1;
+    compte.hidden = !(falten >= 0);
+    if (falten >= 0) {
+      compte.textContent = "";
+      var f = el("div", "compte");
+      f.appendChild(el("b", null, falten === 0 ? "Avui" : String(falten)));
+      f.appendChild(el("span", "muted", falten === 0 ? "és el dia: " + cursa.nom : (falten === 1 ? "dia" : "dies") + " per a " + cursa.nom));
+      compte.appendChild(el("p", "etiqueta", "La cursa"));
+      compte.appendChild(f);
+    }
+
+    if (!setmanes.length) {
+      $("avui").textContent = "";
+      $("avui").appendChild(el("p", "etiqueta", "Avui"));
+      $("avui").appendChild(el("h1", null, llarg(avui)));
+      $("avui").appendChild(el("p", "muted", "Encara no hi ha cap setmana. Diumenge, amb el correu, la tindràs aquí."));
+    } else pintaAvui(actual || ve && ve.inici === mes(avui, 1) && ve, avui);   // diumenge al vespre, demà ja és la que ve
+
+    $("setmana").hidden = !actual;
+    if (actual) pintaDies(actual, $("dies"), avui);
+    $("ve").hidden = !ve;
+    if (ve) pintaDies(ve, $("dies-ve"), avui);
+
+    var eines = ((doc && doc.eines) || []).filter(function (e) { return segur(e.url); });
+    $("eines").hidden = !eines.length;
+    $("llista-eines").textContent = "";
+    eines.forEach(function (e) {
+      var a = el("a", "eina");
+      a.href = e.url;
+      a.appendChild(el("div", "titol", e.titol));
+      if (e.text) a.appendChild(el("div", "petit muted", e.text));
+      $("llista-eines").appendChild(a);
+    });
+    if (setmanes.length && !actual && !ve)
+      $("peu").textContent = "Aquesta setmana encara no hi és: arriba diumenge, amb el correu.";
+  }
+
+  function entra(motiu) {
+    $("carregant").hidden = true; $("area").hidden = true; $("surt").hidden = true; $("entra").hidden = false;
+    if (motiu) $("entra-motiu").textContent = motiu;
+  }
+
+  // ---- el Worker (../config.json diu on és, com a la pàgina d'apnea) ------------------------------------------------
+  var worker = null, carregada = 0, darrer = null;
+  function config() {
+    if (worker) return Promise.resolve(worker);
+    return fetch("../config.json", { cache: "no-store" }).then(function (r) { return r.json(); })
+      .then(function (c) { worker = c && c.worker; if (!worker) throw new Error("worker"); return worker; });
+  }
+  function carrega() {
+    if (!sessio) return entra();
+    var copia = llegeix(COPIA);
+    if (copia && !darrer) { darrer = copia; pinta(copia); }            // la d'abans, mentre arriba la nova
+    config().then(function (w) {
+      return fetch(w + "/area?k=" + encodeURIComponent(sessio.k) + "&g=" + encodeURIComponent(sessio.g), { cache: "no-store" });
+    }).then(function (r) {
+      if (r.status === 403 || r.status === 400) { oblida(); sessio = null; throw new Error("enllac"); }
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }).then(function (doc) {
+      carregada = Date.now(); darrer = doc; desa(COPIA, doc); pinta(doc);
+    }).catch(function (e) {
+      if (!sessio) return entra("Aquest enllaç ja no val. Posa el teu correu i te n'enviem un de nou.");
+      if (!darrer) { $("carregant").textContent = "No s'ha pogut carregar. Mira la connexió i torna-ho a provar."; }
+      else $("peu").textContent = "Sense connexió: és el que hi havia l'últim cop.";
+    });
+  }
+
+  // Quan es torna a la pàgina: si ha canviat el dia, el que toca avui; si fa més d'una hora, el que hi ha al Worker.
+  var dia = iso(new Date());
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible" || !sessio) return;
+    if (Date.now() - carregada > 3600e3) carrega();
+    else if (iso(new Date()) !== dia && darrer) pinta(darrer);
+    dia = iso(new Date());
+  });
+
+  $("surt").addEventListener("click", function () {
+    oblida(); sessio = null; darrer = null;
+    entra("Sessió tancada en aquest mòbil. Per tornar a entrar, posa el teu correu.");
+  });
+
+  $("form-entra").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var email = $("email").value.trim(), fet = $("entra-fet");
+    fet.hidden = false;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { fet.textContent = "Aquest correu no sembla bé."; return; }
+    fet.textContent = "Enviant…";
+    config().then(function (w) {
+      return fetch(w + "/area/enllac", { method: "POST", headers: { "content-type": "application/json" },
+                                         body: JSON.stringify({ email: email, web: $("web").value }) });
+    }).then(function (r) {
+      if (r.status === 429) throw new Error("massa");
+      if (!r.ok) throw new Error(r.status);
+      fet.textContent = "Fet. Si és el correu amb què entrenes amb Ginga, d'aquí a un parell de minuts hi tindràs " +
+        "l'enllaç. Obre'l en aquest mòbil.";
+    }).catch(function (e) {
+      fet.textContent = e.message === "massa" ? "Ja te l'hem enviat avui: mira el correu (i el correu brossa)."
+        : "No s'ha pogut enviar. Mira la connexió i torna-ho a provar.";
+    });
+  });
+
+  carrega();
+})();
+</script>
+</body>
+</html>
