@@ -119,6 +119,17 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .lloc .tria button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .valora label { display: flex; gap: 10px; align-items: center; font-weight: 600; padding: 4px 0; }
 .valora input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--ok); }
+/* com ha anat cada exercici (en acabar-lo): les repeticions que quedaven, el pes i si ha fet mal */
+.valex { display: grid; gap: 8px; text-align: left; border-top: 1px solid var(--line); padding-top: 10px; }
+.valex .tria4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.valex .tria4 button { padding: 12px 4px; font-size: .9rem; }
+.valex .tria4 button[aria-pressed="true"] { background: var(--ok); color: #fff; border-color: var(--ok); }
+.valex label { display: flex; gap: 10px; align-items: center; font-weight: 600; }
+.valex input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--ok); }
+.valex input[type=number] { width: 6em; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--card); color: var(--fg); }
+.valex .fila .btn { padding: 8px 6px; font-size: .78rem; text-transform: none; letter-spacing: 0; }   /* saltar-ho: discret */
+.pes-proposat { margin: 6px 0 0; font-weight: 700; }
 .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .lockup { display: block; height: auto; }
 .lockup .lk-g, .lockup .lk-t { fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -219,6 +230,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     <div style="display:grid;gap:2px">
       <h2 id="ex-nom"></h2>
       <div class="muted" id="ex-det"></div>
+      <p class="pes-proposat" id="ex-pes" hidden></p>
       <p class="compte" id="ex-compte" hidden><b id="ex-compte-t">Compte:</b> <span id="ex-a"></span></p>
       <details class="com" id="ex-com" open hidden><summary id="ex-com-t">Com es fa</summary><p id="ex-i"></p></details>
     </div>
@@ -243,6 +255,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
         <button class="btn sec" type="button" id="mes15">+15 s</button>
         <button class="btn rest" type="button" id="salta">Salta</button>
       </div>
+      <div class="valex" id="valex-descans" hidden></div>
     </div>
 
     <button class="btn" type="button" id="accio">Sèrie feta</button>
@@ -254,6 +267,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     <div class="num">Fet!</div>
     <p id="final-txt" style="margin:0"></p>
     <p class="muted" style="margin:0" id="final-rpe">Quan pugi a intervals.icu, posa-hi l'RPE de la sessió (de l'1 al 10).</p>
+    <div class="valex" id="valex-final" hidden></div>
     <!-- Força 60+: com ha anat la sessió (només si l'enllaç porta la clau signada "f") -->
     <div class="valora" id="valora" hidden>
       <strong>Com t'ha anat?</strong>
@@ -558,6 +572,139 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     if (estat === 0 || aLlocDeParar) { ordreVideo("pauseVideo"); fotograma(true); }
   });
 
+  // ---- Força 60+: com ha anat cada exercici, en acabar-lo (al descans de l'última sèrie; l'últim, al final).
+  // Quantes repeticions quedaven (o segons, als de temps), el pes si en porta, si ha fet mal, i les sèries fetes.
+  // S'envia a cada toc (el Worker ho afegeix al que ja hi havia) i es recorda al mòbil, per no tornar-ho a demanar.
+  // És opcional: «Ara no» la salta aquella vegada, i «No m'ho preguntis més» no la torna a fer (es pot tornar a
+  // activar a la pantalla final). El pes es veu igualment a tot arreu (al costat de l'exercici i a la llista).
+  var valexObert = { "valex-descans": null, "valex-final": null }, valexSaltat = {}, EN = sessio.l === "en";
+  var CLAU_NO_PREGUNTIS = "ginga-valex-no";
+  function noPreguntis() { try { return localStorage.getItem(CLAU_NO_PREGUNTIS) === "1"; } catch (err) { return false; } }
+  function kgText(x) { return (x + "").replace(".", ",") + " kg"; }
+  function pesDe(e) { return e.kg != null ? e.kg : kgDarrer(e); }
+  function textPes(e) {
+    if (e.kg == null) return pesDe(e) ? (EN ? "Weight: " : "Pes: ") + kgText(pesDe(e)) + (EN ? " (last time)" : " (l'última vegada)") : "";
+    if (!e.kg) return EN ? "Weight: none" : "Pes: sense pes";
+    if (e.kv === "puja" && e.ka) return (EN ? "Try " : "Prova ") + kgText(e.kg) +
+      (EN ? " (last time " + kgText(e.ka) + ", and it was easy)" : " (l'última vegada, " + kgText(e.ka) + ", i et va sobrar)");
+    if (e.kv === "baixa" && e.ka) return (EN ? "Go down to " : "Baixa a ") + kgText(e.kg) +
+      (EN ? " (last time " + kgText(e.ka) + ", too hard)" : " (l'última vegada, " + kgText(e.ka) + ", i et va costar massa)");
+    return (EN ? "Weight: " : "Pes: ") + kgText(e.kg) + (EN ? " (like last time)" : " (com l'última vegada)");
+  }
+  function llegeixKg(input) {
+    var v = Math.round(parseFloat(String(input.value).replace(",", ".")) * 4) / 4;
+    return v >= 0 && v <= 500 ? v : null;
+  }
+  function clauExercici(e) { return "ginga-valex:" + valora.k + ":" + e.id; }
+  function clauKg(e) { return "ginga-kg:" + (valora ? valora.k.split(".")[0] : "aquest-mobil") + ":" + e.id; }
+  function recorda(e) { try { return JSON.parse(localStorage.getItem(clauExercici(e))) || {}; } catch (err) { return {}; } }
+  function kgDarrer(e) {                                 // l'últim pes que hi ha posat, si el diumenge no n'ha proposat
+    try { var x = localStorage.getItem(clauKg(e)); return x == null ? null : +x; } catch (err) { return null; }
+  }
+  function enviaExercici(e, i, guardat) {
+    try { localStorage.setItem(clauExercici(e), JSON.stringify(guardat)); } catch (err) {}
+    if (guardat.kg != null) try { localStorage.setItem(clauKg(e), guardat.kg); } catch (err) {}
+    var n = G.passos(sessio, e), fetes = foto && foto.fetes ? Math.min(foto.fetes[i], n) : null, x = {};
+    ["r", "kg", "dolor"].forEach(function (c) { if (guardat[c] != null) x[c] = guardat[c]; });
+    if (fetes != null) {                                 // per costat (c 1): dos passos per sèrie
+      x.fetes = e.c === 1 ? Math.floor(fetes / 2) : fetes; x.de = e.c === 1 ? Math.floor(n / 2) : n;
+    }
+    var cos = { k: valora.k, g: valora.g, e: {} }; cos.e[e.id] = x;
+    return fetch(valora.u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cos) });
+  }
+  function tornaAPreguntar(cont) {                       // a la pantalla final, si havia dit «No m'ho preguntis més»
+    cont.hidden = false; cont.textContent = ""; valexObert[cont.id] = null;
+    var b = document.createElement("button"); b.type = "button"; b.className = "btn sec";
+    b.textContent = EN ? "Ask me again how each exercise went" : "Torna'm a preguntar com va cada exercici";
+    b.addEventListener("click", function () {
+      try { localStorage.removeItem(CLAU_NO_PREGUNTIS); } catch (err) {}
+      cont.hidden = true;
+    });
+    cont.appendChild(b);
+  }
+  function preguntaExercici(cont, i) {
+    var e = i >= 0 ? sessio.e[i] : null;
+    if (valora && cont.id === "valex-final" && noPreguntis()) return tornaAPreguntar(cont);
+    if (!valora || !e || !e.va || !e.id || valexSaltat[i] || noPreguntis() ||
+        (cont.id === "valex-final" && recorda(e).r)) {
+      cont.hidden = true; valexObert[cont.id] = null; return;
+    }
+    cont.hidden = false;
+    if (valexObert[cont.id] === i) return;               // ja hi és: no esborrar el que està escrivint
+    valexObert[cont.id] = i;
+    var ja = recorda(e), kgInput = null, sense = null;
+    cont.textContent = "";
+    var t = document.createElement("strong");
+    t.textContent = e.n + ": " + (e.u === "s" ? (EN ? "how much longer could you have held?" : "quant més hauries aguantat?")
+                                              : (EN ? "how many more could you have done?" : "quantes més n'hauries pogut fer?"));
+    cont.appendChild(t);
+    var tria = document.createElement("div"); tria.className = "tria4"; tria.setAttribute("role", "group");
+    var opcions = e.u === "s" ? (EN ? ["None", "A few s", "10-20 s", "Much more"] : ["Gens", "Uns segons", "10-20 s", "Molt més"])
+                              : (EN ? ["None", "1 or 2", "3 or 4", "5+"] : ["Cap", "1 o 2", "3 o 4", "5 o més"]);
+    ["0", "1", "3", "5"].forEach(function (r, k) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "btn sec"; b.textContent = opcions[k];
+      b.setAttribute("data-r", r); b.setAttribute("aria-pressed", ja.r === r ? "true" : "false");
+      b.addEventListener("click", function () {
+        Array.prototype.forEach.call(tria.children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+        desa({ r: r });
+      });
+      tria.appendChild(b);
+    });
+    cont.appendChild(tria);
+    if (e.pe) {
+      var lp = document.createElement("label"), kg0 = ja.kg != null ? ja.kg : (e.kg != null ? e.kg : kgDarrer(e));
+      lp.appendChild(document.createTextNode(EN ? "Weight" : "Pes"));
+      kgInput = document.createElement("input"); kgInput.type = "number"; kgInput.min = "0"; kgInput.step = "0.5";
+      kgInput.inputMode = "decimal"; kgInput.setAttribute("aria-label", EN ? "Weight in kg" : "Pes en kg");
+      if (kg0) kgInput.value = kg0;
+      lp.appendChild(kgInput); lp.appendChild(document.createTextNode("kg"));
+      cont.appendChild(lp);
+      kgInput.addEventListener("change", function () {
+        var v = llegeixKg(kgInput);
+        if (v != null) { if (sense) sense.checked = v === 0; desa({ kg: v }); }
+      });
+      if (e.pe === 2) {                                  // també es pot fer sense pes
+        var ls = document.createElement("label");
+        sense = document.createElement("input"); sense.type = "checkbox"; sense.checked = kg0 === 0;
+        ls.appendChild(sense); ls.appendChild(document.createTextNode(EN ? "Without weight" : "Sense pes"));
+        cont.appendChild(ls);
+        sense.addEventListener("change", function () {
+          if (sense.checked) { kgInput.value = ""; desa({ kg: 0 }); }
+          else { var g = recorda(e); delete g.kg; desa(g, true); }
+        });
+      }
+    }
+    var lm = document.createElement("label"), mal = document.createElement("input");
+    mal.type = "checkbox"; mal.checked = !!ja.dolor;
+    lm.appendChild(mal); lm.appendChild(document.createTextNode(EN ? "It hurt" : "M'ha fet mal"));
+    cont.appendChild(lm);
+    mal.addEventListener("change", function () { desa({ dolor: mal.checked }); });
+    var salta = document.createElement("div"); salta.className = "fila";
+    [[EN ? "Not now" : "Ara no", function () { valexSaltat[i] = true; }],
+     [EN ? "Don't ask me again" : "No m'ho preguntis més", function () {
+       try { localStorage.setItem(CLAU_NO_PREGUNTIS, "1"); } catch (err) {}
+     }]].forEach(function (x) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "btn sec"; b.textContent = x[0];
+      b.addEventListener("click", function () { x[1](); cont.hidden = true; valexObert[cont.id] = null; });
+      salta.appendChild(b);
+    });
+    cont.appendChild(salta);
+    var estat = document.createElement("p");
+    estat.className = "muted"; estat.style.margin = "0"; estat.setAttribute("aria-live", "polite");
+    cont.appendChild(estat);
+    function desa(dades, substitueix) {
+      var guardat = substitueix ? dades : Object.assign(recorda(e), dades);
+      if (kgInput && guardat.kg == null && !(sense && sense.checked) && llegeixKg(kgInput) != null && kgInput.value !== "")
+        guardat.kg = llegeixKg(kgInput);                 // el pes que ja hi ha escrit (el de l'altra vegada), també
+      enviaExercici(e, i, guardat).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        estat.textContent = (EN ? "Saved." : "Desat.") + (mal.checked ? (EN ? " Your coach will see it." : " L'entrenador ho veurà.") : "");
+      }).catch(function () {
+        estat.textContent = EN ? "Not sent: try again in a moment." : "No s'ha pogut enviar: torna-ho a provar d'aquí a una estona.";
+      });
+    }
+  }
+
   // ---- Força 60+: valoració del final de la sessió. L'enllaç porta f = { u: Worker, k: clau, g: signatura }.
   var valora = sessio.f && sessio.f.u && sessio.f.k && sessio.f.g ? sessio.f : null, triat = null;
   var clauValora = valora ? "ginga-valorat:" + valora.k : null;
@@ -615,6 +762,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
       if (musica && !musicaAcabada) { musicaAcabada = true; musica.atura(12); }
       $("final-txt").textContent = suma(f.fetes) + " sèries de " + sessio.e.length + " exercicis.";
       preparaValoracio();
+      preguntaExercici($("valex-final"), f.i);            // l'últim exercici no té descans: es pregunta aquí
       try { if (bloqueig && !remot) bloqueig.release(); } catch (err) {}
       return;
     }
@@ -625,6 +773,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     $("barra").style.width = Math.round(suma(f.fetes) / totalSeries * 100) + "%";
     $("ex-nom").textContent = e.n;
     $("ex-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).map(majuscula).join(" · ");
+    $("ex-pes").textContent = e.pe ? textPes(e) : ""; $("ex-pes").hidden = !$("ex-pes").textContent;
     $("ex-compte").hidden = !e.a; $("ex-a").textContent = e.a || "";
     $("ex-compte-t").textContent = sessio.l === "en" ? "Watch out:" : "Compte:";
     $("ex-com").hidden = !e.i; $("ex-i").textContent = e.i || "";
@@ -646,6 +795,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     }
     if (feina) $("feina-txt").textContent = f.text || "Ara";
     if (descans) { $("seguent").textContent = f.seguent || ""; $("descans-txt").textContent = f.text || "Descans"; }
+    preguntaExercici($("valex-descans"), descans && f.fetes[i] >= n ? i : -1);
     $("accio").hidden = descans && !sessio.g;
     $("accio").textContent = sessio.g && !serie ? (f.pausat ? "Continua" : "Pausa")
       : feina ? "Acaba ara" : (e.u === "s" ? "Comença el temps" : "Sèrie feta");
@@ -672,7 +822,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
       var mig = document.createElement("div"); mig.style.minWidth = "0";
       var nom = document.createElement("div"); nom.className = "nom"; nom.textContent = e.n;
       var det = document.createElement("div"); det.className = "det";
-      det.textContent = [e.x, e.d ? "descans " + mmss(e.d) : ""].filter(Boolean).join(" · ");
+      det.textContent = [e.pe && pesDe(e) ? kgText(pesDe(e)) : "", e.x, e.d ? "descans " + mmss(e.d) : ""]
+        .filter(Boolean).join(" · ");                    // el pes, per consultar-lo d'un cop d'ull
       mig.appendChild(nom); if (det.textContent) mig.appendChild(det);
       var p = document.createElement("span"); p.className = "pauta"; p.textContent = pauta(e);
       li.appendChild(idx); li.appendChild(mig); li.appendChild(p);
