@@ -25,20 +25,20 @@
   --ok: #00996B;          /* Tropical green */
   --rest: #D9541C;        /* el descans: taronja fosc, que es llegeix sobre blanc càlid */
   --rest-soft: #FFE4D3;
-  --card-glass: rgba(255,255,255,0.88);
+  --card-glass: rgba(255,255,255,0.72);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
     --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31;
-    --card-glass: rgba(26,44,38,0.88); color-scheme: dark;
+    --card-glass: rgba(26,44,38,0.72); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31;
-  --card-glass: rgba(26,44,38,0.88); color-scheme: dark;
+  --card-glass: rgba(26,44,38,0.72); color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
