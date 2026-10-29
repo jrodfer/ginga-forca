@@ -80,6 +80,9 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
 .estat .instr { margin: 0; color: var(--muted); font: 500 1.25vw/1.45 var(--body);
   display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .estat .instr:empty { display: none; }
+.estat .compte { margin: 0; padding: .6vw 1vw; border-left: .4vw solid var(--accent); color: var(--fg);
+  font: 600 1.5vw/1.4 var(--body); }
+.estat .compte:empty { display: none; }
 .caixa { background: var(--panel); border-radius: 1.4vw; padding: 2vw; display: grid; gap: .6vw; justify-items: center;
   text-align: center; border-top: .55vw solid var(--accent); }
 .caixa .eyebrow { color: var(--accent); font-weight: 900; }
@@ -136,7 +139,7 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
     <div class="video" id="e-video"><div id="yt"></div><img class="foto" id="e-foto" alt="" hidden><p class="avis-video" id="e-avis-video" hidden></p></div>
     <div class="estat">
       <div style="display:grid;gap:.6vw"><h2 id="e-nom"></h2><div class="det" id="e-det"></div>
-        <p class="instr" id="e-instr"></p></div>
+        <p class="compte" id="e-compte"></p><p class="instr" id="e-instr"></p></div>
       <div class="caixa" id="e-caixa">
         <div class="eyebrow" id="e-etiqueta"></div>
         <div class="gran" id="e-gran"></div>
@@ -319,6 +322,7 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
     $("e-comptador").textContent = "Exercici " + (m.i + 1) + " de " + ses.e.length;
     $("e-nom").textContent = e.n;
     $("e-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
+    $("e-compte").textContent = e.a ? (ses.l === "en" ? "Watch out: " : "Compte: ") + e.a : "";
     $("e-instr").textContent = e.i || "";
     paraA = !guiada && (e.p > 0 || e.ps > 0) ? { p: e.p > 0 ? e.p : 3, ps: e.ps > 0 ? e.ps : 0 } : null;
     posaVideo(e.v || "");

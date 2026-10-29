@@ -153,6 +153,10 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .com summary { cursor: pointer; font-weight: 800; color: var(--fg); }
 .com summary::marker { color: var(--accent); }
 .com p { margin: 6px 0 0; color: var(--muted); font-size: .95rem; line-height: 1.5; }
+/* l'error que més es fa i com evitar-lo (e.a): a la vista mentre es fa la sèrie */
+.compte { margin: 8px 0 2px; padding: 8px 12px; border-left: 4px solid var(--accent); background: var(--card);
+  border-radius: 0 8px 8px 0; color: var(--fg); font-size: .95rem; line-height: 1.45; }
+.compte b { font-weight: 800; }
 @media (prefers-reduced-motion: reduce) { .progres > div { transition: none; } }
 </style>
 </head>
@@ -215,6 +219,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     <div style="display:grid;gap:2px">
       <h2 id="ex-nom"></h2>
       <div class="muted" id="ex-det"></div>
+      <p class="compte" id="ex-compte" hidden><b id="ex-compte-t">Compte:</b> <span id="ex-a"></span></p>
       <details class="com" id="ex-com" open hidden><summary id="ex-com-t">Com es fa</summary><p id="ex-i"></p></details>
     </div>
 
@@ -619,6 +624,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     $("barra").style.width = Math.round(suma(f.fetes) / totalSeries * 100) + "%";
     $("ex-nom").textContent = e.n;
     $("ex-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
+    $("ex-compte").hidden = !e.a; $("ex-a").textContent = e.a || "";
+    $("ex-compte-t").textContent = sessio.l === "en" ? "Watch out:" : "Compte:";
     $("ex-com").hidden = !e.i; $("ex-i").textContent = e.i || "";
     $("ex-com-t").textContent = sessio.l === "en" ? "How to do it" : "Com es fa";
     $("enrere").disabled = i === 0;
