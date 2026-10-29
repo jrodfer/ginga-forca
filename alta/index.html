@@ -324,23 +324,6 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
       ["fitball", "Fitball"]], "Si vas al gimnàs, el que tens per als dies que la facis a casa.");
     obligatoris.push("material");
   }
-  if (demana.estiraments) {
-    opcions("estiraments", "Vols fer també estiraments? Són sessions curtes a part, amb vídeos.", [["si", "Sí"], ["no", "No, gràcies"]], false,
-      "No formen part del pla ni hi sumen: no s'ha vist que facin anar més ràpid, no eviten lesions ni treuen les agulletes. Serveixen per " +
-      "guanyar mobilitat (moure't amb més recorregut). Tria els dies que vulguis: com més sovint, més mobilitat (per al màxim, " +
-      "cada dia). Després d'entrenar o al vespre, mai just abans d'una sessió dura o d'una cursa. Uns 10-15 minuts, fins a " +
-      "notar tensió i sense dolor.");
-    caselles("estiraments_dies", "Quins dies?", ["dl", "dt", "dc", "dj", "dv", "ds", "dg"].map(function (d) { return [d, d.charAt(0).toUpperCase() + d.slice(1)]; }))
-      .querySelector(".tria").className = "tria dies";
-    caselles("rigidesa", "On et notes més rígid/a o carregat/da? (opcional)", [["coll_espatlles", "Coll i espatlles"],
-      ["esquena", "Esquena"], ["malucs", "Malucs"], ["cuixes_darrere", "Darrere de les cuixes"], ["cuixes_davant", "Davant de les cuixes"],
-      ["bessons", "Bessons i turmells"]]);
-    obligatoris.push("estiraments");
-    opcions("ioga", "I ioga, en vols fer? Una sessió a terra, amb vídeos, quan vulguis.", [["si", "Sí"], ["no", "No, gràcies"]], false,
-      "És fora del pla: no suma per al teu objectiu ni per a la força, es fa només si et ve de gust. Uns 15-20 minuts, " +
-      "no just abans d'una sessió dura o d'una cursa. Millora la flexibilitat i l'equilibri; que millori el rendiment, " +
-      "els pocs estudis amb esportistes no ho demostren.");
-  }
   if (demana.edat) {
     opcions("edat", "Quants anys tens?", [["menor", "Menys de 18"], ["18-39", "18 a 39"], ["40-49", "40 a 49"], ["50-59", "50 a 59"], ["60+", "60 o més"]]);
     obligatoris.push("edat");
@@ -370,9 +353,6 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
   function actualitza() {
     // Les preguntes que depenen d'una resposta surten de seguida (no cal tornar-li a escriure després)
     var mostra = function (id, si) { var q = $("q-" + id); if (q) q.hidden = !si; };
-    mostra("estiraments_dies", valor("estiraments") === "si");
-    mostra("rigidesa", valor("estiraments") === "si");
-    mostra("ioga", ["en_curs", "torno"].indexOf(valor("lesio")) < 0 && valor("edat") !== "60+");   // ho parla l'entrenador
     var les = valor("lesio");
     ["lesio_zona", "lesio_desde", "lesio_professional", "lesio_quan", "lesio_detall"].forEach(function (k) { mostra(k, les && les !== "cap"); });
     ["tornada_setmanes", "alta_lesio"].forEach(function (k) { mostra(k, les === "torno"); });
@@ -420,7 +400,7 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     ev.preventDefault();
     var r = {};
     ["esport", "dies", "temporades", "lesio", "lesio_desde", "lesio_professional", "lesio_quan", "tornada_setmanes",
-     "alta_lesio", "forca", "forca_dies", "material", "estiraments", "ioga", "edat", "sexe", "maternitat", "postpart_setmanes"].forEach(function (k) {
+     "alta_lesio", "forca", "forca_dies", "material", "edat", "sexe", "maternitat", "postpart_setmanes"].forEach(function (k) {
       var q = $("q-" + k); if (q && !q.hidden && valor(k)) r[k] = valor(k);
     });
     if (r.lesio && r.lesio !== "cap" && valor("lesio_zona")) r.lesio_zona = valor("lesio_zona");
@@ -448,16 +428,11 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
       if (Object.keys(dn).length) r.dies_esport_no = dn;
     }
     if ($("q-material_casa") && !$("q-material_casa").hidden && marcats("material_casa").length) r.material_casa = marcats("material_casa");
-    if (r.estiraments === "si") {
-      r.estiraments_dies = marcats("estiraments_dies");
-      if (marcats("rigidesa").length) r.rigidesa = marcats("rigidesa");
-    }
     var ll = {};
     (dades.l || []).forEach(function (c) { var x = $("c-ll-" + c); if (x && !$("q-ll-" + c).hidden && x.value.trim()) ll[c] = x.value.trim(); });
     if (Object.keys(ll).length) r.llindars = ll;
     var falta = obligatoris.filter(function (k) { return k === "volum" ? r.volum === undefined : !r[k]; });
     if (r.maternitat === "postpart" && !r.postpart_setmanes) falta.push("postpart_setmanes");
-    if (r.estiraments === "si" && !r.estiraments_dies.length) falta.push("estiraments_dies");
     if (r.lesio && r.lesio !== "cap") { if (!r.lesio_zona) falta.push("lesio_zona"); if (!r.lesio_desde) falta.push("lesio_desde"); }
     if (r.hores && r.hores_sostre && r.hores_sostre < r.hores) {
       $("error").hidden = false;
