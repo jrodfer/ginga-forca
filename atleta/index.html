@@ -16,7 +16,8 @@
 /* L'àrea de l'atleta: el que toca avui, la resta de la setmana i les seves eines, amb els enllaços del correu. Ginga
    hi desa la setmana cada diumenge (coach/area.py, al Worker de valoracions); la pàgina la llegeix amb l'enllaç
    personal (#k=<pseudònim>.area&g=<signatura>), que arriba al correu i el navegador recorda: sense usuari ni
-   contrasenya. Qui no el té el demana amb el seu correu. No hi ha cap dada de salut. */
+   contrasenya. Qui no el té entra amb el seu correu i un codi de 6 xifres que li arriba al correu, i el navegador
+   també el recorda. No hi ha cap dada de salut. */
 :root {
   --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1; --accent: #FF6A2B; --ok: #00996B;
   --suau: #F4F3EF; --card-glass: rgba(255,255,255,0.72);
@@ -91,8 +92,10 @@ h2 { font-size: 1.6rem; margin: 0 0 4px; }
 .eina .titol { font-weight: 500; }
 .eina .titol::after { content: " →"; color: var(--accent); }
 
-input[type="email"] { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans); color: var(--fg); background: var(--card);
+input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans); color: var(--fg); background: var(--card);
   border: 1px solid var(--line); border-radius: 6px; }
+#codi { font-size: 28px; letter-spacing: .35em; text-align: center; }
+.mes { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; margin-top: 8px; }
 .parany { position: absolute; left: -9999px; }
 </style>
 <link rel="stylesheet" href="../marca.css">
@@ -110,13 +113,21 @@ input[type="email"] { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans)
     <div class="card">
       <p class="etiqueta">La teva setmana a Ginga</p>
       <h1>Entra amb el teu correu</h1>
-      <p class="muted" id="entra-motiu">Sense contrasenya: et enviem un enllaç al correu amb què entrenes amb Ginga. Obre'l en
-        aquest mòbil i ja no te'l tornarem a demanar.</p>
+      <p class="muted" id="entra-motiu">Sense contrasenya: et enviem un codi de 6 xifres al correu amb què entrenes amb
+        Ginga. Un cop dins, aquest mòbil et recordarà i no te'l tornarem a demanar.</p>
       <form id="form-entra" novalidate>
         <label class="petit muted" for="email">Correu</label>
         <input type="email" id="email" autocomplete="email" maxlength="120" required>
         <input type="text" class="parany" name="web" id="web" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <button type="submit" class="btn">Envia'm l'enllaç</button>
+        <button type="submit" class="btn">Envia'm el codi</button>
+      </form>
+      <form id="form-codi" novalidate hidden>
+        <p class="petit" id="codi-on"></p>
+        <label class="petit muted" for="codi">Codi</label>
+        <input type="text" id="codi" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+        <button type="submit" class="btn">Entra</button>
+        <p class="mes"><button type="button" class="enllac" id="un-altre">Torna-me'l a enviar</button>
+          <button type="button" class="enllac" id="canvia">Un altre correu</button></p>
       </form>
       <p id="entra-fet" class="petit" hidden></p>
     </div>
@@ -136,7 +147,7 @@ input[type="email"] { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans)
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var DESAT = "ginga-area", COPIA = "ginga-area-copia";
+  var DESAT = "ginga-area", COPIA = "ginga-area-copia", ESPERA = "ginga-area-codi";
   var DIES = ["Diumenge", "Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte"];
   var MESOS = ["de gener", "de febrer", "de març", "d'abril", "de maig", "de juny", "de juliol", "d'agost", "de setembre",
                "d'octubre", "de novembre", "de desembre"];
@@ -287,7 +298,7 @@ input[type="email"] { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans)
     }).then(function (doc) {
       carregada = Date.now(); darrer = doc; desa(COPIA, doc); pinta(doc);
     }).catch(function (e) {
-      if (!sessio) return entra("Aquest enllaç ja no val. Posa el teu correu i te n'enviem un de nou.");
+      if (!sessio) return entra("Aquest enllaç ja no val. Posa el teu correu i t'enviem un codi per entrar.");
       if (!darrer) { $("carregant").textContent = "No s'ha pogut carregar. Mira la connexió i torna-ho a provar."; }
       else $("peu").textContent = "Sense connexió: és el que hi havia l'últim cop.";
     });
@@ -307,25 +318,88 @@ input[type="email"] { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans)
     entra("Sessió tancada en aquest mòbil. Per tornar a entrar, posa el teu correu.");
   });
 
-  $("form-entra").addEventListener("submit", function (ev) {
-    ev.preventDefault();
-    var email = $("email").value.trim(), fet = $("entra-fet");
-    fet.hidden = false;
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { fet.textContent = "Aquest correu no sembla bé."; return; }
-    fet.textContent = "Enviant…";
-    config().then(function (w) {
-      return fetch(w + "/area/enllac", { method: "POST", headers: { "content-type": "application/json" },
-                                         body: JSON.stringify({ email: email, web: $("web").value }) });
+  // ---- entrar amb un codi: el correu, i després les 6 xifres que hi arriben -----------------------------------------
+  // Mentre s'espera el codi, el correu es recorda 15 minuts (si el mòbil recarrega la pàgina en anar a mirar-lo).
+  function demanaCodi(email) {
+    var fet = $("entra-fet");
+    fet.hidden = false; fet.textContent = "Enviant…";
+    return config().then(function (w) {
+      return fetch(w + "/area/codi", { method: "POST", headers: { "content-type": "application/json" },
+                                       body: JSON.stringify({ email: email, web: $("web").value }) });
     }).then(function (r) {
       if (r.status === 429) throw new Error("massa");
       if (!r.ok) throw new Error(r.status);
-      fet.textContent = "Fet. Si és el correu amb què entrenes amb Ginga, d'aquí a un parell de minuts hi tindràs " +
-        "l'enllaç. Obre'l en aquest mòbil.";
+      desa(ESPERA, { email: email, ts: Date.now() });
+      fet.hidden = true;
+      demanaLesXifres(email);
     }).catch(function (e) {
-      fet.textContent = e.message === "massa" ? "Ja te l'hem enviat avui: mira el correu (i el correu brossa)."
+      fet.textContent = e.message === "massa" ? "Avui ja te n'hem enviat uns quants: mira el correu (i el correu brossa)."
         : "No s'ha pogut enviar. Mira la connexió i torna-ho a provar.";
     });
+  }
+  function demanaLesXifres(email) {
+    $("form-entra").hidden = true; $("form-codi").hidden = false;
+    $("codi-on").textContent = "Si " + email + " és el correu amb què entrenes amb Ginga, d'aquí a un o dos minuts hi " +
+      "tindràs el codi (mira també el correu brossa). Val 15 minuts.";
+    $("codi").value = "";
+    $("codi").focus();
+  }
+  function demanaElCorreu() {
+    try { localStorage.removeItem(ESPERA); } catch (e) {}
+    $("form-codi").hidden = true; $("form-entra").hidden = false; $("entra-fet").hidden = true;
+  }
+
+  $("form-entra").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var email = $("email").value.trim(), fet = $("entra-fet");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { fet.hidden = false; fet.textContent = "Aquest correu no sembla bé."; return; }
+    demanaCodi(email);
   });
+
+  var entrant = false;
+  $("form-codi").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var espera = llegeix(ESPERA), codi = $("codi").value.replace(/\s/g, ""), fet = $("entra-fet");
+    if (entrant) return;
+    if (!espera) return demanaElCorreu();
+    fet.hidden = false;
+    if (!/^\d{6}$/.test(codi)) { fet.textContent = "El codi són 6 xifres."; return; }
+    fet.textContent = "Entrant…"; entrant = true;
+    config().then(function (w) {
+      return fetch(w + "/area/entra", { method: "POST", headers: { "content-type": "application/json" },
+                                        body: JSON.stringify({ email: espera.email, codi: codi }) });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (cos) { return { r: r, cos: cos }; });
+    }).then(function (x) {
+      if (x.r.status === 400) throw new Error(x.cos.queden > 0 ? "dolent" : "caducat");
+      if (!x.r.ok || !/^[0-9a-f]{16}\.area$/.test(x.cos.k || "")) throw new Error(x.r.status);
+      sessio = { k: x.cos.k, g: x.cos.g };
+      desa(DESAT, sessio);                                   // i ja es queda: la propera vegada entra sol
+      try { localStorage.removeItem(ESPERA); } catch (e) {}
+      fet.hidden = true;
+      $("form-codi").hidden = true; $("form-entra").hidden = false;
+      $("entra").hidden = true; $("carregant").hidden = false;
+      carrega();
+    }).catch(function (e) {
+      fet.textContent = e.message === "dolent" ? "Aquest codi no és bo. Mira'l bé i torna-ho a provar."
+        : e.message === "caducat" ? "Aquest codi ja no val. Demana'n un de nou."
+        : "No s'ha pogut entrar. Mira la connexió i torna-ho a provar.";
+    }).then(function () { entrant = false; });
+  });
+  $("codi").addEventListener("input", function () {          // amb les 6 xifres, entra sol
+    var f = $("form-codi");
+    if (f.requestSubmit && /^\d{6}$/.test($("codi").value.replace(/\s/g, ""))) f.requestSubmit();
+  });
+  $("un-altre").addEventListener("click", function () {
+    var espera = llegeix(ESPERA);
+    if (espera) demanaCodi(espera.email); else demanaElCorreu();
+  });
+  $("canvia").addEventListener("click", demanaElCorreu);
+
+  (function () {                                             // si es torna a la pàgina mentre s'espera el codi
+    var espera = llegeix(ESPERA);
+    if (espera && espera.email && Date.now() - espera.ts < 15 * 60e3) { $("email").value = espera.email; demanaLesXifres(espera.email); }
+  })();
 
   carrega();
 })();
