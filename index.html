@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <script>
-// gingacoach.com sense cap sessió darrere del # és la portada del domini: hi va la web de Ginga. Amb #<sessió> (els
-// enllaços de força dels correus) o amb ?exemple, el reproductor de sempre.
-if (location.hostname === "gingacoach.com" && !location.hash && !location.search) location.replace("ginga/");
+// Sense cap sessió darrere del # és la portada del domini (gingacoach.com): hi va la web de Ginga, també si l'enllaç
+// porta coses darrere del ? (WhatsApp, Instagram i Facebook hi posen ?fbclid=...). Amb #<sessió> (els enllaços de força
+// dels correus) o amb ?exemple, el reproductor de sempre. Obert com a fitxer (els tests), res.
+if (/^https?:$/.test(location.protocol) && location.hash.length < 2 && !/[?&]exemple(&|=|$)/.test(location.search))
+  location.replace(location.pathname.replace(/index\.html$/, "") + "ginga/");
 </script>
 <link rel="icon" type="image/svg+xml" href="https://gingacoach.com/icona.svg">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
