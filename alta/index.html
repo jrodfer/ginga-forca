@@ -16,12 +16,14 @@
 :root {
   --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1;
   --accent: #FF6A2B; --ok: #00996B; --avis: #B3261E;
+  --card-glass: rgba(255,255,255,0.72);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
-    --accent: #FF6A2B; --ok: #2DBF8C; --avis: #FF8A80; color-scheme: dark;
+    --accent: #FF6A2B; --ok: #2DBF8C; --avis: #FF8A80;
+    --card-glass: rgba(26,44,38,0.72); color-scheme: dark;
   }
 }
 /* el logo, igual que al reproductor de força */
@@ -39,7 +41,7 @@ header { padding: 20px 0 8px; }
 h1 { font-size: 28px; line-height: 1.2; margin: 8px 0 4px; }
 h2 { font-size: 22px; margin: 0 0 6px; }
 .muted { color: var(--muted); }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; }
+.card { background: var(--card-glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; }
 .pregunta { padding: 12px 0; border-top: 1px solid var(--line); }
 .pregunta:first-of-type { border-top: 0; }
 .pregunta p { margin: 0 0 10px; font-weight: 700; }

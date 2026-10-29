@@ -19,19 +19,20 @@
 :root {
   --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #00996B; --tag: #FFE4D3;
+  --card-glass: rgba(255,255,255,0.72);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
     --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --tag: #1D3A31;
-    color-scheme: dark;
+    --card-glass: rgba(26,44,38,0.72); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --tag: #1D3A31;
-  color-scheme: dark;
+  --card-glass: rgba(26,44,38,0.72); color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -55,7 +56,7 @@ p { margin: 0; }
 .lockup .lk-p { fill: #00996B; }
 .lockup .lk-i { fill: var(--accent); }
 .llista { display: grid; gap: 10px; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px;
+.card { background: var(--card-glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px;
   display: grid; grid-template-columns: 28px 1fr auto; gap: 4px 12px; align-items: start; }
 .num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-fg);
   font-weight: 900; display: grid; place-items: center; font-size: .95rem; grid-row: span 3; }
