@@ -73,6 +73,7 @@ h2 { font-size: 1.6rem; margin: 0 0 4px; }
 .accio { margin-top: 12px; }
 .accio .titol { font-weight: 500; font-size: 15px; }
 .accio .resum { font-size: 14px; color: var(--muted); }
+.accio .avis { font-size: 14px; font-weight: 500; margin-top: 4px; }
 
 /* la setmana, dia a dia */
 .dia { border-top: 1px solid var(--line); }
@@ -137,9 +138,9 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
   <section id="area" hidden>
     <div class="card" id="compte" hidden></div>
     <div class="card" id="avui"></div>
+    <div class="card" id="eines" hidden><p class="etiqueta">Quan vulguis, cada dia</p><div id="llista-eines"></div></div>
     <div class="card" id="setmana"><p class="etiqueta verd">Aquesta setmana</p><div id="dies"></div></div>
     <div class="card" id="ve" hidden><p class="etiqueta verd">La setmana que ve</p><div id="dies-ve"></div></div>
-    <div class="card" id="eines" hidden><p class="etiqueta">Les teves eines</p><div id="llista-eines"></div></div>
     <p class="petit muted" id="peu">Es posa al dia sola cada diumenge, amb el correu.</p>
   </section>
 </main>
@@ -190,6 +191,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       var c = el("div", "accio");
       c.appendChild(el("div", "titol", a.titol));
       if (a.resum) c.appendChild(el("div", "resum", a.resum));
+      if (a.avis) c.appendChild(el("div", "avis", a.avis));
       var b = el("a", "btn", a.boto || "Obre-la");
       b.href = url;
       c.appendChild(b);
