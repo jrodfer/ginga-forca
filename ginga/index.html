@@ -74,7 +74,9 @@ p { margin: 0 0 12px; }
 
 /* capçalera */
 .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 72px; }
-.idiomes { display: flex; gap: 6px; }
+.idiomes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.idiomes .entra { font: 500 12px/1 var(--sans); letter-spacing: .06em; text-transform: uppercase; padding: 10px 14px;
+  border-radius: 4px; border: 1px solid var(--accent); color: var(--fg); text-decoration: none; margin-right: 6px; }
 .idiomes button { font: 500 12px/1 var(--sans); letter-spacing: .06em; text-transform: uppercase; padding: 9px 14px;
   border-radius: 4px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; }
 .idiomes button[aria-pressed="true"] { border-color: var(--ok); }
@@ -153,6 +155,7 @@ footer a { color: #F0EDE8; }
       <header class="cap">
         <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
         <div class="idiomes" role="group" aria-label="Idioma / Language">
+          <a class="entra" href="../atleta/">La teva setmana</a>
           <button type="button" data-idioma="ca">Català</button>
           <button type="button" data-idioma="en">English</button>
         </div>
@@ -380,6 +383,7 @@ footer a { color: #F0EDE8; }
       <header class="cap">
         <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
         <div class="idiomes" role="group" aria-label="Idioma / Language">
+          <a class="entra" href="../atleta/">Your week</a>
           <button type="button" data-idioma="ca">Català</button>
           <button type="button" data-idioma="en">English</button>
         </div>
@@ -602,11 +606,11 @@ footer a { color: #F0EDE8; }
 </article>
 
 <script>
-// l'idioma: el de l'enllaç (?lang=en), el que s'ha triat abans o el del navegador (com a web/privacitat/)
+// l'idioma: el de l'enllaç (?lang=en), el que s'ha triat abans o el català (com a web/privacitat/)
 (function () {
   const desat = (() => { try { return localStorage.getItem("ginga-idioma"); } catch (e) { return null; } })();
   const demanat = new URLSearchParams(location.search).get("lang");
-  let idioma = demanat || desat || (/^(ca|es)/i.test(navigator.language || "") ? "ca" : "en");
+  let idioma = demanat || desat || "ca";                      // per defecte, en català (també amb el navegador en anglès)
   const posa = (i) => {
     idioma = i === "en" ? "en" : "ca";
     document.documentElement.lang = idioma;

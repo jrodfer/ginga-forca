@@ -248,11 +248,11 @@ a { color: inherit; text-decoration-color: var(--accent); text-underline-offset:
   </article>
 </main>
 <script>
-// l'idioma: el de l'enllaç (?lang=en), el que s'ha triat abans o el del navegador
+// l'idioma: el de l'enllaç (?lang=en), el que s'ha triat abans o el català
 (function () {
   const desat = (() => { try { return localStorage.getItem("ginga-idioma"); } catch (e) { return null; } })();
   const demanat = new URLSearchParams(location.search).get("lang");
-  let idioma = demanat || desat || (/^(ca|es)/i.test(navigator.language || "") ? "ca" : "en");
+  let idioma = demanat || desat || "ca";                      // per defecte, en català (també amb el navegador en anglès)
   const posa = (i) => {
     idioma = i === "en" ? "en" : "ca";
     document.documentElement.lang = idioma;
