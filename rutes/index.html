@@ -19,6 +19,7 @@
   --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #00996B; --warn: #D9541C; --warn-soft: #FFE4D3;
   --ruta: #FF6A2B; --ruta-alt: #8A968F; --pujada: #00996B; --gent: #6B4FD8;
+  --card-glass: rgba(255,255,255,0.88);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -26,14 +27,14 @@
     --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
     --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --warn: #FFC531; --warn-soft: #1D3A31;
     --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --gent: #B7A6FF;
-    color-scheme: dark;
+    --card-glass: rgba(26,44,38,0.88); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --warn: #FFC531; --warn-soft: #1D3A31;
   --ruta: #FF6A2B; --ruta-alt: #A6B4AC; --pujada: #2DBF8C; --gent: #B7A6FF;
-  color-scheme: dark;
+  --card-glass: rgba(26,44,38,0.88); color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -66,7 +67,7 @@ p { margin: 0; }
   overflow: hidden; text-overflow: ellipsis; }
 .garmin-boto.connectat { border-color: var(--ok); color: var(--ok); }
 #segueix .lockup { width: 72px; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+.card { background: var(--card-glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
 .avis { background: var(--warn-soft); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
 .xifres { display: flex; flex-wrap: wrap; gap: 6px 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .xifres span { white-space: nowrap; }
