@@ -5,23 +5,31 @@
 <link rel="icon" type="image/svg+xml" href="https://jrodfer.github.io/ginga-forca/icona.svg">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10231D">
-<meta name="description" content="Ginga: l'assistent setmanal de l'entrenador de córrer, bici, natació i triatló. Un entrenador ho valida tot.">
+<meta name="description" content="Ginga: un pla de resistència personal, amb base científica, revisat cada setmana. Córrer, bici, natació, triatló i força, amb el teu entrenador o sense.">
 <title>Ginga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap">
 <style>
-/* La pàgina de presentació de Ginga, en català i en anglès: què és, com funciona, contacte i privacitat. És el web
-   que es dona a Garmin (API de Courses) i a qui pregunti què és Ginga. La font és a jrodfer/ginga (web/ginga/). */
+/* La pàgina de presentació de Ginga, en català i en anglès: què és, com funciona, per què te'n pots fiar, per a qui,
+   el preu i com començar. El contingut surt del tríptic i de l'article (negoci/triptic.html, negoci/ginga-article.md):
+   si allà canvia una xifra o un preu, canvia aquí a la mateixa PR. És també el web que es dona a Garmin
+   (?lang=en). La font és a jrodfer/ginga (web/ginga/). */
 :root {
-  --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1; --accent: #FF6A2B; --ok: #00996B;
+  --bg: #FAFAF7; --alt: #F4F3EF; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1;
+  --accent: #FF6A2B; --ok: #00996B;
   --card-glass: rgba(255,255,255,0.72);
+  /* les seccions fosques, iguals en clar i en fosc */
+  --fosc: #10231D; --fosc-card: rgba(26,44,38,0.82); --fosc-fg: #F0EDE8; --fosc-muted: #A9AEA9; --fosc-line: #2A3D36;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F; --accent: #FF6A2B; --ok: #2DBF8C;
-    --card-glass: rgba(26,44,38,0.72); color-scheme: dark;
+    --bg: #10231D; --alt: #132A23; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
+    --accent: #FF6A2B; --ok: #2DBF8C;
+    --card-glass: rgba(26,44,38,0.72);
+    --fosc: #0B1712; --fosc-card: rgba(22,38,32,0.86);
+    color-scheme: dark;
   }
 }
 /* el logo, igual que al reproductor de força */
@@ -32,122 +40,567 @@
 .lockup .lk-p { fill: #00996B; }
 .lockup .lk-i { fill: var(--accent); }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 var(--sans); }
-main { max-width: 720px; margin: 0 auto; padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 0 8px; flex-wrap: wrap; }
-.idiomes { display: flex; gap: 6px; }
-.idiomes button { font: 800 15px/1 var(--sans); padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line);
-  background: transparent; color: var(--fg); cursor: pointer; }
-.idiomes button[aria-pressed="true"] { border-color: var(--ok); }
-h1 { font-size: 32px; line-height: 1.2; margin: 18px 0 8px; }
-h2 { font-size: 22px; margin: 0 0 8px; }
-.lead { font-size: 20px; margin: 0 0 8px; }
-.muted { color: var(--muted); }
-.card { background: var(--card-glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; }
-.card ul { margin: 6px 0 0; padding-left: 20px; }
-.card li { margin: 4px 0; }
-.passos { counter-reset: pas; list-style: none; padding: 0; margin: 0; }
-.passos li { counter-increment: pas; display: grid; grid-template-columns: 36px 1fr; gap: 10px; margin: 10px 0; }
-.passos li::before { content: counter(pas); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
-  background: var(--accent); color: #10231D; font-weight: 900; }
-.btn { display: inline-block; border-radius: 14px; font: 800 18px/1 var(--sans); padding: 16px 20px; background: var(--accent);
-  color: #10231D; text-decoration: none; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 300 17px/1.65 var(--sans); overflow-x: hidden; }
 a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
-footer { margin-top: 28px; color: var(--muted); font-size: 15px; }
+p { margin: 0 0 12px; }
 [hidden] { display: none !important; }
+
+/* seccions a tota l'amplada, alternant crema i Night ink, com el tríptic */
+.sec { position: relative; overflow: hidden; padding: 96px 16px; background: var(--bg); }
+.sec.alt { background: var(--alt); }
+.sec.fosc { background: radial-gradient(ellipse at 30% 25%, rgba(255,197,49,0.05) 0%, transparent 50%),
+  radial-gradient(ellipse at 75% 70%, rgba(0,153,107,0.03) 0%, transparent 45%), var(--fosc);
+  color: var(--fosc-fg); --fg: var(--fosc-fg); --muted: var(--fosc-muted); --line: var(--fosc-line);
+  --card-glass: var(--fosc-card); color-scheme: dark; }
+.dins { position: relative; max-width: 960px; margin: 0 auto; }
+.textura { position: absolute; left: 0; width: 100%; pointer-events: none; }
+.etiqueta { display: flex; align-items: center; gap: 14px; margin: 0 0 20px; font: 500 11px/1 var(--sans);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.etiqueta::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
+.etiqueta.verd::before { background: var(--ok); }
+.sec h1 { font-size: clamp(40px, 6.4vw, 68px); line-height: 1.05; margin: 0 0 22px; }
+.sec h2 { font-size: clamp(30px, 4.2vw, 46px); line-height: 1.12; margin: 0 0 18px; max-width: 720px; }
+.sec h3 { font-size: 24px; line-height: 1.2; margin: 0 0 8px; }
+.lead { font-size: 19px; color: var(--muted); max-width: 620px; margin: 0 0 32px; }
+.muted { color: var(--muted); }
+.targeta { background: var(--card-glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border: 1px solid var(--line); border-radius: 14px; padding: 40px; }
+.graella { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); }
+.graella .targeta { padding: 28px; }
+.btn { display: inline-block; padding: 16px 34px; background: var(--accent); color: #10231D; text-decoration: none;
+  font-size: 13px; }
+.btn.sec2 { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.botons { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* capçalera */
+.cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 72px; }
+.idiomes { display: flex; gap: 6px; }
+.idiomes button { font: 500 12px/1 var(--sans); letter-spacing: .06em; text-transform: uppercase; padding: 9px 14px;
+  border-radius: 4px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; }
+.idiomes button[aria-pressed="true"] { border-color: var(--ok); }
+
+/* portada */
+.portada { padding-top: calc(env(safe-area-inset-top, 0px) + 28px); }
+.portada .dins { display: grid; grid-template-columns: 1fr; gap: 24px; }
+.portada .g { display: none; width: 280px; height: auto; opacity: .11; }
+@media (min-width: 860px) {
+  .portada .dins { grid-template-columns: 1fr 300px; align-items: center; }
+  .portada .g { display: block; }
+  .portada .cap { grid-column: 1 / -1; }
+}
+.ja { margin: 24px 0 0; font-size: 15px; color: var(--muted); }
+.esports { font: 500 12px/1.6 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 18px; }
+
+/* passos numerats */
+.passos { list-style: none; margin: 0; padding: 0; }
+.passos li { display: grid; grid-template-columns: 64px 1fr; gap: 20px; padding: 26px 0; border-top: 1px solid var(--line); }
+.passos li:first-child { border-top: 0; padding-top: 0; }
+.passos li:last-child { padding-bottom: 0; }
+.passos .n { font: 400 48px/1 var(--serif); color: var(--muted); opacity: .45; }
+.passos b { font-weight: 500; }
+
+/* el que creua cada diumenge */
+.senyals { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 24px; padding: 0; list-style: none; }
+.senyals li { border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; font-size: 14px; font-weight: 400; }
+
+/* xifres */
+.xifres { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); margin: 36px 0; }
+.xifra { border-top: 1px solid var(--line); padding-top: 18px; }
+.xifra b { display: block; font: 400 64px/1 var(--serif); letter-spacing: -0.02em; color: var(--fg); }
+.xifra span { color: var(--muted); font-size: 14px; }
+
+/* captures */
+.captures { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); margin-top: 36px; }
+.captures figure { margin: 0; }
+.captures img { display: block; width: auto; max-width: 100%; max-height: 560px; height: auto; margin: 0 auto 14px; border-radius: 14px;
+  border: 1px solid var(--line); }
+.captures figcaption { font-size: 14px; color: var(--muted); max-width: 360px; margin: 0 auto; }
+
+/* comparació */
+.taula { width: 100%; border-collapse: collapse; font-size: 15px; }
+.taula th, .taula td { padding: 14px 8px; border-top: 1px solid var(--line); text-align: center; vertical-align: top; }
+.taula th { font: 500 11px/1.3 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-top: 0; }
+.taula td:first-child, .taula th:first-child { text-align: left; padding-left: 0; }
+.taula .g1 { color: var(--ok); font-weight: 600; }
+
+/* preus */
+.preu b { font: 400 60px/1 var(--serif); letter-spacing: -0.02em; }
+.preu s { color: var(--muted); font-size: 20px; margin-left: 8px; }
+.preu .unitat { color: var(--muted); font-size: 14px; margin-left: 6px; }
+
+footer.sec { padding: 56px 16px calc(env(safe-area-inset-bottom, 0px) + 44px); background: #0B1712; color: #A9AEA9; font-size: 14px; }
+footer .dins { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; align-items: flex-end; }
+footer p { max-width: 520px; }
+footer a { color: #F0EDE8; }
+
+@media (max-width: 600px) {
+  .sec { padding: 72px 16px; }
+  .targeta { padding: 26px 20px; }
+  .passos li { grid-template-columns: 44px 1fr; gap: 14px; }
+  .passos .n { font-size: 36px; }
+  .taula { font-size: 14px; }
+  .taula th, .taula td { padding: 12px 4px; }
+  .cap { margin-bottom: 48px; }
+}
 </style>
 <link rel="stylesheet" href="../marca.css">
 </head>
 <body>
-<main>
-  <header>
-    <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
-    <div class="idiomes" role="group" aria-label="Idioma / Language">
-      <button type="button" data-idioma="ca">Català</button>
-      <button type="button" data-idioma="en">English</button>
+
+<article lang="ca" data-idioma="ca">
+  <section class="sec fosc portada">
+    <div class="dins">
+      <header class="cap">
+        <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
+        <div class="idiomes" role="group" aria-label="Idioma / Language">
+          <button type="button" data-idioma="ca">Català</button>
+          <button type="button" data-idioma="en">English</button>
+        </div>
+      </header>
+      <div>
+        <p class="esports">Córrer · Bici · Natació · Triatló · Força</p>
+        <h1>El teu entrenament, revisat cada setmana.</h1>
+        <p class="lead">Un pla de resistència personal, amb base científica, que s'ajusta al que fas de veritat. Amb el teu
+          entrenador o sense.</p>
+        <div class="botons">
+          <a class="btn" href="../solicitud/">Vull entrenar amb Ginga</a>
+          <a class="btn sec2" href="#com-funciona">Com funciona</a>
+        </div>
+        <p class="ja">Ja entrenes amb Ginga? <a href="../atleta/">La teva setmana</a></p>
+      </div>
+      <svg class="g" viewBox="0 -12 150 162" aria-hidden="true"><path d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78" fill="none" stroke="#FFC531" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><circle cx="126" cy="6" r="15" fill="#FFC531"/></svg>
     </div>
-  </header>
+  </section>
 
-  <article lang="ca" data-idioma="ca">
-    <h1>L'assistent setmanal de l'entrenador</h1>
-    <p class="lead">Córrer, bici, natació i triatló, amb la força al costat. Ginga analitza la setmana de cada atleta i proposa;
-      l'entrenador ho valida tot.</p>
+  <section class="sec" id="com-funciona">
+    <svg class="textura" style="bottom: 20px; height: 120px" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#FFC531" stroke-linecap="round"><path d="M-30 30 C300 10,600 60,900 25 C1200 -10,1380 50,1470 20" stroke-width="1.8" opacity=".24" vector-effect="non-scaling-stroke"/><path d="M-30 44 C300 24,600 74,900 39 C1200 4,1380 64,1470 34" stroke-width="1.4" opacity=".18" vector-effect="non-scaling-stroke"/><path d="M-30 56 C300 36,600 86,900 51 C1200 16,1380 76,1470 46" stroke-width="1" opacity=".13" vector-effect="non-scaling-stroke"/></g></svg>
+    <div class="dins">
+      <p class="etiqueta">Què és Ginga</p>
+      <h2>Un pla que et coneix</h2>
+      <p class="lead">Fer el pla és la part fàcil. El que marca la diferència és revisar-lo cada setmana: què has fet de
+        veritat, com dorms, com estàs, i ajustar el que ve. Ginga ho fa per a cada atleta, cada diumenge.</p>
+      <div class="targeta">
+        <ol class="passos">
+          <li><span class="n">01</span><span><b>Llegeix</b> el que has fet: sessions, càrrega, pulsacions en repòs, HRV, son,
+            com et va anar i si et fa mal alguna cosa.</span></li>
+          <li><span class="n">02</span><span><b>Ho compara</b> amb el pla, i mira els senyals de fatiga i de risc.</span></li>
+          <li><span class="n">03</span><span><b>Reajusta</b> les setmanes que vénen si les dades ho demanen.</span></li>
+          <li><span class="n">04</span><span><b>T'escriu</b> un correu personal: com ha anat, el que has fet bé, què millorar i
+            la setmana que ve.</span></li>
+          <li><span class="n">05</span><span><b>Et prepara</b> la setmana: les sessions al rellotge, la força amb vídeos, les
+            rutes i la tècnica.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>Com funciona</h2>
-      <ol class="passos">
-        <li><span>L'atleta entrena amb el seu rellotge (Garmin, Coros, Polar, Suunto, Wahoo...) connectat a intervals.icu.</span></li>
-        <li><span>Cada diumenge, Ginga compara el que ha fet amb el pla, avisa l'entrenador si hi ha dolor o fatiga i repassa
-          les setmanes que queden.</span></li>
-        <li><span>L'entrenador revisa la proposta i decideix.</span></li>
-        <li><span>L'atleta rep un correu amb la setmana, els vídeos de força i una ruta per a cada sessió de córrer i de bici.</span></li>
-      </ol>
-    </section>
+  <section class="sec fosc">
+    <div class="dins">
+      <p class="etiqueta verd">Cada diumenge</p>
+      <div class="targeta">
+        <h2>Més del que pot mirar un entrenador sol</h2>
+        <p class="muted">Cada diumenge, per a cada atleta, aplica 129 regles i creua:</p>
+        <ul class="senyals">
+          <li>Càrrega</li><li>Forma i fatiga</li><li>Previst contra fet</li><li>Ritme de pujada</li><li>Monotonia</li>
+          <li>HRV</li><li>Pulsacions en repòs</li><li>Son</li><li>Sensacions (RPE)</li><li>Dolor i on</li>
+          <li>Sessions clau</li><li>Força i zones del cos</li><li>Descàrrega i taper</li><li>Dades que no arriben</li>
+        </ul>
+        <p>I les teves zones surten de les teves dades, no d'una taula genèrica.</p>
+      </div>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>Què hi ha</h2>
-      <ul>
-        <li><strong>Plans amb base científica:</strong> cada regla del pla té la seva font, i el que no en té es diu com a criteri
-          d'entrenador.</li>
-        <li><strong>Ginga Força:</strong> sessions de força amb vídeo de cada exercici, per seguir al mòbil o a la tele.</li>
-        <li><strong>Rutes:</strong> un circuit per a cada sessió a l'aire lliure, amb el GPX per al rellotge. Amb Garmin, la ruta
-          podrà anar directament al rellotge com a recorregut.</li>
-        <li><strong>Per a entrenadors i clubs</strong>, i per a atletes que entrenen sols però volen que una persona els validi
-          el pla.</li>
-      </ul>
-    </section>
+  <section class="sec alt">
+    <svg class="textura" style="top: 0; height: 100%; left: auto; right: 12%; width: 30px" viewBox="0 0 30 900" preserveAspectRatio="none" aria-hidden="true"><path d="M16 -10 C20 120,12 300,19 480 C24 600,14 740,18 910" fill="none" stroke="#FFC531" stroke-width="1.4" stroke-linecap="round" opacity=".26" vector-effect="non-scaling-stroke"/><circle cx="18" cy="480" r="3.5" fill="#FFC531" opacity=".22"/></svg>
+    <div class="dins">
+      <p class="etiqueta">Tot connectat</p>
+      <h2>Tot el que necessites, en un sol lloc</h2>
+      <p class="lead">Per separat, hi ha apps que en fan una part. Aquí va tot junt i es coordina: la força sap quan tens una
+        sessió clau, la ruta sap quina sessió toca i el correu t'ho explica tot.</p>
+      <div class="graella">
+        <div class="targeta"><h3>Força a la tele</h3><p class="muted">El vídeo de cada exercici, les sèries i les repeticions; amb
+          Chromecast, a la pantalla gran.</p></div>
+        <div class="targeta"><h3>Una ruta per sessió</h3><p class="muted">Dius d'on surts i et proposa un circuit que encaixa amb
+          la sessió, amb el GPX per al rellotge i el seguiment al mòbil.</p></div>
+        <div class="targeta"><h3>Qualsevol rellotge</h3><p class="muted">A través d'intervals.icu: Garmin, Coros, Polar, Suunto,
+          Apple, Wahoo… Sense cap app nova.</p></div>
+        <div class="targeta"><h3>Força i pliometria dins del pla</h3><p class="muted">Coordinades per zones del cos, perquè no
+          xoquin amb les sessions clau.</p></div>
+        <div class="targeta"><h3>Tècnica de natació i de carrera</h3><p class="muted">Un vídeo per exercici, just després
+          d'escalfar. La de natació, a la nota de la sessió, que es veu al rellotge a la piscina.</p></div>
+        <div class="targeta"><h3>Ginga Força</h3><p class="muted">Força, os i equilibri per a qualsevol adult, només amb el mòbil.
+          I, si en vols, estiraments i ioga.</p></div>
+      </div>
+      <div class="captures">
+        <figure><img src="img/ruta.jpg" alt="La pàgina de rutes de Ginga amb el mapa i una ruta proposada" width="560" height="1170" loading="lazy">
+          <figcaption>Rutes: dius d'on surts i Ginga et proposa un circuit que encaixa amb la sessió, amb el GPX per al
+            rellotge i el seguiment al mòbil.</figcaption></figure>
+        <figure><img src="img/forca.jpg" alt="El reproductor de força de Ginga, amb el vídeo d'una sentadilla i la sèrie que toca" width="560" height="1278" loading="lazy">
+          <figcaption>Força: el vídeo de cada exercici, la sèrie i les repeticions que toquen; amb el botó TV, la sessió
+            passa a la tele.</figcaption></figure>
+      </div>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>Vols entrenar amb Ginga?</h2>
-      <p>Explica'ns què busques i l'entrenador et respon per correu.</p>
-      <a class="btn" href="../solicitud/">Vull entrenar</a>
-    </section>
+  <section class="sec fosc">
+    <svg class="textura" style="top: 70px; height: 240px" viewBox="0 0 1440 250" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#FFC531" stroke-linecap="round"><path d="M-30 60 C250 20,550 110,850 50 C1150 -10,1350 80,1470 40" stroke-width="2" opacity=".26" vector-effect="non-scaling-stroke"/><path d="M-30 78 C250 38,550 128,850 68 C1150 8,1350 98,1470 58" stroke-width="1.6" opacity=".2" vector-effect="non-scaling-stroke"/><path d="M-30 94 C250 54,550 144,850 84 C1150 24,1350 114,1470 74" stroke-width="1.3" opacity=".16" vector-effect="non-scaling-stroke"/><path d="M-30 108 C250 68,550 158,850 98 C1150 38,1350 128,1470 88" stroke-width="1" opacity=".12" vector-effect="non-scaling-stroke"/></g></svg>
+    <div class="dins">
+      <p class="etiqueta">Per què te'n pots fiar</p>
+      <div class="targeta">
+        <h2><i>Decideix la metodologia, no la IA</i></h2>
+        <p class="muted" style="max-width: 680px">Cada decisió (quanta càrrega, quan descansar, quan reajustar, què fer davant
+          d'un senyal) surt d'una regla escrita i revisada per entrenadors, amb la seva font científica o el criteri
+          declarat. El codi l'aplica igual per a tothom. La intel·ligència artificial només redacta i proposa, dins d'aquests
+          límits.</p>
+        <div class="xifres">
+          <div class="xifra"><b>129</b><span>regles</span></div>
+          <div class="xifra"><b>128</b><span>fonts científiques</span></div>
+          <div class="xifra"><b>1</b><span>revisió de la ciència cada mes</span></div>
+        </div>
+        <div class="graella">
+          <div><h3>Seguretat</h3>
+            <p class="muted"><b>Amb entrenador</b>, el que afegeix càrrega ho valida ell. <b>Sense</b>, només dins dels límits
+              del model, revisat per entrenadors certificats: com a molt, un 10% més del que has fet.</p></div>
+          <div><h3>Dolor i salut</h3>
+            <p class="muted">Si escrius <i>#dolor</i>, l'entrenador ho sap, i davant de certs senyals es deriva al metge. Les
+              dades de salut no surten d'intervals.icu: a la IA, només un resum sense nom.</p></div>
+          <div><h3>Transparència</h3>
+            <p class="muted">Cada regla diu d'on surt, què diu l'estudi, en qui es va fer i quina part és criteri. Tot és a
+              l'article tècnic de Ginga.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <footer>
-      <p>Contacte: <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a> · <a href="../privacitat/">Privacitat</a></p>
-    </footer>
-  </article>
+  <section class="sec">
+    <div class="dins">
+      <p class="etiqueta verd">Per a qui</p>
+      <h2>Amb el teu entrenador o sense</h2>
+      <div class="graella">
+        <div class="targeta"><h3>Entrenadors</h3><p class="muted">L'anàlisi de cada atleta cada diumenge, amb més senyals dels que
+          es poden revisar a mà. El correu de cada atleta, comprovat, i avisos de dolor, fatiga o dades que no arriben. Més
+          atletes amb el mateix temps.</p></div>
+        <div class="targeta"><h3>Clubs</h3><p class="muted">Tot l'anterior, i a més grups per nivells a córrer i natació: una sessió
+          per nivell, i cadascú a les seves zones. A la bici en grup, una ruta llarga i una de curta amb una part comuna; el
+          buscador troba les dues.</p></div>
+        <div class="targeta"><h3>Atletes sense entrenador</h3><p class="muted">El mateix sistema, les mateixes regles i la mateixa
+          base científica. Un pla fet per a tu, que es revisa i s'ajusta cada setmana, amb models d'entrenament revisats per
+          entrenadors certificats. No és un entrenador propi, i per això costa menys; però és més segur i més personal que
+          una app on decideix la IA.</p></div>
+      </div>
+    </div>
+  </section>
 
-  <article lang="en" data-idioma="en">
-    <h1>The coach's weekly assistant</h1>
-    <p class="lead">Running, cycling, swimming and triathlon, with strength training alongside. Ginga analyses each athlete's
-      week and makes proposals; the coach validates everything.</p>
+  <section class="sec alt">
+    <div class="dins">
+      <p class="etiqueta">La clau és tot junt</p>
+      <h2>Per separat, n'hi ha que en fan una part</h2>
+      <div class="targeta">
+        <table class="taula">
+          <thead><tr><th scope="col"></th><th scope="col">Ginga</th><th scope="col">Apps amb IA</th><th scope="col">Plataformes</th></tr></thead>
+          <tbody>
+            <tr><td>Base científica pública, regla per regla</td><td class="g1">✓</td><td>✗</td><td>✗</td></tr>
+            <tr><td>Revisa i reajusta cada setmana</td><td class="g1">✓</td><td>✓</td><td>✗</td></tr>
+            <tr><td>Personal: HRV, son, dolor, força i zones del cos, tot alhora</td><td class="g1">✓</td><td>~</td><td>✗</td></tr>
+            <tr><td>Un correu personal cada setmana</td><td class="g1">✓</td><td>~</td><td>✗</td></tr>
+            <tr><td>Força amb vídeos, al mòbil i a la tele</td><td class="g1">✓</td><td>~</td><td>~</td></tr>
+            <tr><td>Rutes per a cada sessió, amb GPX</td><td class="g1">✓</td><td>✗</td><td>✗</td></tr>
+            <tr><td>Sense cap app nova</td><td class="g1">✓</td><td>✗</td><td>✗</td></tr>
+          </tbody>
+        </table>
+        <p class="muted" style="margin: 16px 0 0; font-size: 14px">~ En part, segons l'app. Segons la informació pública de cada
+          eina a l'octubre del 2026.</p>
+      </div>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>How it works</h2>
-      <ol class="passos">
-        <li><span>The athlete trains with their own watch (Garmin, Coros, Polar, Suunto, Wahoo...) connected to intervals.icu.</span></li>
-        <li><span>Every Sunday, Ginga compares what they did with the plan, alerts the coach about pain or fatigue, and reviews
-          the remaining weeks.</span></li>
-        <li><span>The coach reviews the proposal and decides.</span></li>
-        <li><span>The athlete gets an email with the week, strength videos and a route for each run and ride.</span></li>
-      </ol>
-    </section>
+  <section class="sec" id="preu">
+    <div class="dins">
+      <p class="etiqueta">Preu</p>
+      <h2>Una revisió així, feta a mà, són hores de feina cada setmana</h2>
+      <p class="lead">Aquí la tens cada diumenge. Preus de llançament, els 6 primers mesos.</p>
+      <div class="graella">
+        <div class="targeta preu"><p class="etiqueta verd">Entrenador o club</p>
+          <p><b>5 €</b><s>10 €</s><span class="unitat">per atleta i mes</span></p>
+          <p class="muted">Després, 10 €; 8 € per atleta a partir de 20 atletes.</p></div>
+        <div class="targeta preu"><p class="etiqueta verd">Atleta sense entrenador</p>
+          <p><b>9,50 €</b><s>19 €</s><span class="unitat">al mes</span></p>
+          <p class="muted">Després, 19 € al mes o 190 € l'any.</p></div>
+      </div>
+      <p class="muted" style="margin-top: 16px; font-size: 14px">Ginga Força encara no té preu.</p>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>What's included</h2>
-      <ul>
-        <li><strong>Evidence-based plans:</strong> every rule in the plan has its source, and anything without one is stated as
-          coaching judgement.</li>
-        <li><strong>Ginga Força:</strong> strength sessions with a video for every exercise, to follow on the phone or on TV.</li>
-        <li><strong>Routes:</strong> a loop for every outdoor session, with a GPX for the watch. With Garmin, the route will be
-          able to go straight to the watch as a course.</li>
-        <li><strong>For coaches and clubs</strong>, and for athletes who train on their own but want a person to validate their
-          plan.</li>
-      </ul>
-    </section>
+  <section class="sec alt" id="com-comencar">
+    <div class="dins">
+      <p class="etiqueta verd">Com començar</p>
+      <h2>Començar és fàcil</h2>
+      <div class="graella" style="align-items: start">
+        <div class="targeta">
+          <ol class="passos">
+            <li><span class="n">1</span><span>Demana-ho a <a href="../solicitud/">Vull entrenar amb Ginga</a>: tria Ginga (córrer,
+              bici, natació, triatló) o Ginga Força.</span></li>
+            <li><span class="n">2</span><span>Obre un compte a intervals.icu i connecta-hi el teu rellotge.</span></li>
+            <li><span class="n">3</span><span>Respon un formulari curt: objectiu, dies, molèsties i on faràs la força.</span></li>
+            <li><span class="n">4</span><span>El pla arriba al calendari i al rellotge, i cada diumenge, el correu.</span></li>
+          </ol>
+        </div>
+        <div class="targeta"><h3>Què és intervals.icu?</h3><p class="muted">Una plataforma web gratuïta on el teu rellotge (o
+          Strava) envia sol cada entrenament. Ginga hi llegeix com entrenes, com dorms i com estàs, i hi posa les sessions,
+          que t'arriben al calendari i al rellotge.</p></div>
+      </div>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2>Want to train with Ginga?</h2>
-      <p>Tell us what you're looking for and the coach will reply by email.</p>
-      <a class="btn" href="../solicitud/">I want to train</a>
-    </section>
+  <section class="sec fosc">
+    <svg class="textura" style="top: 50%; height: 160px; transform: translateY(-50%)" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#FFC531" stroke-linecap="round"><path d="M-30 60 C300 20,600 110,900 50 C1200 -10,1380 80,1470 40" stroke-width="1.8" opacity=".26" vector-effect="non-scaling-stroke"/><path d="M-30 78 C300 38,600 128,900 68 C1200 8,1380 98,1470 58" stroke-width="1.4" opacity=".2" vector-effect="non-scaling-stroke"/><path d="M-30 94 C300 54,600 144,900 84 C1200 24,1380 114,1470 74" stroke-width="1.1" opacity=".15" vector-effect="non-scaling-stroke"/></g></svg>
+    <div class="dins" style="max-width: 640px">
+      <div class="targeta" style="text-align: center">
+        <h2 style="margin-left: auto; margin-right: auto">El teu entrenament, revisat cada setmana</h2>
+        <p class="muted">Amb el teu entrenador o sense. Explica'ns què busques i et responem per correu.</p>
+        <a class="btn" href="../solicitud/" style="margin-top: 16px">Vull entrenar amb Ginga</a>
+      </div>
+    </div>
+  </section>
 
-    <footer>
-      <p>Contact: <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a> · <a href="../privacitat/?lang=en">Privacy</a></p>
-    </footer>
-  </article>
-</main>
+  <footer class="sec">
+    <div class="dins">
+      <div>
+        <p>Ginga no és consell mèdic. Davant d'un dolor o d'un senyal d'alarma, decideix una persona i, si cal, el metge.</p>
+        <p>Contacte: <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a> · <a href="../privacitat/">Privacitat</a></p>
+      </div>
+      <p>© 2026 Ginga</p>
+    </div>
+  </footer>
+</article>
+
+<article lang="en" data-idioma="en">
+  <section class="sec fosc portada">
+    <div class="dins">
+      <header class="cap">
+        <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
+        <div class="idiomes" role="group" aria-label="Idioma / Language">
+          <button type="button" data-idioma="ca">Català</button>
+          <button type="button" data-idioma="en">English</button>
+        </div>
+      </header>
+      <div>
+        <p class="esports">Running · Cycling · Swimming · Triathlon · Strength</p>
+        <h1>Your training, reviewed every week.</h1>
+        <p class="lead">A personal endurance plan, grounded in science, that adapts to what you actually do. With your coach or
+          without one.</p>
+        <div class="botons">
+          <a class="btn" href="../solicitud/">I want to train with Ginga</a>
+          <a class="btn sec2" href="#how-it-works">How it works</a>
+        </div>
+        <p class="ja">Already training with Ginga? <a href="../atleta/">Your week</a></p>
+      </div>
+      <svg class="g" viewBox="0 -12 150 162" aria-hidden="true"><path d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78" fill="none" stroke="#FFC531" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><circle cx="126" cy="6" r="15" fill="#FFC531"/></svg>
+    </div>
+  </section>
+
+  <section class="sec" id="how-it-works">
+    <svg class="textura" style="bottom: 20px; height: 120px" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#FFC531" stroke-linecap="round"><path d="M-30 30 C300 10,600 60,900 25 C1200 -10,1380 50,1470 20" stroke-width="1.8" opacity=".24" vector-effect="non-scaling-stroke"/><path d="M-30 44 C300 24,600 74,900 39 C1200 4,1380 64,1470 34" stroke-width="1.4" opacity=".18" vector-effect="non-scaling-stroke"/><path d="M-30 56 C300 36,600 86,900 51 C1200 16,1380 76,1470 46" stroke-width="1" opacity=".13" vector-effect="non-scaling-stroke"/></g></svg>
+    <div class="dins">
+      <p class="etiqueta">What Ginga is</p>
+      <h2>A plan that knows you</h2>
+      <p class="lead">Writing the plan is the easy part. What makes the difference is reviewing it every week: what you actually
+        did, how you sleep, how you feel, and adjusting what comes next. Ginga does it for every athlete, every Sunday.</p>
+      <div class="targeta">
+        <ol class="passos">
+          <li><span class="n">01</span><span><b>Reads</b> what you did: sessions, load, resting heart rate, HRV, sleep, how it
+            felt and whether anything hurts.</span></li>
+          <li><span class="n">02</span><span><b>Compares</b> it with the plan, and looks for signs of fatigue and risk.</span></li>
+          <li><span class="n">03</span><span><b>Adjusts</b> the coming weeks if the data call for it.</span></li>
+          <li><span class="n">04</span><span><b>Writes to you</b>: a personal email with how it went, what you did well, what to
+            improve and the week ahead.</span></li>
+          <li><span class="n">05</span><span><b>Gets your week ready</b>: sessions on your watch, strength with videos, routes
+            and technique.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec fosc">
+    <div class="dins">
+      <p class="etiqueta verd">Every Sunday</p>
+      <div class="targeta">
+        <h2>More than one coach can check alone</h2>
+        <p class="muted">Every Sunday, for every athlete, it applies 129 rules and cross-checks:</p>
+        <ul class="senyals">
+          <li>Load</li><li>Fitness and fatigue</li><li>Planned vs. done</li><li>Ramp rate</li><li>Monotony</li>
+          <li>HRV</li><li>Resting heart rate</li><li>Sleep</li><li>Perceived effort (RPE)</li><li>Pain and where</li>
+          <li>Key sessions</li><li>Strength and body areas</li><li>Recovery weeks and taper</li><li>Missing data</li>
+        </ul>
+        <p>And your zones come from your own data, not from a generic table.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec alt">
+    <svg class="textura" style="top: 0; height: 100%; left: auto; right: 12%; width: 30px" viewBox="0 0 30 900" preserveAspectRatio="none" aria-hidden="true"><path d="M16 -10 C20 120,12 300,19 480 C24 600,14 740,18 910" fill="none" stroke="#FFC531" stroke-width="1.4" stroke-linecap="round" opacity=".26" vector-effect="non-scaling-stroke"/><circle cx="18" cy="480" r="3.5" fill="#FFC531" opacity=".22"/></svg>
+    <div class="dins">
+      <p class="etiqueta">All connected</p>
+      <h2>Everything you need, in one place</h2>
+      <p class="lead">Some apps do part of it on their own. Here it all comes together and works as one: strength knows when you
+        have a key session, the route knows which session is due, and the email explains it all.</p>
+      <div class="graella">
+        <div class="targeta"><h3>Strength on TV</h3><p class="muted">A video for every exercise, with sets and reps; with
+          Chromecast, on the big screen.</p></div>
+        <div class="targeta"><h3>A route for every session</h3><p class="muted">Tell it where you start and it suggests a loop that
+          fits the session, with a GPX for your watch and live guidance on your phone.</p></div>
+        <div class="targeta"><h3>Any watch</h3><p class="muted">Through intervals.icu: Garmin, Coros, Polar, Suunto, Apple,
+          Wahoo… No new app.</p></div>
+        <div class="targeta"><h3>Strength and plyometrics in the plan</h3><p class="muted">Coordinated by body area, so they
+          don't clash with your key sessions.</p></div>
+        <div class="targeta"><h3>Swim and run technique</h3><p class="muted">A video for every drill, right after the warm-up.
+          The swim drills go in the session notes, which you can read on your watch at the pool.</p></div>
+        <div class="targeta"><h3>Ginga Força</h3><p class="muted">Strength, bone and balance for any adult, with just a phone.
+          And, if you want them, stretching and yoga.</p></div>
+      </div>
+      <div class="captures">
+        <figure><img src="img/ruta.jpg" alt="Ginga's routes page with the map and a suggested route" width="560" height="1170" loading="lazy">
+          <figcaption>Routes: tell Ginga where you start and it suggests a loop that fits the session, with a GPX for your
+            watch and live guidance on your phone.</figcaption></figure>
+        <figure><img src="img/forca.jpg" alt="Ginga's strength player, with a squat video and the current set" width="560" height="1278" loading="lazy">
+          <figcaption>Strength: a video for every exercise, with the set and reps due; with the TV button, the session moves
+            to the big screen.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec fosc">
+    <svg class="textura" style="top: 70px; height: 240px" viewBox="0 0 1440 250" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#FFC531" stroke-linecap="round"><path d="M-30 60 C250 20,550 110,850 50 C1150 -10,1350 80,1470 40" stroke-width="2" opacity=".26" vector-effect="non-scaling-stroke"/><path d="M-30 78 C250 38,550 128,850 68 C1150 8,1350 98,1470 58" stroke-width="1.6" opacity=".2" vector-effect="non-scaling-stroke"/><path d="M-30 94 C250 54,550 144,850 84 C1150 24,1350 114,1470 74" stroke-width="1.3" opacity=".16" vector-effect="non-scaling-stroke"/><path d="M-30 108 C250 68,550 158,850 98 C1150 38,1350 128,1470 88" stroke-width="1" opacity=".12" vector-effect="non-scaling-stroke"/></g></svg>
+    <div class="dins">
+      <p class="etiqueta">Why you can trust it</p>
+      <div class="targeta">
+        <h2><i>The methodology decides, not the AI</i></h2>
+        <p class="muted" style="max-width: 680px">Every decision (how much load, when to rest, when to adjust, what to do about a
+          warning sign) comes from a written rule reviewed by coaches, with its scientific source or the coaching judgement
+          stated. The code applies it the same way for everyone. Artificial intelligence only writes and proposes, within
+          those limits.</p>
+        <div class="xifres">
+          <div class="xifra"><b>129</b><span>rules</span></div>
+          <div class="xifra"><b>128</b><span>scientific sources</span></div>
+          <div class="xifra"><b>1</b><span>review of the science every month</span></div>
+        </div>
+        <div class="graella">
+          <div><h3>Safety</h3>
+            <p class="muted"><b>With a coach</b>, anything that adds load is approved by them. <b>Without one</b>, only within
+              the limits of the model, reviewed by certified coaches: at most 10% more than you have actually done.</p></div>
+          <div><h3>Pain and health</h3>
+            <p class="muted">If you write <i>#dolor</i> (pain), your coach knows, and certain warning signs are referred to a
+              doctor. Health data stay in intervals.icu: the AI only gets an anonymous summary.</p></div>
+          <div><h3>Transparency</h3>
+            <p class="muted">Every rule says where it comes from, what the study found, who it was done on and which part is
+              coaching judgement. It is all in Ginga's technical article.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="dins">
+      <p class="etiqueta verd">Who it is for</p>
+      <h2>With your coach or without one</h2>
+      <div class="graella">
+        <div class="targeta"><h3>Coaches</h3><p class="muted">Every athlete analysed every Sunday, with more signals than anyone can
+          check by hand. Each athlete's email, checked, and alerts about pain, fatigue or missing data. More athletes in the
+          same time.</p></div>
+        <div class="targeta"><h3>Clubs</h3><p class="muted">All of the above, plus level-based group sessions for running and
+          swimming: one session per level, everyone in their own zones. For group rides, a long and a short route that share
+          part of the course; the route finder gets both.</p></div>
+        <div class="targeta"><h3>Athletes without a coach</h3><p class="muted">The same system, the same rules and the same
+          scientific basis. A plan made for you, reviewed and adjusted every week, with training models reviewed by certified
+          coaches. It is not a personal coach, which is why it costs less; but it is safer and more personal than an app where
+          the AI decides.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec alt">
+    <div class="dins">
+      <p class="etiqueta">It all comes together</p>
+      <h2>Others do part of it</h2>
+      <div class="targeta">
+        <table class="taula">
+          <thead><tr><th scope="col"></th><th scope="col">Ginga</th><th scope="col">AI apps</th><th scope="col">Platforms</th></tr></thead>
+          <tbody>
+            <tr><td>Public scientific basis, rule by rule</td><td class="g1">✓</td><td>✗</td><td>✗</td></tr>
+            <tr><td>Reviews and adjusts every week</td><td class="g1">✓</td><td>✓</td><td>✗</td></tr>
+            <tr><td>Personal: HRV, sleep, pain, strength and body areas, all together</td><td class="g1">✓</td><td>~</td><td>✗</td></tr>
+            <tr><td>A personal email every week</td><td class="g1">✓</td><td>~</td><td>✗</td></tr>
+            <tr><td>Strength with videos, on the phone and on TV</td><td class="g1">✓</td><td>~</td><td>~</td></tr>
+            <tr><td>Routes for every session, with GPX</td><td class="g1">✓</td><td>✗</td><td>✗</td></tr>
+            <tr><td>No new app</td><td class="g1">✓</td><td>✗</td><td>✗</td></tr>
+          </tbody>
+        </table>
+        <p class="muted" style="margin: 16px 0 0; font-size: 14px">~ Partly, depending on the app. Based on each tool's public
+          information in October 2026.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="pricing">
+    <div class="dins">
+      <p class="etiqueta">Pricing</p>
+      <h2>A review like this, done by hand, takes hours every week</h2>
+      <p class="lead">Here you get it every Sunday. Launch prices for the first 6 months.</p>
+      <div class="graella">
+        <div class="targeta preu"><p class="etiqueta verd">Coach or club</p>
+          <p><b>€5</b><s>€10</s><span class="unitat">per athlete per month</span></p>
+          <p class="muted">Then €10; €8 per athlete from 20 athletes.</p></div>
+        <div class="targeta preu"><p class="etiqueta verd">Athlete without a coach</p>
+          <p><b>€9.50</b><s>€19</s><span class="unitat">per month</span></p>
+          <p class="muted">Then €19 a month or €190 a year.</p></div>
+      </div>
+      <p class="muted" style="margin-top: 16px; font-size: 14px">Ginga Força has no price yet.</p>
+    </div>
+  </section>
+
+  <section class="sec alt" id="get-started">
+    <div class="dins">
+      <p class="etiqueta verd">Getting started</p>
+      <h2>Starting is easy</h2>
+      <div class="graella" style="align-items: start">
+        <div class="targeta">
+          <ol class="passos">
+            <li><span class="n">1</span><span>Ask at <a href="../solicitud/">I want to train with Ginga</a>: choose Ginga (running,
+              cycling, swimming, triathlon) or Ginga Força.</span></li>
+            <li><span class="n">2</span><span>Open an intervals.icu account and connect your watch.</span></li>
+            <li><span class="n">3</span><span>Fill in a short form: goal, days, niggles and where you will do strength.</span></li>
+            <li><span class="n">4</span><span>The plan reaches your calendar and your watch, and every Sunday, the email.</span></li>
+          </ol>
+        </div>
+        <div class="targeta"><h3>What is intervals.icu?</h3><p class="muted">A free web platform where your watch (or Strava)
+          sends every workout on its own. Ginga reads how you train, sleep and feel there, and puts your sessions in, which
+          then reach your calendar and your watch.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec fosc">
+    <svg class="textura" style="top: 50%; height: 160px; transform: translateY(-50%)" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#FFC531" stroke-linecap="round"><path d="M-30 60 C300 20,600 110,900 50 C1200 -10,1380 80,1470 40" stroke-width="1.8" opacity=".26" vector-effect="non-scaling-stroke"/><path d="M-30 78 C300 38,600 128,900 68 C1200 8,1380 98,1470 58" stroke-width="1.4" opacity=".2" vector-effect="non-scaling-stroke"/><path d="M-30 94 C300 54,600 144,900 84 C1200 24,1380 114,1470 74" stroke-width="1.1" opacity=".15" vector-effect="non-scaling-stroke"/></g></svg>
+    <div class="dins" style="max-width: 640px">
+      <div class="targeta" style="text-align: center">
+        <h2 style="margin-left: auto; margin-right: auto">Your training, reviewed every week</h2>
+        <p class="muted">With your coach or without one. Tell us what you're looking for and we'll reply by email.</p>
+        <a class="btn" href="../solicitud/" style="margin-top: 16px">I want to train with Ginga</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="sec">
+    <div class="dins">
+      <div>
+        <p>Ginga is not medical advice. When there is pain or a warning sign, a person decides and, if needed, a doctor.</p>
+        <p>Contact: <a href="mailto:coach.ginga@gmail.com">coach.ginga@gmail.com</a> · <a href="../privacitat/?lang=en">Privacy</a></p>
+      </div>
+      <p>© 2026 Ginga</p>
+    </div>
+  </footer>
+</article>
+
 <script>
 // l'idioma: el de l'enllaç (?lang=en), el que s'ha triat abans o el del navegador (com a web/privacitat/)
 (function () {
