@@ -16,8 +16,8 @@
 html {
   min-height: 100%;
   background:
-    /* la G amb el punt, molt suau, a dalt */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -12 150 162'%3E%3Cg opacity='.05'%3E%3Cpath d='M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78' fill='none' stroke='%23FFC531' stroke-width='28' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='126' cy='6' r='15' fill='%23FFC531'/%3E%3C/g%3E%3C/svg%3E") no-repeat right 10vw top 24px / min(440px, 80vw) auto,
+    /* la G sencera amb el punt, ben visible, a dalt a la dreta (mai tallada) */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -12 150 162'%3E%3Cg opacity='.12'%3E%3Cpath d='M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78' fill='none' stroke='%23FFC531' stroke-width='28' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='126' cy='6' r='15' fill='%23FFC531'/%3E%3C/g%3E%3C/svg%3E") no-repeat right 10vw top 24px / min(440px, 80vw) auto,
     /* tres ones a tota l'amplada, a baix */
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%23FFC531' stroke-linecap='round'%3E%3Cpath d='M-30 30 C300 10,600 60,900 25 C1200 -10,1380 50,1470 20' stroke-width='1.8' opacity='.26' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M-30 44 C300 24,600 74,900 39 C1200 4,1380 64,1470 34' stroke-width='1.4' opacity='.2' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M-30 56 C300 36,600 86,900 51 C1200 16,1380 76,1470 46' stroke-width='1' opacity='.14' vector-effect='non-scaling-stroke'/%3E%3C/g%3E%3C/svg%3E") no-repeat left bottom 12px / 100% 120px,
     /* una esquerda vertical, de dalt a baix */
