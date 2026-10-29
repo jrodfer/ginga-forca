@@ -172,6 +172,7 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
   var DIES = ["Diumenge", "Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte"];
   var MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"];
 
+  function majuscula(s) { return s.charAt(0).toUpperCase() + s.slice(1); }   // el detall ve en minúscula (com a la nota del pla)
   function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   function netNom(t) { return (t || "").replace(/^S\d+\s+\w+\s+-\s+/, "").replace(/\bForca\b/g, "Força"); }
   function quantitat(e) {
@@ -321,7 +322,7 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
     $("e-sessio").textContent = netNom(ses.t);
     $("e-comptador").textContent = "Exercici " + (m.i + 1) + " de " + ses.e.length;
     $("e-nom").textContent = e.n;
-    $("e-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
+    $("e-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).map(majuscula).join(" · ");
     $("e-compte").textContent = e.a ? (ses.l === "en" ? "Watch out: " : "Compte: ") + e.a : "";
     $("e-instr").textContent = e.i || "";
     paraA = !guiada && (e.p > 0 || e.ps > 0) ? { p: e.p > 0 ? e.p : 3, ps: e.ps > 0 ? e.ps : 0 } : null;

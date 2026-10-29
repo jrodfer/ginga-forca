@@ -329,6 +329,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   posaLloc(aCasa);
 
   var G = window.GingaMotor, mmss = G.mmss, quantitat = G.quantitat, pauta = G.pauta;
+  function majuscula(s) { return s.charAt(0).toUpperCase() + s.slice(1); }   // el detall ve en minúscula (com a la nota del pla)
   var $ = function (id) { return document.getElementById(id); };
   var DIES = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
   var MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"];
@@ -623,7 +624,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     $("comptador").textContent = "Exercici " + (i + 1) + " de " + sessio.e.length;
     $("barra").style.width = Math.round(suma(f.fetes) / totalSeries * 100) + "%";
     $("ex-nom").textContent = e.n;
-    $("ex-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
+    $("ex-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).map(majuscula).join(" · ");
     $("ex-compte").hidden = !e.a; $("ex-a").textContent = e.a || "";
     $("ex-compte-t").textContent = sessio.l === "en" ? "Watch out:" : "Compte:";
     $("ex-com").hidden = !e.i; $("ex-i").textContent = e.i || "";
