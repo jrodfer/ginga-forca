@@ -1,0 +1,49 @@
+/* La pell comuna de totes les pàgines de Ginga (marca/README.md): Instrument Serif per als títols i les xifres
+   grans, Sora per a la resta, botons rectes en majúscules, targetes de 12 px i les textures kintsugi (línies d'or
+   #FFC531) a tota l'amplada, darrere del contingut. Cada pàgina la carrega després del seu <style>: els colors
+   (--bg, --card, --fg, --muted, --line) són de cada pàgina; aquí només hi ha el que és igual a totes.
+   Les textures són fons CSS (no SVG al document), i per això no les llegeix cap lector de pantalla. Les opacitats
+   (0,13-0,28 les línies, 0,05 la G) es veuen igual sobre el fons clar i sobre el fosc. */
+:root {
+  --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --sans: "Sora", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --gold: #FFC531;
+  --display: var(--serif);
+  --body: var(--sans);
+  /* Instrument Serif només té el pes normal: res de negretes inventades pel navegador */
+  font-synthesis: none;
+}
+html {
+  min-height: 100%;
+  background:
+    /* la G amb el punt, molt suau, a dalt */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -12 150 162'%3E%3Cg opacity='.05'%3E%3Cpath d='M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78' fill='none' stroke='%23FFC531' stroke-width='28' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='126' cy='6' r='15' fill='%23FFC531'/%3E%3C/g%3E%3C/svg%3E") no-repeat right -12vw top 72px / min(520px, 92vw) auto,
+    /* tres ones a tota l'amplada, a baix */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%23FFC531' stroke-linecap='round'%3E%3Cpath d='M-30 30 C300 10,600 60,900 25 C1200 -10,1380 50,1470 20' stroke-width='1.8' opacity='.26' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M-30 44 C300 24,600 74,900 39 C1200 4,1380 64,1470 34' stroke-width='1.4' opacity='.2' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M-30 56 C300 36,600 86,900 51 C1200 16,1380 76,1470 46' stroke-width='1' opacity='.14' vector-effect='non-scaling-stroke'/%3E%3C/g%3E%3C/svg%3E") no-repeat left bottom 12px / 100% 120px,
+    /* una esquerda vertical, de dalt a baix */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 800' preserveAspectRatio='none'%3E%3Cpath d='M10 -10 C14 100,6 250,11 400 C15 550,7 700,12 810' fill='none' stroke='%23FFC531' stroke-width='1' stroke-linecap='round' opacity='.24' vector-effect='non-scaling-stroke'/%3E%3Ccircle cx='11' cy='400' r='3' fill='%23FFC531' opacity='.2'/%3E%3C/svg%3E") no-repeat left max(6px, calc(50% - 400px)) top 0 / 20px 100%,
+    /* el gra de la ceràmica */
+    radial-gradient(ellipse at 35% 30%, rgba(255,197,49,0.045) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 75%, rgba(0,153,107,0.025) 0%, transparent 50%),
+    var(--bg);
+}
+body { background: transparent; font-family: var(--sans); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* títols i xifres grans: Instrument Serif */
+h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.02em; line-height: 1.12; }
+/* la serif és més petita d'ull que la lletra del text: els títols, una mica més grans que abans */
+h1 { font-size: clamp(2.1rem, 7vw, 2.8rem); letter-spacing: -0.025em; }
+h2 { font-size: 1.7rem; }
+h3 { font-size: 1.35em; }
+
+/* etiquetes petites en majúscules */
+.eyebrow { font-family: var(--sans); font-weight: 500; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+
+/* els controls sempre en Sora, encara que la pàgina els posi la lletra de títol */
+button, input, select, textarea, .btn { font-family: var(--sans) !important; }
+
+/* botons: rectes, en majúscules i espaiats; el principal, taronja amb lletra Night ink */
+.btn { border-radius: 4px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+
+/* targetes: blanques sobre el fons crema (o translúcides en fosc), perquè el text no vagi mai sobre les textures */
+.card { border-radius: 12px; }

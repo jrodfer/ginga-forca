@@ -9,17 +9,17 @@
 <title>Ginga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap">
 <style>
 /* La pàgina de presentació de Ginga, en català i en anglès: què és, com funciona, contacte i privacitat. És el web
    que es dona a Garmin (API de Courses) i a qui pregunti què és Ginga. La font és a jrodfer/ginga (web/ginga/). */
 :root {
-  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8; --accent: #FF6A2B; --ok: #00996B;
+  --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1; --accent: #FF6A2B; --ok: #00996B;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239; --accent: #FF6A2B; --ok: #2DBF8C;
+    --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F; --accent: #FF6A2B; --ok: #2DBF8C;
     color-scheme: dark;
   }
 }
@@ -31,11 +31,11 @@
 .lockup .lk-p { fill: #00996B; }
 .lockup .lk-i { fill: var(--accent); }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 "Nunito", "Helvetica Neue", Arial, sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 var(--sans); }
 main { max-width: 720px; margin: 0 auto; padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
 header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 0 8px; flex-wrap: wrap; }
 .idiomes { display: flex; gap: 6px; }
-.idiomes button { font: 800 15px/1 "Nunito", sans-serif; padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line);
+.idiomes button { font: 800 15px/1 var(--sans); padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line);
   background: transparent; color: var(--fg); cursor: pointer; }
 .idiomes button[aria-pressed="true"] { border-color: var(--ok); }
 h1 { font-size: 32px; line-height: 1.2; margin: 18px 0 8px; }
@@ -49,12 +49,13 @@ h2 { font-size: 22px; margin: 0 0 8px; }
 .passos li { counter-increment: pas; display: grid; grid-template-columns: 36px 1fr; gap: 10px; margin: 10px 0; }
 .passos li::before { content: counter(pas); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
   background: var(--accent); color: #10231D; font-weight: 900; }
-.btn { display: inline-block; border-radius: 14px; font: 800 18px/1 "Nunito", sans-serif; padding: 16px 20px; background: var(--accent);
+.btn { display: inline-block; border-radius: 14px; font: 800 18px/1 var(--sans); padding: 16px 20px; background: var(--accent);
   color: #10231D; text-decoration: none; }
 a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
 footer { margin-top: 28px; color: var(--muted); font-size: 15px; }
 [hidden] { display: none !important; }
 </style>
+<link rel="stylesheet" href="../marca.css">
 </head>
 <body>
 <main>

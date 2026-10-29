@@ -10,27 +10,26 @@
 <title>Ginga Apnea</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap">
 <style>
 /* Apnea en sec (només per a en Joan i uns companys apneistes; no l'enllaça cap correu). Les taules de CO2 i d'O2
    amb la marca de cadascú (desada només en aquest mòbil), la marca, la respiració lenta i la preparació, que s'obre
    al reproductor de força. Les dades són a sessions.json, que es fa des d'apnea/apnea.yaml (python -m apnea); la veu,
    a veu/<idioma>/ (python -m apnea.veu); la música, a ../musica.js. Mateixa identitat que el reproductor. */
 :root {
-  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
+  --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #00996B; --tag: #FFE4D3;
-  --display: "Nunito", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
     --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --tag: #1D3A31;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+  --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --tag: #1D3A31;
   color-scheme: dark;
 }
@@ -107,12 +106,12 @@ td.ag { font-weight: 800; }
 .peu { font-size: .85rem; }
 
 /* el reproductor de la taula: pantalla sencera, fosca i tranquil·la */
-.jugador { position: fixed; inset: 0; z-index: 10; background: #0C1C17; color: #FFF4E8;
+.jugador { position: fixed; inset: 0; z-index: 10; background: #0C1C17; color: #F0EDE8;
   display: grid; grid-template-rows: auto 1fr auto; padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px
   calc(env(safe-area-inset-bottom, 0px) + 20px); }
 .j-dalt { display: flex; justify-content: space-between; align-items: center; gap: 12px; max-width: 560px; width: 100%; margin: 0 auto; }
 .j-dalt .eyebrow { color: #A6B4AC; }
-.j-dalt button { flex: none; white-space: nowrap; appearance: none; background: transparent; color: #FFF4E8; border: 1.5px solid #284239; border-radius: 999px;
+.j-dalt button { flex: none; white-space: nowrap; appearance: none; background: transparent; color: #F0EDE8; border: 1.5px solid #284239; border-radius: 999px;
   padding: 8px 14px; font: 700 .85rem var(--display); cursor: pointer; }
 .j-mig { display: grid; place-items: center; align-content: center; gap: 18px; text-align: center; }
 .j-cercle { position: relative; width: min(72vw, 320px); aspect-ratio: 1; display: grid; place-items: center; }
@@ -126,10 +125,11 @@ td.ag { font-weight: 800; }
 .j-sub { color: #A6B4AC; font-size: 1rem; min-height: 1.45em; }
 .j-seg { color: #A6B4AC; font-size: .95rem; min-height: 1.45em; }
 .j-baix { display: grid; gap: 10px; max-width: 560px; width: 100%; margin: 0 auto; }
-.j-baix .btn.sec { color: #FFF4E8; border-color: #284239; }
+.j-baix .btn.sec { color: #F0EDE8; border-color: #284239; }
 .j-resultat { display: grid; gap: 10px; }
 @media (prefers-reduced-motion: reduce) { .j-pulmo { transition: none; } }
 </style>
+<link rel="stylesheet" href="../marca.css">
 </head>
 <body>
 <main>
@@ -237,7 +237,7 @@ td.ag { font-weight: 800; }
   <div class="j-mig" id="j-mig">
     <div class="j-cercle">
       <svg viewBox="0 0 100 100" aria-hidden="true">
-        <circle cx="50" cy="50" r="47" fill="none" stroke="#284239" stroke-width="2"/>
+        <circle cx="50" cy="50" r="47" fill="none" stroke="#24352F" stroke-width="2"/>
         <circle id="j-anell" cx="50" cy="50" r="47" fill="none" stroke="#FF6A2B" stroke-width="2.5" stroke-linecap="round"
           stroke-dasharray="295.3" stroke-dashoffset="295.3"/>
       </svg>

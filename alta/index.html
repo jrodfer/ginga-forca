@@ -9,18 +9,18 @@
 <title>Ginga · Comencem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap">
 <style>
 /* Formulari d'alta d'un atleta nou de Ginga. Només surten les preguntes que intervals.icu no respon (les tria
    coach/alta_formulari.py i venen a l'enllaç). La font és a jrodfer/ginga (web/alta/); aquí se'n publica la còpia. */
 :root {
-  --bg: #FFF4E8; --card: #FFFFFF; --fg: #10231D; --muted: #56655D; --line: #EBDCC8;
+  --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1;
   --accent: #FF6A2B; --ok: #00996B; --avis: #B3261E;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
     --accent: #FF6A2B; --ok: #2DBF8C; --avis: #FF8A80; color-scheme: dark;
   }
 }
@@ -32,7 +32,7 @@
 .lockup .lk-p { fill: #00996B; }   /* el punt de la G, verd */
 .lockup .lk-i { fill: var(--accent); }   /* el punt de la i, taronja */
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 "Nunito", "Helvetica Neue", Arial, sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 18px/1.55 var(--sans); }
 main { max-width: 640px; margin: 0 auto; padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }
 header { padding: 20px 0 8px; }
 .marca { font-weight: 900; font-size: 26px; color: var(--accent); letter-spacing: .02em; }
@@ -54,14 +54,14 @@ h2 { font-size: 22px; margin: 0 0 6px; }
 .fila { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 input[type=number] { font: inherit; font-size: 24px; font-weight: 800; width: 130px; padding: 10px 12px; border-radius: 12px;
   border: 2px solid var(--line); background: var(--card); color: var(--fg); }
-.btn { appearance: none; border: 0; border-radius: 14px; font: 800 18px/1 "Nunito", sans-serif; padding: 16px 20px; cursor: pointer;
+.btn { appearance: none; border: 0; border-radius: 14px; font: 800 18px/1 var(--sans); padding: 16px 20px; cursor: pointer;
   background: var(--accent); color: #10231D; min-height: 56px; }
 .btn.sec { background: transparent; color: var(--fg); border: 2px solid var(--line); }
 .btn:disabled { opacity: .5; cursor: default; }
 .btn:focus-visible, input:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
 .check { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-weight: 600; }
 .check input { width: 22px; height: 22px; accent-color: var(--ok); }
-.check.gran { align-items: flex-start; font-weight: 500; border: 2px solid var(--linia, #EBDCC8); border-radius: 12px; padding: 12px; }
+.check.gran { align-items: flex-start; font-weight: 500; border: 2px solid var(--linia, #E3E4E1); border-radius: 12px; padding: 12px; }
 .check.gran input { width: 30px; height: 30px; flex: none; margin: 0; }
 .avis { color: var(--avis); font-weight: 700; }
 .ok { color: var(--ok); font-weight: 800; font-size: 22px; }
@@ -91,6 +91,7 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
 .ok { color: var(--ok); font-weight: 800; font-size: 22px; }
 .ajuda { color: var(--muted); font-size: 15px; margin: -4px 0 10px; font-weight: 400; }
 </style>
+<link rel="stylesheet" href="../marca.css">
 </head>
 <body>
 <main>

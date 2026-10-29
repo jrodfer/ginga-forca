@@ -9,35 +9,33 @@
 <title>Ginga Força</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap">
 <style>
 /* Layout: una columna de mòbil; a dalt el vídeo, al mig la sèrie en xifres grans, a baix els botons al polze.
    Identitat de Ginga: Sunset orange per a les accions, Tropical green per al que està fet, Samba yellow per al
-   descans en fosc, Night ink i Warm white de fons. Nunito per a tot. */
+   descans en fosc, Night ink i crema de fons. Instrument Serif i Sora (web/marca.css). */
 :root {
-  --bg: #FFF4E8;          /* Warm white */
+  --bg: #FAFAF7;          /* crema */
   --card: #FFFFFF;
   --fg: #10231D;          /* Night ink */
-  --muted: #56655D;
-  --line: #EBDCC8;
+  --muted: #5B6863;
+  --line: #E3E4E1;
   --accent: #FF6A2B;      /* Sunset orange */
   --accent-fg: #10231D;
   --ok: #00996B;          /* Tropical green */
   --rest: #D9541C;        /* el descans: taronja fosc, que es llegeix sobre blanc càlid */
   --rest-soft: #FFE4D3;
-  --display: "Nunito", "Helvetica Neue", Arial, sans-serif;
-  --body: "Nunito", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+    --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
     --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #10231D; --card: #17302A; --fg: #FFF4E8; --muted: #A6B4AC; --line: #284239;
+  --bg: #10231D; --card: #1A2C26; --fg: #F0EDE8; --muted: #969C97; --line: #24352F;
   --accent: #FF6A2B; --accent-fg: #10231D; --ok: #2DBF8C; --rest: #FFC531; --rest-soft: #1D3A31;
   color-scheme: dark;
 }
@@ -170,6 +168,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 .compte b { font-weight: 800; }
 @media (prefers-reduced-motion: reduce) { .progres > div { transition: none; } }
 </style>
+<link rel="stylesheet" href="marca.css">
 </head>
 <body>
 <main>
