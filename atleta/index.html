@@ -87,6 +87,10 @@ h2 { font-size: 1.6rem; margin: 0 0 4px; }
 .dia .cos { padding: 0 0 14px 124px; }
 @media (max-width: 420px) { .dia .cos { padding-left: 0; } }
 
+/* la forma: fitness, fatigue i form d'intervals.icu */
+.xifres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 10px; }
+.xifres b { display: block; font: 400 34px/1.1 var(--serif); }
+
 /* les eines */
 .eina { display: block; padding: 14px 0; border-top: 1px solid var(--line); text-decoration: none; }
 .eina:first-of-type { border-top: 0; padding-top: 4px; }
@@ -136,10 +140,11 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
   </section>
 
   <section id="area" hidden>
-    <div class="card" id="compte" hidden></div>
     <div class="card" id="avui"></div>
     <div class="card" id="setmana"><p class="etiqueta verd">Aquesta setmana</p><div id="dies"></div></div>
     <div class="card" id="ve" hidden><p class="etiqueta verd">La setmana que ve</p><div id="dies-ve"></div></div>
+    <div class="card" id="compte" hidden></div>
+    <div class="card" id="forma" hidden></div>
     <div class="card" id="eines" hidden><p class="etiqueta">Quan vulguis, cada dia</p><div id="llista-eines"></div></div>
     <p class="petit muted" id="peu">Es posa al dia sola cada diumenge, amb el correu.</p>
   </section>
@@ -255,6 +260,25 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       $("avui").appendChild(el("h1", null, llarg(avui)));
       $("avui").appendChild(el("p", "muted", "Encara no hi ha cap setmana. Diumenge, amb el correu, la tindràs aquí."));
     } else pintaAvui(actual || ve && ve.inici === mes(avui, 1) && ve, avui);   // diumenge al vespre, demà ja és la que ve
+
+    var forma = doc && doc.forma, fo = $("forma");
+    fo.hidden = !forma;
+    if (forma) {
+      fo.textContent = "";
+      fo.appendChild(el("p", "etiqueta", "La teva forma, " + llarg(forma.data).toLowerCase()));
+      var x = el("div", "xifres");
+      [["Fitness", forma.fitness], ["Fatigue", forma.fatigue], ["Form", forma.form]].forEach(function (f) {
+        var c = el("div");
+        c.appendChild(el("b", null, (f[1] > 0 && f[0] === "Form" ? "+" : "") + f[1]));
+        c.appendChild(el("span", "petit muted", f[0]));
+        x.appendChild(c);
+      });
+      fo.appendChild(x);
+      fo.appendChild(el("p", "petit muted", "Fitness: la càrrega de les últimes 6 setmanes. Fatigue: la de l'última. " +
+        "Form: la resta; negativa vol dir que carregues més del que estàs acostumat."));
+      fo.appendChild(el("p", "petit muted", "Són les de " + llarg(forma.data).toLowerCase() + ", quan es va fer el correu: " +
+        "no compten el que has fet després. Les d'avui, a intervals.icu."));
+    }
 
     $("setmana").hidden = !actual;
     if (actual) pintaDies(actual, $("dies"), avui);
