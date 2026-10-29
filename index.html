@@ -578,11 +578,9 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   // ---- Força 60+: com ha anat cada exercici, en acabar-lo (al descans de l'última sèrie; l'últim, al final).
   // Quantes repeticions quedaven (o segons, als de temps), el pes si en porta, si ha fet mal, i les sèries fetes.
   // S'envia a cada toc (el Worker ho afegeix al que ja hi havia) i es recorda al mòbil, per no tornar-ho a demanar.
-  // És opcional: «Ara no» la salta aquella vegada, i «No m'ho preguntis més» no la torna a fer (es pot tornar a
-  // activar a la pantalla final). El pes es veu igualment a tot arreu (al costat de l'exercici i a la llista).
+  // És opcional: qui no vol contestar no contesta, i «Ara no» l'amaga aquella vegada. El pes es veu igualment a tot
+  // arreu (al costat de l'exercici i a la llista).
   var valexObert = { "valex-descans": null, "valex-final": null }, valexSaltat = {}, EN = sessio.l === "en";
-  var CLAU_NO_PREGUNTIS = "ginga-valex-no";
-  function noPreguntis() { try { return localStorage.getItem(CLAU_NO_PREGUNTIS) === "1"; } catch (err) { return false; } }
   function kgText(x) { return (x + "").replace(".", ",") + " kg"; }
   function pesDe(e) { return e.kg != null ? e.kg : kgDarrer(e); }
   function textPes(e) {
@@ -615,20 +613,9 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     var cos = { k: valora.k, g: valora.g, e: {} }; cos.e[e.id] = x;
     return fetch(valora.u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cos) });
   }
-  function tornaAPreguntar(cont) {                       // a la pantalla final, si havia dit «No m'ho preguntis més»
-    cont.hidden = false; cont.textContent = ""; valexObert[cont.id] = null;
-    var b = document.createElement("button"); b.type = "button"; b.className = "btn sec";
-    b.textContent = EN ? "Ask me again how each exercise went" : "Torna'm a preguntar com va cada exercici";
-    b.addEventListener("click", function () {
-      try { localStorage.removeItem(CLAU_NO_PREGUNTIS); } catch (err) {}
-      cont.hidden = true;
-    });
-    cont.appendChild(b);
-  }
   function preguntaExercici(cont, i) {
     var e = i >= 0 ? sessio.e[i] : null;
-    if (valora && cont.id === "valex-final" && noPreguntis()) return tornaAPreguntar(cont);
-    if (!valora || !e || !e.va || !e.id || valexSaltat[i] || noPreguntis() ||
+    if (!valora || !e || !e.va || !e.id || valexSaltat[i] ||
         (cont.id === "valex-final" && recorda(e).r)) {
       cont.hidden = true; valexObert[cont.id] = null; return;
     }
@@ -683,10 +670,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     cont.appendChild(lm);
     mal.addEventListener("change", function () { desa({ dolor: mal.checked }); });
     var salta = document.createElement("div"); salta.className = "fila";
-    [[EN ? "Not now" : "Ara no", function () { valexSaltat[i] = true; }],
-     [EN ? "Don't ask me again" : "No m'ho preguntis més", function () {
-       try { localStorage.setItem(CLAU_NO_PREGUNTIS, "1"); } catch (err) {}
-     }]].forEach(function (x) {
+    [[EN ? "Not now" : "Ara no", function () { valexSaltat[i] = true; }]].forEach(function (x) {
       var b = document.createElement("button"); b.type = "button"; b.className = "btn sec"; b.textContent = x[0];
       b.addEventListener("click", function () { x[1](); cont.hidden = true; valexObert[cont.id] = null; });
       salta.appendChild(b);
