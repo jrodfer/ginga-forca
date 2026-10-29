@@ -320,11 +320,14 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   var esExemple = !sessio;
   sessio = sessio || EXEMPLE;
   var clau = "ginga-forca:" + ((location.hash || "").slice(1, 80) || "exemple");
+  // g és la sessió guiada (la de ioga: sempre amb la veu, a). Els enllaços de força al gimnàs d'abans portaven g
+  // sense veu: són de gimnàs (gi), no guiades, que si no van per temps i sense valoració.
+  if (sessio.g && !sessio.a) { sessio.gi = 1; delete sessio.g; }
 
   // ---- al gimnàs o a casa: els exercicis amb alternativa de casa (e.k) es canvien sencers; la resta, igual.
-  // Qui va al gimnàs (g) ho tria sempre, encara que cap exercici canviï; qui fa la força a casa no ho veu.
+  // Qui va al gimnàs (gi) ho tria sempre, encara que cap exercici canviï; qui fa la força a casa no ho veu.
   var gimnas = sessio.e, canvia = gimnas.some(function (e) { return e.k; });
-  var teCasa = !!sessio.g || canvia, clauLloc = "ginga-lloc:" + clau;
+  var teCasa = !!sessio.gi || canvia, clauLloc = "ginga-lloc:" + clau;
   function posaLloc(casa) {
     sessio.e = gimnas.map(function (e) {
       if (!casa || !e.k) return e;
