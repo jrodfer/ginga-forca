@@ -237,6 +237,18 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
   }
 
   var videoActual = null, guiada = false;              // guiada (ioga): sense so, que parla la veu guia del mòbil
+  // Els exercicis de força d'aguantar amb e.p (en quarts) o e.ps (en segons): el vídeo s'atura a la postura, com al mòbil
+  var paraA = null, vigilaPara = null;
+  function vigilaAtura() {
+    clearInterval(vigilaPara); vigilaPara = null;
+    if (!paraA) return;
+    vigilaPara = setInterval(function () {
+      try {
+        var d = yt.getDuration(), on = paraA.ps || d * paraA.p / 4;
+        if (d && yt.getCurrentTime() >= on) { yt.pauseVideo(); clearInterval(vigilaPara); vigilaPara = null; }
+      } catch (err) {}
+    }, 200);
+  }
   function so() { if (!guiada) yt.unMute(); }
   function posaVideo(id, forca) {
     videoVol = id;
@@ -250,10 +262,12 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
       videoActual = null; return;
     }
     if (sense) sense.remove();
-    if (!ytLlest || (!forca && videoActual === id)) return;
-    videoActual = id;
+    var clau = id + (paraA ? "|atura" : "");            // el mateix vídeo, aturat o en bucle, es torna a carregar
+    if (!ytLlest || (!forca && videoActual === clau)) return;
+    videoActual = clau;
     yt.loadVideoById(id);
     if (guiada) yt.mute();
+    vigilaAtura();
     // si la tele no deixa arrencar amb so, arrenca sense
     setTimeout(function () { try { if (yt.getPlayerState() !== YT.PlayerState.PLAYING) { yt.mute(); yt.playVideo(); } } catch (err) {} }, 2500);
   }
@@ -306,6 +320,7 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
     $("e-nom").textContent = e.n;
     $("e-det").textContent = [e.x, e.d ? "descans " + mmss(e.d) + " entre sèries" : ""].filter(Boolean).join(" · ");
     $("e-instr").textContent = e.i || "";
+    paraA = !guiada && (e.p > 0 || e.ps > 0) ? { p: e.p > 0 ? e.p : 3, ps: e.ps > 0 ? e.ps : 0 } : null;
     posaVideo(e.v || "");
 
     var n = GingaMotor.passos(ses, e), fetes = Math.min((m.fetes || [])[m.i] || 0, n), caixa = $("e-caixa");

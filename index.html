@@ -473,7 +473,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   });
 
   // ---- vídeo (al mòbil només quan no s'emet: si no, sona per partida doble)
-  var videoActual = null, videoQuart = 3, videoSegon = 0;
+  var videoActual = null, videoQuart = 3, videoSegon = 0, videoAtura = false;
   function posaVideo(e) {
     $("tele").hidden = !e.v;
     if (e.v) $("tele").href = "https://www.youtube.com/watch?v=" + encodeURIComponent(e.v);
@@ -481,21 +481,26 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     if (videoActual === e.v + "|" + e.n) return;
     videoActual = e.v + "|" + e.n;
     var cont = $("video"); cont.textContent = ""; cont.classList.remove("fosc");
+    // s'atura a la postura: a la guiada, sempre; a la resta, els exercicis d'aguantar que ho diuen (e.p, e.ps), perquè
+    // el vídeo no ensenyi un moviment que no toca (la planxa alta, amb el de la flexió escapular)
+    videoAtura = !!e.v && (!!sessio.g || e.p > 0 || e.ps > 0);
     if (e.v) {
       var f = document.createElement("iframe"), id = encodeURIComponent(e.v);
-      // arrenca sol quan s'obre l'exercici, sense so (si no, el mòbil no el deixa arrencar); fora de la guiada, en bucle
+      // arrenca sol quan s'obre l'exercici, sense so (si no, el mòbil no el deixa arrencar); si no s'atura, en bucle
       f.src = "https://www.youtube-nocookie.com/embed/" + id + "?rel=0&playsinline=1&modestbranding=1&autoplay=1&mute=1" +
-        (sessio.g ? "&enablejsapi=1&controls=0&disablekb=1&iv_load_policy=3&origin=" + encodeURIComponent(location.origin)
-                  : "&loop=1&playlist=" + id);
+        (videoAtura ? "&enablejsapi=1&iv_load_policy=3&origin=" + encodeURIComponent(location.origin) +
+                      (sessio.g ? "&controls=0&disablekb=1" : "")
+                    : "&loop=1&playlist=" + id);
       f.title = "Vídeo: " + e.n;
       f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
       f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
       cont.appendChild(f);
-      if (sessio.g) {                                      // el fotograma on s'atura (e.p, en quarts; 3/4 si no ho diu)
+      if (videoAtura) {                                    // el fotograma on s'atura (e.p, en quarts; 3/4 si no ho diu)
         videoQuart = e.p === 1 || e.p === 2 ? e.p : 3; videoSegon = e.ps > 0 ? e.ps : 0;
         var im = document.createElement("img"); im.className = "fotograma"; im.alt = ""; im.hidden = true;
         im.src = "https://i.ytimg.com/vi/" + id + "/sd" + videoQuart + ".jpg";   // YouTube: 1, 2, 3 = 1/4, 1/2, 3/4
         im.onerror = function () { im.onerror = null; im.src = "https://i.ytimg.com/vi/" + id + "/hq" + videoQuart + ".jpg"; };
+        if (!sessio.g) { im.title = "Torna a veure el vídeo"; im.style.cursor = "pointer"; im.onclick = arrencaVideo; }
         cont.appendChild(im);
         videoArrenca = Date.now(); videoDurada = 0;
         f.addEventListener("load", function () {           // que el vídeo ens digui per on va
@@ -514,6 +519,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   // guia), i s'atura als 3/4 (o on digui l'exercici: e.p en quarts, o e.ps en segons), a la postura feta, fins que
   // s'acaba l'exercici. A sobre s'hi posa la imatge de YouTube d'aquell quart (sd1, sd2 o sd3), perquè no es vegi el
   // botó de pausa; també a la pausa. Al descans, fons negre. Les ordres van per postMessage (enablejsapi), i el vídeo diu per on va (infoDelivery).
+  // A la força, els exercicis d'aguantar amb e.p o e.ps fan el mateix, però el vídeo arrenca sol en obrir-se i, si es
+  // toca la imatge, torna a començar.
   function ordreVideo(func, args) {
     var f = $("video").querySelector("iframe");
     if (!f || !f.contentWindow) return;
@@ -535,7 +542,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     if (explica) arrencaVideo();
   }
   window.addEventListener("message", function (ev) {
-    if (!sessio.g || !/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(ev.origin)) return;
+    if (!videoAtura || !/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(ev.origin)) return;
     var d;
     try { d = JSON.parse(ev.data); } catch (err) { return; }
     var info = d && d.info || {}, estat = d && d.event === "onStateChange" ? d.info : info.playerState;
