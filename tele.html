@@ -213,6 +213,7 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
         },
         onStateChange: function (ev) {
           if (ev.data === YT.PlayerState.PLAYING) { clearTimeout(vigila); foto(""); }
+          if (ev.data === YT.PlayerState.PAUSED || ev.data === YT.PlayerState.ENDED) fotograma(videoVol);   // no el negre
           if (ev.data === YT.PlayerState.ENDED) { yt.seekTo(0); yt.playVideo(); }   // en bucle
         },
         onError: function () { clearTimeout(vigila); foto(videoVol, AVIS_VIDEO); }   // vídeo no disponible o bloquejat a la tele
@@ -228,10 +229,22 @@ body { background: var(--bg); color: var(--fg); font: 700 1.6vw/1.3 var(--body);
   var vigila = null, fotoDe = "";
   function foto(id, avis) {
     var im = $("e-foto");
+    im.onerror = null;
     if (id) im.src = "https://i.ytimg.com/vi/" + encodeURIComponent(id) + "/hqdefault.jpg";
     im.hidden = !id;
     $("e-avis-video").textContent = (id && avis) || "";
     $("e-avis-video").hidden = !(id && avis);
+  }
+  // Al Chromecast, un vídeo aturat (pausa, final, la postura) es queda en negre: s'hi posa la imatge de YouTube del
+  // quart més proper (sd1, sd2, sd3; hq si no n'hi ha), com al mòbil, fins que torna a anar.
+  function fotograma(id) {
+    if (!id) return;
+    var q = 3;
+    try { var d = yt.getDuration(); if (d) q = Math.min(3, Math.max(1, Math.round(yt.getCurrentTime() / d * 4))); } catch (err) {}
+    var im = $("e-foto"), base = "https://i.ytimg.com/vi/" + encodeURIComponent(id) + "/";
+    im.onerror = function () { im.onerror = null; im.src = base + "hq" + q + ".jpg"; };
+    im.src = base + "sd" + q + ".jpg"; im.hidden = false;
+    $("e-avis-video").hidden = true;
   }
   function vigilaVideo(id) {
     if (id === fotoDe) return;             // la tele rep l'estat sovint: només quan canvia d'exercici
