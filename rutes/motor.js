@@ -380,6 +380,16 @@
   const NIVELL_PRINCIPAL = 0.7;    // d'aquí amunt, carretera principal: se'n treuen els trams llargs i es diu el %
   const TRAM_PRINCIPAL = 300;      // m seguits per una principal que ja es miren d'evitar (creuar-la o un tros curt, no)
   const CADA_EVITA_PRINCIPAL = 400;  // per tallar una carretera n'hi ha prou amb un punt de tant en tant
+  // Com a molt, 3 km o un 12% del circuit per carretera principal, el que sigui més (en Joan, 30/10/2026: «prefereixo
+  // fer una ruta un % més llarga» que anar per una N- o una C- quan hi ha alternativa). Un circuit que en fa més no es
+  // proposa. Els 3 km deixen creuar un riu o l'autopista pel pont d'una principal (Llers, la C-260).
+  const MAX_PRINCIPAL_M = 3000;
+  const MAX_PRINCIPAL = 0.12;
+
+  /** Els metres per carretera principal que pot fer un circuit de `metres` m. */
+  function limitPrincipal(metres) {
+    return Math.max(MAX_PRINCIPAL_M, MAX_PRINCIPAL * metres);
+  }
 
   /** Trànsit (0-1) d'un tram pel nom del pas d'openrouteservice, o null si el nom no porta cap referència. */
   function transitRef(nom) {
@@ -491,6 +501,7 @@
       dolents: fora.dolents, foraCarretera: fora.metres,
       transit: princ.transit, principal: princ.metres / (acc[acc.length - 1] || 1), principalLlarg: princ.llarg,
       tramsPrincipals: princ.llarg.some(Boolean),
+      massaPrincipal: princ.metres > limitPrincipal(acc[acc.length - 1]),
       desnivell: p.ascent != null ? p.ascent : desnivellPositiu(coords),
       senseAsfalt,
       carretera: (waytype[1] || 0) + (waytype[2] || 0),
@@ -957,14 +968,17 @@ out tags geom qt;`;
         if (afegit > 0 && (r.km < kMin || r.km > kMax)) await prova(fes((x0 * (obj - L)) / afegit));
       }));
     }
-    // poques que valguin: les alternatives de BRouter de la millor
+    // poques que valguin, o totes per massa carretera principal: les alternatives de BRouter de la millor. Els punts
+    // els tria l'atleta, i per això una que en fa massa no es llença: va darrere de les que no
     const pena = (c) => (c.pena = c.pena != null ? c.pena : penaOberta(c, p));
-    const bones = () => cands.filter(dins).sort((a, b) => pena(a) - pena(b));
-    if (bones().length && bones().length < 3) {
+    const massa = (c) => esCarretera(sessioOberta(p)) && c.r.massaPrincipal ? 1 : 0;
+    const ordena = (a, b) => massa(a) - massa(b) || pena(a) - pena(b);
+    const bones = () => cands.filter(dins).sort(ordena);
+    if (bones().length && (bones().length < 3 || bones().every(massa))) {
       const c = bones()[0];
       await Promise.all([1, 2].map((alt) => prova(c.punts, c.mogut, alt)));
     }
-    const ordre = (bones().length ? bones() : cands.sort((a, b) => pena(a) - pena(b)));
+    const ordre = (bones().length ? bones() : cands.sort(ordena));
     const propostes = [];
     for (const c of ordre) if (propostes.length < 3 && !propostes.some((x) => mateixa(x.r, c.r))) propostes.push(c);
     return { propostes, motiu: motiu || (!cands.length ? "cap" : bones().length ? null : "fora") };
@@ -973,7 +987,7 @@ out tags geom qt;`;
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, rangDesnivell, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
-    foraCarretera, transitRef, perTransit, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
+    foraCarretera, transitRef, perTransit, limitPrincipal, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa, voltes,
     puntesVoltes, corriolsDubtosos, PERFILS_BROUTER, deBrouter, consultaPobles, consultaPoblesOverpass, llegeixPobles,
     perPobles, viaForaVoltes, puntA, mesAProp, desviament, triangle, sessioOberta, penaOberta, rutaOberta,
