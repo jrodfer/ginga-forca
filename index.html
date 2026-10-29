@@ -186,6 +186,7 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
         <button class="btn sec" type="button" data-lloc="gimnas" aria-pressed="true">Al gimnàs</button>
         <button class="btn sec" type="button" data-lloc="casa" aria-pressed="false">A casa</button>
       </div>
+      <p class="muted" id="lloc-igual" hidden>A casa, els mateixos exercicis.</p>
     </div>
     <ol class="plan" id="llista"></ol>
     <details id="notes-bloc" hidden><summary>Notes de l'entrenador</summary><p id="notes"></p></details>
@@ -301,8 +302,10 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
   sessio = sessio || EXEMPLE;
   var clau = "ginga-forca:" + ((location.hash || "").slice(1, 80) || "exemple");
 
-  // ---- al gimnàs o a casa: els exercicis amb alternativa de casa (e.k) es canvien sencers; la resta, igual
-  var gimnas = sessio.e, teCasa = gimnas.some(function (e) { return e.k; }), clauLloc = "ginga-lloc:" + clau;
+  // ---- al gimnàs o a casa: els exercicis amb alternativa de casa (e.k) es canvien sencers; la resta, igual.
+  // Qui va al gimnàs (g) ho tria sempre, encara que cap exercici canviï; qui fa la força a casa no ho veu.
+  var gimnas = sessio.e, canvia = gimnas.some(function (e) { return e.k; });
+  var teCasa = !!sessio.g || canvia, clauLloc = "ginga-lloc:" + clau;
   function posaLloc(casa) {
     sessio.e = gimnas.map(function (e) {
       if (!casa || !e.k) return e;
@@ -313,6 +316,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     Array.prototype.forEach.call(document.querySelectorAll("#lloc button"), function (b) {
       b.setAttribute("aria-pressed", (b.getAttribute("data-lloc") === "casa") === casa ? "true" : "false");
     });
+    var igual = document.getElementById("lloc-igual");
+    if (igual) igual.hidden = !(casa && !canvia);
   }
   var aCasa = false;
   try { aCasa = teCasa && localStorage.getItem(clauLloc) === "casa"; } catch (err) {}
