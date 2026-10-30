@@ -1,0 +1,198 @@
+{
+ "textos": {
+  "ca": {
+   "marca": "Tècnica de carrera",
+   "eyebrow": "El teu bloc",
+   "avui": "Els exercicis del teu bloc",
+   "avuiIntro": "Després de 10-15 minuts corrent suau, en aquest ordre: cada exercici, un tram d'uns 20-30 m, i enllaça'l amb uns metres corrent normal pensant en la idea. Torna caminant.",
+   "manual": "Exercicis de tècnica de carrera",
+   "manualIntro": "Tres blocs, del més senzill al més complet. Fes-los amb el cos fresc, després de 10-15 minuts corrent suau, en una sortida tranquil·la i mai després de sèries.",
+   "tots": "Tots els blocs",
+   "perCostat": "per costat",
+   "peu": "Vídeos a YouTube: la biblioteca de l'entrenador i la TriDot Run Drill Series."
+  },
+  "en": {
+   "marca": "Running technique",
+   "eyebrow": "Your block",
+   "avui": "Your block's drills",
+   "avuiIntro": "After 10-15 minutes of easy running, in this order: each drill over 20-30 m, then a few metres of normal running with the same idea. Walk back.",
+   "manual": "Running technique drills",
+   "manualIntro": "Three blocks, from simplest to fullest. Do them fresh, after 10-15 minutes of easy running, on an easy run and never after intervals.",
+   "tots": "All the blocks",
+   "perCostat": "each side",
+   "peu": "Videos on YouTube: the coach's library and the TriDot Run Drill Series."
+  }
+ },
+ "grups": [
+  {
+   "titol": "Bloc 1 · Base",
+   "titol_en": "Block 1 · Basics",
+   "ids": [
+    "tc_bracos",
+    "tc_marxa",
+    "tc_frankenstein",
+    "tc_skipping",
+    "tc_talons",
+    "tc_enrere",
+    "tc_progressius"
+   ],
+   "minuts": 14
+  },
+  {
+   "titol": "Bloc 2 · Skipping",
+   "titol_en": "Block 2 · Skipping",
+   "ids": [
+    "tc_peus_rapids",
+    "tc_talons",
+    "tc_skipping_a",
+    "tc_carioca",
+    "tc_lateral",
+    "tc_progressius"
+   ],
+   "minuts": 14
+  },
+  {
+   "titol": "Bloc 3 · Complet",
+   "titol_en": "Block 3 · Full set",
+   "ids": [
+    "tc_talons",
+    "tc_skipping_a",
+    "tc_genolls_alts",
+    "tc_skipping_b",
+    "tc_cames_rectes",
+    "tc_progressius"
+   ],
+   "minuts": 12
+  }
+ ],
+ "exercicis": [
+  {
+   "id": "tc_bracos",
+   "nom": "Braços",
+   "nom_en": "Arm swing",
+   "video": "HL57zOgDPCg",
+   "detall": "Quiet, peus separats i el pes una mica endavant: braços a 90 graus que van endavant i enrere, sense creuar davant del cos, espatlles baixes. Idea: les mans passen fregant la butxaca.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_marxa",
+   "nom": "Marxa",
+   "nom_en": "Marching",
+   "video": "CFigpGBXB_s",
+   "detall": "Caminant: puja el genoll fins al maluc amb la punta del peu amunt, para un instant amb el braç contrari endavant i baixa el peu sota el cos. Idea: empeny el terra avall.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_frankenstein",
+   "nom": "Caminada Frankenstein",
+   "nom_en": "Frankenstein walk",
+   "video": "Qol4UvKES0E",
+   "detall": "Caminant, braços estirats al davant: puja una cama recta cap a la mà, amb la punta del peu amunt, i baixa-la sota el cos. És la preparació del skipping rus. Idea: la punta del peu va a buscar la mà.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_skipping",
+   "nom": "Skipping suau",
+   "nom_en": "Knee skips",
+   "video": "Q5Vda1RZrtw",
+   "detall": "Saltironant endavant amb ritme, el genoll una mica amunt i els braços acompanyant. Comença petit i ves-lo fent més gran. Idea: rebota al terra com una pilota.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_peus_rapids",
+   "nom": "Skipping baix (peus ràpids)",
+   "nom_en": "Quick feet",
+   "video": "x1xX2AHgIrk",
+   "detall": "Passes molt curtes i molt ràpides sobre la part de davant del peu, avançant poc, el cos una mica endavant i braços a 90 graus. Idea: toca a terra com si cremés.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_talons",
+   "nom": "Talons al cul",
+   "nom_en": "Butt kicks",
+   "video": "jpH94dKeHO4",
+   "detall": "Corrent suau, el taló puja cap al cul just després de deixar el terra i el peu torna a baixar sota el cos, no al davant. Idea: el peu surt del terra de seguida.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_skipping_a",
+   "nom": "Skipping A",
+   "nom_en": "A skips",
+   "video": "HUBzJ9GQrqs",
+   "detall": "Saltironant: el genoll puja fins al maluc amb la punta del peu amunt i el peu baixa amb força just sota el cos. Braç contrari endavant. Idea: pica el terra just sota teu.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_carioca",
+   "nom": "Carioca",
+   "nom_en": "Carioca",
+   "video": "laFblMkLo9A",
+   "detall": "De costat: la cama de darrere creua per davant i després per darrere, els malucs giren i les espatlles miren endavant. Un tram cap a cada costat. Idea: mira un punt fix al davant.",
+   "series": 2,
+   "segons": 15,
+   "costat": true
+  },
+  {
+   "id": "tc_lateral",
+   "nom": "Desplaçament lateral",
+   "nom_en": "Lateral shuffle",
+   "video": "m-THHWwBKXA",
+   "detall": "De costat, genolls una mica doblegats i sobre la part de davant del peu: passes ràpides sense que els peus es toquin. Un tram cap a cada costat. Idea: llisca pel terra sense fer soroll.",
+   "series": 2,
+   "segons": 15,
+   "costat": true
+  },
+  {
+   "id": "tc_enrere",
+   "nom": "Trote enrere",
+   "nom_en": "Backward jogging",
+   "video": "x96GKevST7I",
+   "detall": "Trotant d'esquena, passes curtes i lleugeres sobre la part de davant del peu, el cos alt i els braços com quan corres. Mira enrere de tant en tant. Idea: el terra rellisca endavant sota teu.",
+   "series": 2,
+   "segons": 15
+  },
+  {
+   "id": "tc_genolls_alts",
+   "nom": "Genolls alts",
+   "nom_en": "High knees",
+   "video": "3oGGhXiCoEA",
+   "detall": "Corrent avançant poc, els genolls pugen fins al maluc a un ritme ràpid, el cos alt i els braços amb força. Idea: puja unes escales sense tocar els graons.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_skipping_b",
+   "nom": "Skipping B",
+   "nom_en": "B skips",
+   "video": "WbG2fa1VnJQ",
+   "detall": "Com el skipping A, però dalt de tot la cama s'estira endavant i baixa cap enrere, fins a tocar terra sota el cos. Fes primer el A i passa-hi. Idea: arrossega el terra cap enrere.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_cames_rectes",
+   "nom": "Skipping rus (cames rectes)",
+   "nom_en": "Straight-leg run",
+   "video": "dMvbhL5bYbY",
+   "detall": "Passes curtes amb les cames rectes i rígides, com unes tisores, que baixen a buscar el terra sota el cos amb la part del mig del peu. No és un salt llarg. Idea: talla l'aire i pica el terra sota teu.",
+   "series": 2,
+   "segons": 20
+  },
+  {
+   "id": "tc_progressius",
+   "nom": "Progressius",
+   "nom_en": "Strides",
+   "video": "ZjjEW_A5rHs",
+   "detall": "Uns 80-100 m corrent de suau a ràpid sense arribar a esprintar, relaxat i amb bona forma; torna caminant. Idea: el terra passa cada cop més ràpid sota teu.",
+   "series": 4,
+   "segons": 20
+  }
+ ]
+}

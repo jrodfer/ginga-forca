@@ -13,7 +13,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap">
 <style>
 /* Els exercicis de tècnica de crol amb el seu vídeo. Amb #id1,id2... (l'enllaç del correu del diumenge), primer els
-   d'aquella natació, en ordre; sense, el manual sencer per nivells. Les dades són a exercicis.json, que es fa des de
+   d'aquella natació, en ordre; sense, el manual sencer per nivells. Amb ?m=carrera, els de tècnica de carrera
+   (carrera.json, de python -m tecnica_carrera web), per blocs: la mateixa pàgina per a qualsevol mòdul de vídeos. Les dades són a exercicis.json, que es fa des de
    tecnica_natacio/exercicis.yaml (python -m tecnica_natacio web). Mateixa identitat que el reproductor de força. */
 :root {
   --bg: #FAFAF7; --card: #FFFFFF; --fg: #10231D; --muted: #5B6863; --line: #E3E4E1;
@@ -161,7 +162,8 @@ a { color: inherit; }
     t.appendChild(el("h3", null, en ? e.nom_en : e.nom));
     c.appendChild(t);
     var tags = el("div", "tags");
-    tags.appendChild(el("span", "tag", T.focus ? (T.focus[e.focus] || e.focus) : e.focus));
+    if (e.focus) tags.appendChild(el("span", "tag", T.focus ? (T.focus[e.focus] || e.focus) : e.focus));
+    if (e.series) tags.appendChild(el("span", "tag", e.series + " × " + e.segons + " s" + (e.costat ? " " + T.perCostat : "")));
     if (e.material && !en) tags.appendChild(el("span", "tag", e.material));
     c.appendChild(tags);
     if (e.per_a) {
@@ -170,7 +172,7 @@ a { color: inherit; }
       per.appendChild(document.createTextNode(en ? e.per_a_en : e.per_a));
       c.appendChild(per);
     }
-    c.appendChild(el("p", null, en ? e.detall_en : e.detall));
+    c.appendChild(el("p", null, en ? (e.detall_en || e.detall) : e.detall));
     if (e.idea) {
       var idea = el("p", "idea");
       idea.appendChild(el("b", null, T.idea));
@@ -183,10 +185,21 @@ a { color: inherit; }
   document.documentElement.lang = en ? "en" : "ca";
   $("marca").textContent = T.marca;
   $("peu").textContent = T.peu;
-  fetch("exercicis.json").then(function (r) {
+  // ?m=carrera (o un altre mòdul): les seves dades (<m>.json, amb els textos i els grups); sense, la natació de sempre
+  var m = new URLSearchParams(location.search).get("m");
+  fetch(/^[a-z]+$/.test(m || "") ? m + ".json" : "exercicis.json").then(function (r) {
     if (!r.ok) throw new Error(r.status);
     return r.json();
   }).then(function (dades) {
+    var grups = null;
+    if (!Array.isArray(dades)) {
+      var t = dades.textos[en ? "en" : "ca"];
+      Object.keys(t).forEach(function (k) { T[k] = t[k]; });
+      T.focus = null;
+      $("marca").textContent = T.marca; $("peu").textContent = T.peu;
+      grups = dades.grups;
+      dades = dades.exercicis;
+    }
     var perId = {};
     dades.forEach(function (e) { perId[e.id] = e; });
     var ids = decodeURIComponent(location.hash.slice(1)).split(",").filter(function (i) { return perId[i]; }).slice(0, 12);
@@ -202,7 +215,14 @@ a { color: inherit; }
       $("manual-titol").textContent = T.manual;
       $("manual-intro").textContent = T.manualIntro;
     }
-    [1, 2, 3].forEach(function (nivell) {
+    if (grups) grups.forEach(function (g) {          // un mòdul amb grups (els blocs de carrera): cadascun sencer
+      $("nivells").appendChild(el("h2", null, (en ? g.titol_en : g.titol) + (g.minuts ? " · " + g.minuts + " min" : "")));
+      var l = el("div", "llista");
+      l.style.marginTop = "10px";
+      g.ids.forEach(function (i, n) { if (perId[i]) l.appendChild(targeta(perId[i], n + 1)); });
+      $("nivells").appendChild(l);
+    });
+    else [1, 2, 3].forEach(function (nivell) {
       var d = dades.filter(function (e) { return e.nivell === nivell; });
       if (!d.length) return;
       $("nivells").appendChild(el("h2", null, T.nivells[nivell]));
