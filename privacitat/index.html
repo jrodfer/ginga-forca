@@ -59,7 +59,7 @@ a { color: inherit; text-decoration-color: var(--accent); text-underline-offset:
 
   <article lang="ca" data-idioma="ca">
     <h1>Política de privacitat</h1>
-    <p class="muted">Darrera actualització: 27 d'octubre de 2026 (Garmin: activitats, salut i IA)</p>
+    <p class="muted">Darrera actualització: 30 d'octubre de 2026</p>
 
     <div class="card">
       <p style="margin:0"><strong>En resum:</strong> Ginga fa servir les teves dades d'entrenament només per preparar-te el pla i el
@@ -68,8 +68,8 @@ a { color: inherit; text-decoration-color: var(--accent); text-underline-offset:
     </div>
 
     <h2>Qui és el responsable</h2>
-    <p>Ginga és el nom comercial de <strong>Joan Rodeja Ferrer</strong>, treballador autònom, amb NIF <strong>41555947F</strong> i
-      domicili a <strong>c. Méndez Núñez 7, àtic B, 17600 Figueres</strong>. Contacte: <a href="mailto:info@gingacoach.com">info@gingacoach.com</a>.</p>
+    <p>El responsable és l'entrenador de Ginga. Per a qualsevol cosa sobre les teves dades, escriu a
+      <a href="mailto:info@gingacoach.com">info@gingacoach.com</a>.</p>
     <p>Si entrenes amb un entrenador o un club que fa servir Ginga, el responsable de les teves dades és ell, i Ginga les
       tracta per encàrrec seu.</p>
 
@@ -94,53 +94,31 @@ a { color: inherit; text-decoration-color: var(--accent); text-underline-offset:
       guarda res. El pots retirar quan vulguis, escrivint-nos.</p>
 
     <h2>Garmin</h2>
-    <p>Pots connectar el teu compte de Garmin Connect a Ginga. Només si ho fas, i amb el teu permís a la pantalla de Garmin:</p>
-    <ul>
-      <li><strong>Rutes:</strong> Ginga hi envia la ruta que tries per a una sessió, perquè la tinguis al rellotge com a
-        recorregut.</li>
-      <li><strong>Activitats i salut:</strong> Garmin envia a Ginga les activitats que fas a partir d'aquell dia (amb el fitxer
-        de cada una) i el resum diari de salut: freqüència cardíaca en repòs, variabilitat de la freqüència cardíaca, son,
-        estrès i pes, si els tens. Les fem servir per al mateix que les d'intervals.icu: comparar el que has fet amb el pla i
-        avisar l'entrenador si hi ha fatiga o dolor.</li>
-    </ul>
-    <p>Guardem l'autorització que ens dona Garmin (un token xifrat) i les dades que ens envia, com a màxim 90 dies. Si
-      desconnectes Ginga des de la configuració de Garmin Connect o ens ho demanes, esborrem el token i les dades que ens
-      hagi enviat Garmin.</p>
+    <p>Pots connectar el teu compte de Garmin Connect a Ginga, amb el teu permís a la pantalla de Garmin, perquè Ginga hi
+      enviï la ruta que tries per a una sessió i la tinguis al rellotge com a recorregut. Ginga no llegeix res del teu
+      compte de Garmin.</p>
+    <p>Guardem l'autorització que ens dona Garmin (un token xifrat). Si desconnectes Ginga des de la configuració de Garmin
+      Connect o ens ho demanes, l'esborrem.</p>
 
     <h2>Intel·ligència artificial</h2>
     <div class="card">
       <p>Ginga fa servir Claude, un model d'intel·ligència artificial d'Anthropic, per analitzar la teva setmana i proposar
         canvis al pla, i per ajudar a redactar el correu. Li enviem un resum de la setmana (sessions, ritmes, potència,
-        freqüència cardíaca, son, sensacions), sense el teu nom, correu ni GPS. Inclou les dades de Garmin si l'has connectat.
+        freqüència cardíaca, son, sensacions), sense el teu nom, correu ni GPS.
         L'entrenador revisa tot el que proposa abans que t'arribi.</p>
       <p>Anthropic no entrena models amb aquestes dades, i Ginga tampoc.</p>
-      <p style="margin-bottom:0">Si connectes Garmin, et demanem a part el consentiment per fer servir aquelles dades amb Claude.
-        Pots retirar-lo, i també el de les dades d'intervals.icu, quan vulguis escrivint a <a href="mailto:info@gingacoach.com">info@gingacoach.com</a>: a partir d'aquell
+      <p style="margin-bottom:0">Pots retirar el consentiment per fer servir les teves dades amb Claude quan vulguis escrivint a <a href="mailto:info@gingacoach.com">info@gingacoach.com</a>: a partir d'aquell
         moment, l'entrenador analitza la teva setmana sense Claude.</p>
     </div>
 
     <h2>Qui hi té accés</h2>
-    <p>L'entrenador de Ginga i, si en tens, el teu entrenador o club. A més, aquests serveis tracten dades per encàrrec nostre:</p>
-    <div class="taula"><table>
-      <tr><th>Servei</th><th>Què hi passa</th></tr>
-      <tr><td>intervals.icu</td><td>D'on llegim els teus entrenaments, amb el teu permís.</td></tr>
-      <tr><td>Anthropic (Claude)</td><td>Analitza un resum de la setmana, sense nom, correu ni GPS, i ajuda a redactar el
-        correu. No entrena models amb aquestes dades.</td></tr>
-      <tr><td>Google (Gmail)</td><td>Envia els correus.</td></tr>
-      <tr><td>GitHub</td><td>Guarda el codi i els plans d'entrenament en un repositori privat, i hi publica les pàgines web.</td></tr>
-      <tr><td>Cloudflare</td><td>Rep els formularis i les valoracions de força (caduquen als 60 i 180 dies), fa de pont amb
-        openrouteservice i, si connectes Garmin, guarda el token i les dades que envia Garmin (90 dies).</td></tr>
-      <tr><td>openrouteservice (HeiGIT, Alemanya)</td><td>Calcula els circuits a partir del punt de sortida.</td></tr>
-      <tr><td>OpenStreetMap (Overpass)</td><td>Des del teu navegador, troba les pistes d'atletisme i els camins més freqüentats a
-        prop del punt de sortida.</td></tr>
-      <tr><td>GitHub Actions</td><td>Hi corre l'anàlisi de cada diumenge: llegeix les dades de la setmana i no les guarda.</td></tr>
-      <tr><td>Garmin</td><td>Només si el connectes: hi enviem les rutes que tries, i ens envia les activitats i la salut.</td></tr>
-    </table></div>
-    <p>Alguns d'aquests serveis són als Estats Units. Les transferències es fan amb les garanties del Reglament General de
-      Protecció de Dades (el Marc de Privacitat de Dades UE-EUA o clàusules contractuals tipus).</p>
+    <p>L'entrenador de Ginga i, si en tens, el teu entrenador o club. Els proveïdors tècnics que fem servir (correu,
+      allotjament, intel·ligència artificial) només tracten les dades per encàrrec nostre. Alguns són als Estats Units, i les
+      transferències es fan amb les garanties del Reglament General de Protecció de Dades (el Marc de Privacitat de Dades
+      UE-EUA o clàusules contractuals tipus).</p>
 
     <h2>Quant de temps</h2>
-    <p>Mentre entrenis amb Ginga. Quan ho deixis, esborrem el teu pla, la teva autorització d'intervals.icu i la de Garmin, i les dades que ens hagi enviat Garmin.
+    <p>Mentre entrenis amb Ginga. Quan ho deixis, esborrem el teu pla i les teves autoritzacions d'intervals.icu i de Garmin.
       Les respostes dels formularis caduquen als 180 dies, i les valoracions de força als 60.</p>
 
     <h2>Els teus drets</h2>
@@ -154,7 +132,7 @@ a { color: inherit; text-decoration-color: var(--accent); text-underline-offset:
 
   <article lang="en" data-idioma="en">
     <h1>Privacy policy</h1>
-    <p class="muted">Last updated: 27 October 2026 (Garmin: activities, health and AI)</p>
+    <p class="muted">Last updated: 30 October 2026</p>
 
     <div class="card">
       <p style="margin:0"><strong>In short:</strong> Ginga uses your training data only to prepare your plan and your weekly email.
@@ -163,8 +141,8 @@ a { color: inherit; text-decoration-color: var(--accent); text-underline-offset:
     </div>
 
     <h2>Who is responsible</h2>
-    <p>Ginga is the trade name of <strong>Joan Rodeja Ferrer</strong>, self-employed, tax ID <strong>41555947F</strong>, address
-      <strong>Méndez Núñez 7, àtic B, 17600 Figueres, Spain</strong>. Contact: <a href="mailto:info@gingacoach.com">info@gingacoach.com</a>.</p>
+    <p>The controller is Ginga's coach. For anything about your data, write to
+      <a href="mailto:info@gingacoach.com">info@gingacoach.com</a>.</p>
     <p>If you train with a coach or club that uses Ginga, they are the controller of your data and Ginga processes it on
       their behalf.</p>
 
@@ -189,54 +167,31 @@ a { color: inherit; text-decoration-color: var(--accent); text-underline-offset:
       You can withdraw it at any time by writing to us.</p>
 
     <h2>Garmin</h2>
-    <p>You can connect your Garmin Connect account to Ginga. Only if you do, and with your permission on Garmin's screen:</p>
-    <ul>
-      <li><strong>Routes:</strong> Ginga sends the route you choose for a session to your account, so you have it on your watch
-        as a course.</li>
-      <li><strong>Activities and health:</strong> Garmin sends Ginga the activities you do from that day on (with the file of each
-        one) and your daily health summary: resting heart rate, heart rate variability, sleep, stress and weight, if you have
-        them. We use them for the same purpose as the intervals.icu data: comparing what you did with the plan and alerting the
-        coach about fatigue or pain.</li>
-    </ul>
-    <p>We store the authorization Garmin gives us (an encrypted token) and the data it sends us, for at most 90 days. If you
-      disconnect Ginga from your Garmin Connect settings or ask us to, we delete the token and the data Garmin sent us.</p>
+    <p>You can connect your Garmin Connect account to Ginga, with your permission on Garmin's screen, so that Ginga sends the
+      route you choose for a session to your account and you have it on your watch as a course. Ginga does not read
+      anything from your Garmin account.</p>
+    <p>We store the authorization Garmin gives us (an encrypted token). If you disconnect Ginga from your Garmin Connect
+      settings or ask us to, we delete it.</p>
 
     <h2>Artificial intelligence</h2>
     <div class="card">
       <p>Ginga uses Claude, an artificial intelligence model by Anthropic, to analyse your week and propose changes to your plan,
         and to help draft your email. We send it a summary of your week (sessions, pace, power, heart rate, sleep, how you felt),
-        without your name, email or GPS. It includes your Garmin data if you have connected Garmin. The coach reviews everything
+        without your name, email or GPS. The coach reviews everything
         it proposes before it reaches you.</p>
       <p>Anthropic does not train models on this data, and neither does Ginga.</p>
-      <p style="margin-bottom:0">If you connect Garmin, we ask separately for your consent to use that data with Claude. You can
-        withdraw it, and your consent for the intervals.icu data too, at any time by writing to <a href="mailto:info@gingacoach.com">info@gingacoach.com</a>: from then on, the coach analyses
+      <p style="margin-bottom:0">You can withdraw your consent to use your data with Claude at any time by writing to <a href="mailto:info@gingacoach.com">info@gingacoach.com</a>: from then on, the coach analyses
         your week without Claude.</p>
     </div>
 
     <h2>Who has access</h2>
-    <p>Ginga's coach and, if you have one, your own coach or club. These services also process data on our behalf:</p>
-    <div class="taula"><table>
-      <tr><th>Service</th><th>What happens there</th></tr>
-      <tr><td>intervals.icu</td><td>Where we read your training from, with your permission.</td></tr>
-      <tr><td>Anthropic (Claude)</td><td>Analyses a weekly summary, without your name, email or GPS, and helps draft the email. It
-        does not train models on this data.</td></tr>
-      <tr><td>Google (Gmail)</td><td>Sends the emails.</td></tr>
-      <tr><td>GitHub</td><td>Stores the code and training plans in a private repository, and publishes the web pages.</td></tr>
-      <tr><td>Cloudflare</td><td>Receives the forms and strength ratings (they expire after 180 and 60 days), relays requests to
-        openrouteservice and, if you connect Garmin, stores the token and the data Garmin sends (90 days).</td></tr>
-      <tr><td>openrouteservice (HeiGIT, Germany)</td><td>Computes the loops from the starting point.</td></tr>
-      <tr><td>OpenStreetMap (Overpass)</td><td>From your browser, finds athletics tracks and the most used paths near the starting
-        point.</td></tr>
-      <tr><td>GitHub Actions</td><td>Runs the Sunday analysis: it reads the week's data and does not store it.</td></tr>
-      <tr><td>Garmin</td><td>Only if you connect it: we send it the routes you choose, and it sends us your activities and health
-        data.</td></tr>
-    </table></div>
-    <p>Some of these services are in the United States. Transfers rely on the safeguards of the General Data Protection
-      Regulation (the EU-US Data Privacy Framework or standard contractual clauses).</p>
+    <p>Ginga's coach and, if you have one, your own coach or club. The technical providers we use (email, hosting, artificial
+      intelligence) process data only on our behalf. Some are in the United States, and transfers rely on the safeguards of
+      the General Data Protection Regulation (the EU-US Data Privacy Framework or standard contractual clauses).</p>
 
     <h2>How long</h2>
-    <p>For as long as you train with Ginga. When you leave, we delete your plan, your intervals.icu authorization, your
-      Garmin authorization and the data Garmin sent us. Form answers expire after 180 days, and strength ratings after 60.</p>
+    <p>For as long as you train with Ginga. When you leave, we delete your plan and your intervals.icu and Garmin
+      authorizations. Form answers expire after 180 days, and strength ratings after 60.</p>
 
     <h2>Your rights</h2>
     <p>You can ask to see, correct, delete or take away your data, or ask us to stop using it, by writing to
