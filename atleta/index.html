@@ -98,6 +98,30 @@ h2 { font-size: 1.6rem; margin: 0 0 4px; }
 .eina .titol { font-weight: 500; }
 .eina .titol::after { content: " →"; color: var(--accent); }
 
+/* reorganitzar la setmana (setmana/): els canvis que es poden fer amb cada sessió, i el que n'ha dit Ginga */
+.canvia { margin-top: 8px; }
+.obre { background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; color: var(--fg);
+  font: 400 13px/1.2 var(--sans); cursor: pointer; }
+.obre[aria-expanded="true"] { border-color: var(--accent); }
+.panell { margin-top: 10px; padding: 12px; border-radius: 10px; background: var(--suau); border: 1px solid var(--line); }
+.panell p { font-size: 14px; margin: 0 0 6px; }
+.fila { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.fila:last-child { margin-bottom: 0; }
+.xip { border: 1px solid var(--line); background: var(--card); color: var(--fg); border-radius: 999px; padding: 8px 14px;
+  font: 400 14px/1.2 var(--sans); cursor: pointer; min-height: 40px; }
+.xip.princ { background: var(--accent); color: #10231D; border-color: var(--accent); }
+.xip.marcat { border-color: var(--accent); background: var(--accent); color: #10231D; }
+.xip:disabled { opacity: .5; cursor: default; }
+select.xip { appearance: auto; }
+.pluja { margin-top: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 14px; }
+.pluja b { font-weight: 500; }
+.feta { color: var(--ok); font-size: 13px; margin-left: 8px; }
+.on { font-size: 13px; color: var(--muted); }
+.resultat { margin: 0 0 16px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 15px; }
+.resultat.ok { border-color: var(--ok); }
+.resultat.no { border-color: var(--accent); }
+.dia .plou { color: var(--muted); font-size: 13px; }
+
 input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans); color: var(--fg); background: var(--card);
   border: 1px solid var(--line); border-radius: 6px; }
 #codi { font-size: 28px; letter-spacing: .35em; text-align: center; }
@@ -144,10 +168,13 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     <div class="card" id="compte" hidden></div>
     <div class="card" id="forma" hidden></div>
     <div class="card" id="avui"></div>
-    <div class="card" id="setmana"><p class="etiqueta verd">Aquesta setmana</p><div id="dies"></div></div>
-    <div class="card" id="ve" hidden><p class="etiqueta verd">La setmana que ve</p><div id="dies-ve"></div></div>
+    <div class="resultat" id="resultat" role="status" aria-live="polite" hidden></div>
+    <div class="card" id="setmana"><p class="etiqueta verd">Aquesta setmana</p><div id="dies"></div><div id="no-puc"></div></div>
+    <div class="card" id="ve" hidden><p class="etiqueta verd">La setmana que ve</p><div id="dies-ve"></div><div id="no-puc-ve"></div></div>
     <div class="card" id="eines" hidden><p class="etiqueta">Quan vulguis, cada dia</p><div id="llista-eines"></div></div>
     <p class="petit muted" id="peu">Es posa al dia sola cada diumenge, amb el correu.</p>
+    <p class="petit muted" id="peu-canvis" hidden>Pots moure una sessió, fer-la a dins o a fora, escurçar-la o saltar-la: Ginga
+      ho comprova amb el teu pla abans de canviar-ho, i ho veuràs al calendari i al rellotge.</p>
   </section>
 </main>
 <script>
@@ -183,30 +210,225 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function segur(url) { return typeof url === "string" && /^https:\/\//.test(url) ? url : null; }
 
+  function accio(a, cont, deLaSessio) {                     // la d'una sessió no repeteix el nom
+    var url = segur(a.url);
+    if (!url) return;
+    var c = el("div", "accio");
+    if (!deLaSessio) c.appendChild(el("div", "titol", a.titol));
+    if (a.resum) c.appendChild(el("div", "resum", a.resum));
+    if (a.avis) c.appendChild(el("div", "avis", a.avis));
+    var b = el("a", "btn", a.boto || "Obre-la");
+    b.href = url;
+    c.appendChild(b);
+    cont.appendChild(c);
+  }
   function sessions(dia, cont) {
     (dia.sessions || []).forEach(function (s) {
       var c = el("div", "sessio"), nom = el("div", "nom", s.nom);
       if (s.clau) nom.appendChild(el("span", "clau", "Sessió clau"));
+      if (s.feta) nom.appendChild(el("span", "feta", "Feta"));
       c.appendChild(nom);
+      if (s.interior != null) c.appendChild(el("div", "on", ON[s.tipus] || ""));
       if (s.nota) c.appendChild(el("div", "nota", s.nota));
+      if (s.pluja) pluja(s, c);
+      (s.accions || []).forEach(function (a) {                  // a dins, la ruta no cal
+        if (!(s.interior && /\/rutes\//.test(a.url || ""))) accio(a, c, true);
+      });
+      if (s.opcions) canvis(s, c);
       cont.appendChild(c);
     });
-    (dia.accions || []).forEach(function (a) {
-      var url = segur(a.url);
-      if (!url) return;
-      var c = el("div", "accio");
-      c.appendChild(el("div", "titol", a.titol));
-      if (a.resum) c.appendChild(el("div", "resum", a.resum));
-      if (a.avis) c.appendChild(el("div", "avis", a.avis));
-      var b = el("a", "btn", a.boto || "Obre-la");
-      b.href = url;
-      c.appendChild(b);
-      cont.appendChild(c);
-    });
+    (dia.accions || []).forEach(function (a) { accio(a, cont); });
   }
   function resum(dia) {
     var n = (dia.sessions || []).map(function (s) { return s.nom; });
     return n.length ? n.join(" · ") : "Descans";
+  }
+
+  // ---- reorganitzar la setmana (setmana/): Ginga hi desa la setmana del calendari amb el que es pot fer amb cada
+  // sessió (calendari.setmanes); la pàgina només ofereix això, i Ginga ho torna a comprovar abans de canviar-ho ----
+  var ON = { Ride: "A la carretera", VirtualRide: "Al rodet", Run: "Al carrer", VirtualRun: "A la cinta" };
+  var CURT = ["Dg", "Dl", "Dt", "Dc", "Dj", "Dv", "Ds"];
+  var calendari = null, pendent = null;
+  function curt(d) { return CURT[data(d).getDay()] + " " + data(d).getDate(); }
+
+  // La setmana del pla amb les sessions com són al calendari: cada enllaç del correu va amb la seva sessió (pel nom),
+  // encara que s'hagi mogut de dia; la resta (estiraments...) es queda al seu dia.
+  function combina(setmana, inici) {
+    var cal = calendari && (calendari.setmanes || []).filter(function (x) { return x.inici === inici; })[0];
+    if (!cal) return setmana;
+    var accions = [];
+    (setmana ? setmana.dies : []).forEach(function (d) { (d.accions || []).forEach(function (a) { accions.push({ a: a, data: d.data }); }); });
+    var dies = [];
+    for (var i = 0; i < 7; i++) dies.push({ data: mes(inici, i), sessions: [], accions: [] });
+    cal.sessions.forEach(function (s) {
+      var d = dies.filter(function (x) { return x.data === s.data; })[0];
+      if (!d) return;
+      var c = Object.assign({}, s, { accions: [] });
+      accions = accions.filter(function (x) { if (x.a.titol === s.nom) { c.accions.push(x.a); return false; } return true; });
+      d.sessions.push(c);
+    });
+    accions.forEach(function (x) { var d = dies.filter(function (y) { return y.data === x.data; })[0]; if (d) d.accions.push(x.a); });
+    dies.forEach(function (d) {                                // la pluja, només si aquell dia hi ha res a fora
+      d.plou = calendari.temps && calendari.temps[d.data] && d.sessions.some(function (s) { return s.interior === false; });
+    });
+    return { inici: inici, dies: dies, canvis: true };
+  }
+
+  function xip(text, fer, princ) {
+    var b = el("button", "xip" + (princ ? " princ" : ""), text);
+    b.type = "button";
+    b.disabled = !!pendent;
+    b.addEventListener("click", fer);
+    return b;
+  }
+  function pluja(s, cont) {
+    var c = el("div", "pluja"), p = el("p");
+    p.appendChild(el("b", null, "Pot ploure: "));
+    p.appendChild(document.createTextNode(s.pluja.prob + "% de probabilitat, " + String(s.pluja.mm).replace(".", ",") + " mm."));
+    c.appendChild(p);
+    var f = el("div", "fila");
+    if (s.opcions && s.opcions.lloc) f.appendChild(xip(ON[s.opcions.lloc], function () { demana({ accio: "lloc", id: s.id }); }, true));
+    (s.pluja.secs || []).slice(0, 3).forEach(function (d) {
+      f.appendChild(xip("Mou-la a " + DIES[data(d).getDay()].toLowerCase(), function () { demana({ accio: "mou", id: s.id, data: d }); }));
+    });
+    if (f.childNodes.length) c.appendChild(f);
+    cont.appendChild(c);
+  }
+  function canvis(s, cont) {
+    var o = s.opcions, c = el("div", "canvia"), obre = el("button", "obre", "Canvia-la");
+    obre.type = "button";
+    obre.setAttribute("aria-expanded", "false");
+    obre.disabled = !!pendent;
+    var panell = el("div", "panell");
+    panell.hidden = true;
+    obre.addEventListener("click", function () {
+      panell.hidden = !panell.hidden;
+      obre.setAttribute("aria-expanded", String(!panell.hidden));
+    });
+    panell.appendChild(el("p", null, "Mou-la a:"));
+    var f = el("div", "fila");
+    (o.dies || []).forEach(function (d) { f.appendChild(xip(curt(d), function () { demana({ accio: "mou", id: s.id, data: d }); })); });
+    if (!(o.dies || []).length) f.appendChild(el("span", "petit muted", "Aquesta setmana no hi cap en cap altre dia sense espatllar el pla."));
+    panell.appendChild(f);
+    if (o.lloc) {
+      panell.appendChild(el("p", null, "On:"));
+      var fl = el("div", "fila");
+      fl.appendChild(xip(ON[o.lloc], function () { demana({ accio: "lloc", id: s.id }); }));
+      panell.appendChild(fl);
+    }
+    if (o.escurca) {
+      panell.appendChild(el("p", null, "Tinc menys temps (ara, " + s.minuts + " min):"));
+      var fe = el("div", "fila"), sel = el("select", "xip");
+      sel.setAttribute("aria-label", "Minuts que tens");
+      for (var m = o.escurca.max; m >= o.escurca.min; m -= 5) { var op = el("option", null, m + " min"); op.value = m; sel.appendChild(op); }
+      fe.appendChild(sel);
+      fe.appendChild(xip("Escurça-la", function () { demana({ accio: "escurca", id: s.id, minuts: +sel.value }); }));
+      panell.appendChild(fe);
+    }
+    var ft = el("div", "fila");
+    ft.appendChild(xip("Me la salto", function () {
+      if (confirm(s.clau ? "És una sessió clau: segur que te la saltes?" : "Segur que te la saltes?")) demana({ accio: "treu", id: s.id });
+    }));
+    panell.appendChild(ft);
+    c.appendChild(obre);
+    c.appendChild(panell);
+    cont.appendChild(c);
+  }
+
+  // Els dies que no pot: els marca, i Ginga hi reorganitza la setmana (el que no hi cap, se salta).
+  function noPuc(setmana, cont, avui) {
+    cont.textContent = "";
+    if (!setmana || !setmana.canvis) return;
+    var dies = setmana.dies.filter(function (d) { return d.data >= avui; }).map(function (d) { return d.data; });
+    if (!dies.length) return;
+    var c = el("div", "canvia"), obre = el("button", "obre", "Hi ha dies que no puc");
+    obre.type = "button";
+    obre.disabled = !!pendent;
+    var panell = el("div", "panell"), triats = {};
+    panell.hidden = true;
+    obre.addEventListener("click", function () { panell.hidden = !panell.hidden; });
+    panell.appendChild(el("p", null, "Marca els dies que no pots entrenar. Ginga hi mourà les sessions sense espatllar el pla; si alguna no hi cap, se salta."));
+    var f = el("div", "fila"), fes = xip("Reorganitza la setmana", function () {
+      var llista = Object.keys(triats).filter(function (d) { return triats[d]; }).sort();
+      if (llista.length) demana({ accio: "no_disponible", dies: llista });
+    }, true);
+    fes.disabled = true;
+    dies.forEach(function (d) {
+      var b = xip(curt(d), function () {
+        triats[d] = !triats[d];
+        b.className = "xip" + (triats[d] ? " marcat" : "");
+        b.setAttribute("aria-pressed", String(!!triats[d]));
+        fes.disabled = !!pendent || !Object.keys(triats).some(function (x) { return triats[x]; });
+      });
+      b.setAttribute("aria-pressed", "false");
+      f.appendChild(b);
+    });
+    panell.appendChild(f);
+    var ff = el("div", "fila");
+    ff.appendChild(fes);
+    panell.appendChild(ff);
+    c.appendChild(obre);
+    c.appendChild(panell);
+    cont.appendChild(c);
+  }
+
+  function mostra(text, estat) {
+    var r = $("resultat");
+    r.hidden = !text;
+    r.className = "resultat" + (estat ? " " + estat : "");
+    r.textContent = text || "";
+  }
+  var CANVI = "ginga-area-canvi";
+  function demana(cos) {
+    if (pendent || !sessio) return;
+    pendent = { id: null, ts: Date.now() };
+    mostra("Comprovant-ho amb el teu pla…");
+    if (darrer) pinta(darrer);
+    var peticio = { k: sessio.k, g: sessio.g, accio: cos.accio };
+    if (cos.id != null) peticio.id = cos.id;
+    ["data", "minuts", "dies"].forEach(function (c) { if (cos[c] != null) peticio[c] = cos[c]; });
+    config().then(function (w) {
+      return fetch(w + "/area/canvi", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(peticio) });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; });
+    }).then(function (x) {
+      if (x.r.status === 429) throw new Error("massa");
+      if (!x.r.ok || !x.j.id) throw new Error(x.j.error || x.r.status);
+      pendent = { id: x.j.id, ts: Date.now(), ara: !!x.j.ara };
+      desa(CANVI, pendent);
+      mostra(x.j.ara ? "Comprovant-ho amb el teu pla… Tarda menys d'un minut."
+        : "Rebut. Ginga ho comprovarà amb el teu pla i ho canviarà en menys d'una hora.");
+      espera();
+    }).catch(function (e) {
+      pendent = null;
+      mostra(e.message === "massa" ? "Avui ja has fet molts canvis: si cal res més, escriu a l'equip."
+        : "No s'ha pogut enviar. Mira la connexió i torna-ho a provar.", "no");
+      if (darrer) pinta(darrer);
+    });
+  }
+  // Mentre Ginga ho comprova, la pàgina mira cada 5 segons si ja hi ha el resultat (com a molt 4 minuts; si no hi és,
+  // el veurà quan torni a la pàgina).
+  var esperant = null;
+  function espera() {
+    clearTimeout(esperant);
+    if (!pendent || !pendent.id) return;
+    if (Date.now() - pendent.ts > 4 * 60e3) {
+      if (pendent.ara) mostra("Encara s'està comprovant. Torna-hi d'aquí a una estona.");
+      return;
+    }
+    esperant = setTimeout(function () {
+      config().then(function (w) {
+        return fetch(w + "/area?k=" + encodeURIComponent(sessio.k) + "&g=" + encodeURIComponent(sessio.g), { cache: "no-store" });
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (doc) {
+        var c = doc && (doc.canvis || []).filter(function (x) { return x.id === pendent.id; })[0];
+        if (c && c.estat !== "pendent") {
+          pendent = null;
+          try { localStorage.removeItem(CANVI); } catch (e) {}
+          mostra(c.missatge, c.estat === "fet" ? "ok" : "no");
+          carregada = Date.now(); darrer = doc; desa(COPIA, doc); pinta(doc);
+        } else espera();
+      }).catch(espera);
+    }, 5000);
   }
 
   function pintaAvui(setmana, avui) {
@@ -215,7 +437,19 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     cont.appendChild(el("p", "etiqueta", "Avui"));
     cont.appendChild(el("h1", null, llarg(avui)));
     var dia = setmana && setmana.dies.filter(function (d) { return d.data === avui; })[0];
-    if (dia && ((dia.sessions || []).length || (dia.accions || []).length)) return sessions(dia, cont);
+    if (dia && ((dia.sessions || []).length || (dia.accions || []).length)) {
+      sessions(dia, cont);
+      if (setmana.canvis && dia.sessions.some(function (s) { return s.opcions; })) {
+        var f = el("div", "fila");
+        f.style.marginTop = "14px";
+        f.appendChild(xip("Avui no puc", function () {
+          if (confirm("Ginga mourà les sessions d'avui a un altre dia de la setmana, sense espatllar el pla. Si alguna no hi cap, se salta. Endavant?"))
+            demana({ accio: "no_disponible", dies: [avui] });
+        }));
+        cont.appendChild(f);
+      }
+      return;
+    }
     cont.appendChild(el("p", "muted", "Avui no tens cap sessió: descansa, que també és entrenar."));
     var seguent = setmana && setmana.dies.filter(function (d) { return d.data > avui && (d.sessions || []).length; })[0];
     if (seguent) cont.appendChild(el("p", "petit", DIES[data(seguent.data).getDay()] + ": " + resum(seguent)));
@@ -228,7 +462,9 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       var sum = el("summary"), quan = el("span", "quan", DIES[data(d.data).getDay()]);
       quan.appendChild(el("small", null, data(d.data).getDate() + " " + MESOS[data(d.data).getMonth()]));
       sum.appendChild(quan);
-      sum.appendChild(el("span", null, resum(d)));
+      var r = el("span", null, resum(d));
+      if (d.plou) r.appendChild(el("span", "plou", " · pot ploure"));
+      sum.appendChild(r);
       det.appendChild(sum);
       var cos = el("div", "cos");
       sessions(d, cos);
@@ -239,8 +475,10 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
 
   function pinta(doc) {
     var avui = iso(new Date()), setmanes = (doc && doc.setmanes) || [];
-    var actual = setmanes.filter(function (s) { return s.inici <= avui && avui < mes(s.inici, 7); })[0];
-    var ve = setmanes.filter(function (s) { return s.inici > avui; })[0];
+    calendari = (doc && doc.calendari) || null;
+    var dilluns = mes(avui, -((data(avui).getDay() + 6) % 7));
+    var actual = combina(setmanes.filter(function (s) { return s.inici <= avui && avui < mes(s.inici, 7); })[0], dilluns);
+    var ve = combina(setmanes.filter(function (s) { return s.inici > avui; })[0], mes(dilluns, 7));
     $("carregant").hidden = true; $("entra").hidden = true; $("area").hidden = false; $("surt").hidden = false;
 
     var cursa = doc && doc.cursa, compte = $("compte");
@@ -255,7 +493,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       compte.appendChild(f);
     }
 
-    if (!setmanes.length) {
+    if (!setmanes.length && !calendari) {
       $("avui").textContent = "";
       $("avui").appendChild(el("p", "etiqueta", "Avui"));
       $("avui").appendChild(el("h1", null, llarg(avui)));
@@ -279,8 +517,11 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
 
     $("setmana").hidden = !actual;
     if (actual) pintaDies(actual, $("dies"), avui);
+    noPuc(actual, $("no-puc"), avui);
     $("ve").hidden = !ve;
     if (ve) pintaDies(ve, $("dies-ve"), avui);
+    noPuc(ve, $("no-puc-ve"), avui);
+    $("peu-canvis").hidden = !(actual && actual.canvis || ve && ve.canvis);
 
     var eines = ((doc && doc.eines) || []).filter(function (e) { return segur(e.url); });
     $("eines").hidden = !eines.length;
@@ -425,6 +666,11 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
   })();
 
   carrega();
+  (function () {                                             // un canvi que s'estava comprovant quan es va tancar la pàgina
+    var p = llegeix(CANVI);
+    if (p && p.id && Date.now() - p.ts < 4 * 60e3) { pendent = p; mostra("Comprovant-ho amb el teu pla…"); espera(); }
+    else try { localStorage.removeItem(CANVI); } catch (e) {}
+  })();
   if (window.GingaInforme) GingaInforme.munta({ modul: "àrea", clau: function () { return sessio ? { k: sessio.k, g: sessio.g } : null; },
     context: function () { return { entrat: !!sessio }; } });
 })();
