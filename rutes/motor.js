@@ -380,15 +380,16 @@
   const NIVELL_PRINCIPAL = 0.7;    // d'aquí amunt, carretera principal: se'n treuen els trams llargs i es diu el %
   const TRAM_PRINCIPAL = 300;      // m seguits per una principal que ja es miren d'evitar (creuar-la o un tros curt, no)
   const CADA_EVITA_PRINCIPAL = 400;  // per tallar una carretera n'hi ha prou amb un punt de tant en tant
-  // Com a molt, 3 km o un 12% del circuit per carretera principal, el que sigui més (en Joan, 30/10/2026: «prefereixo
-  // fer una ruta un % més llarga» que anar per una N- o una C- quan hi ha alternativa). Un circuit que en fa més no es
-  // proposa. Els 3 km deixen creuar un riu o l'autopista pel pont d'una principal (Llers, la C-260).
+  // Com a molt, un 12% del circuit per carretera principal i mai més de 3 km (en Joan, 30/10/2026: «prefereixo fer una
+  // ruta un % més llarga» que anar per una N- o una C- quan hi ha alternativa). Un circuit que en fa més no es proposa.
+  // Primer era el que fos més dels dos, i en una de 13 km deixava passar un 16% (2 km): massa. Un 12% encara deixa
+  // creuar un riu o l'autopista pel pont d'una principal (Llers, la C-260).
   const MAX_PRINCIPAL_M = 3000;
   const MAX_PRINCIPAL = 0.12;
 
   /** Els metres per carretera principal que pot fer un circuit de `metres` m. */
   function limitPrincipal(metres) {
-    return Math.max(MAX_PRINCIPAL_M, MAX_PRINCIPAL * metres);
+    return Math.min(MAX_PRINCIPAL_M, MAX_PRINCIPAL * metres);
   }
 
   /** Trànsit (0-1) d'un tram pel nom del pas d'openrouteservice, o null si el nom no porta cap referència. */
@@ -515,6 +516,10 @@
   // Una quarta part del circuit per la C-31 (1) en lloc d'una GIV (0,15) paga 5 x 0,25 x 0,85 = 1,1, com un 35% de
   // desviació dels km; per una GI- de tres xifres (0,4), 0,3, com un 10%. Abans, només les principals: 4 x fracció.
   const PES_TRANSIT = 5;
+  // Un tram llarg per carretera principal (més de 300 m seguits) pesa més que el 30% de desviació dels km que es pot
+  // acceptar (3 x 0,3 = 0,9): «si em diu 16 km, sempre és millor una de 19 que no passi per aquestes carreteres que
+  // una de 13» (en Joan, 30/10/2026). Creuar-ne una o un tros curt no hi compta.
+  const PES_TRAMS_PRINCIPALS = 1;
 
   // Com es diu a l'atleta: poc trànsit per sota de 0,25 (veïnals i camins asfaltats, amb com a molt un 10% per la
   // C-31); moderat, com la meitat per GI- de tres xifres (0,28); molt, com una tercera part per la C-31 (0,43).
@@ -550,6 +555,7 @@
     if (sessio.s === "ride") {
       pena += (sessio.o === "cycling-road" ? 3 : 0.5) * r.senseAsfalt + (sessio.o === "cycling-road" ? 1.5 : 0) * r.camins;
       if (sessio.o === "cycling-road") pena += PES_TRANSIT * (r.transit || 0);   // com menys trànsit, millor
+      if (sessio.o === "cycling-road" && r.tramsPrincipals) pena += PES_TRAMS_PRINCIPALS;
     } else if (sessio.asfalt) {
       pena += 2 * r.senseAsfalt + 2 * r.escales;        // ruta a mida per asfalt: la terra, només per enllaçar
     } else {
