@@ -124,17 +124,12 @@ details summary { cursor: pointer; font-weight: 700; }
 details[open] summary { margin-bottom: 8px; }
 details ul { margin: 0; padding-left: 20px; color: var(--muted); display: grid; gap: 6px; }
 details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
-/* el registre de la cerca: per copiar-lo i enviar-lo quan una ruta no surt bé */
-#registre { margin-top: 12px; }
+/* l'informe a l'entrenador (el registre de la cerca hi va, però l'atleta no el veu) */
 #informe-estat { margin-top: 8px; }
 .nota-informe { display: block; font-weight: 700; margin-bottom: 6px; }
 #informe-nota { display: block; width: 100%; margin-bottom: 10px; padding: 10px 12px; border-radius: 12px;
   border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; resize: vertical; }
 #informe-nota:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-#registre .fila { margin: 8px 0; }
-#reg-text { margin: 0; max-height: 50vh; overflow: auto; padding: 8px; border-radius: 8px; border: 1px solid var(--line);
-  background: var(--bg); color: var(--fg); font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
-  white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* seguiment: pantalla completa */
 #segueix { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: grid; grid-template-rows: auto 1fr auto; }
@@ -207,15 +202,6 @@ details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
     <textarea id="informe-nota" rows="3" maxlength="1000"></textarea>
     <button class="btn sec" type="button" id="b-informe"></button>
     <p class="muted" id="informe-estat" aria-live="polite" hidden></p>
-    <details id="registre">
-      <summary id="t-registre"></summary>
-      <p class="muted" id="registre-ajuda"></p>
-      <div class="fila">
-        <button class="btn sec petit" type="button" id="b-reg-envia"></button>
-        <button class="btn sec petit" type="button" id="b-reg-copia"></button>
-      </div>
-      <pre id="reg-text"></pre>
-    </details>
   </section>
 
   <section class="card">
@@ -293,10 +279,10 @@ const RESERVA_PRINCIPALS = 20;  // els que no gasta mai la terra: per a les prin
 const MARGE_KM = 0.15;          // si cap no s'hi acosta tant, una segona tanda amb la llargada ajustada
 
 // ---------- registre ----------
-// El que fa la cerca (cada petició, quant triga, què en surt i per què es descarta), perquè l'atleta el pugui copiar
-// i enviar a l'entrenador quan una ruta no surt bé (en Joan, 30/10/2026). Res que identifiqui l'atleta: ni el codi ni
+// El que fa la cerca (cada petició, quant triga, què en surt i per què es descarta). Va amb l'informe a l'entrenador
+// per resoldre la incidència; l'atleta no el veu (en Joan, 30/10/2026). Res que identifiqui l'atleta: ni el codi ni
 // la signatura de l'enllaç, ni el pseudònim, ni el que s'escriu al cercador; les coordenades, arrodonides a 0,01°
-// (~1 km). Només a la memòria de la pàgina: es perd en tancar-la i no s'envia enlloc sol.
+// (~1 km). Només a la memòria de la pàgina: es perd en tancar-la i només s'envia amb l'informe.
 const REGISTRE_MAX = 600;       // línies; després es van perdent les més velles (la capçalera es queda)
 const registre = [];
 const registreT0 = performance.now();
@@ -308,17 +294,12 @@ function reg(...parts) {
   const text = parts.map((x) => typeof x === "string" ? x : JSON.stringify(x)).join(" ");
   registre.push(`${s}s ${amaga(text)}`);
   if (registre.length > REGISTRE_MAX) registre.splice(capRegistre, registre.length - REGISTRE_MAX);
-  pintaRegistre();
 }
 /** Les coordenades que hi pugui haver en un text (un error d'openrouteservice en porta), a 0,01°. */
 const amaga = (text) => text.replace(/-?\d{1,3}\.\d{4,}/g, (x) => Number(x).toFixed(2));
 const aprox = (p) => (p ? `${p[1].toFixed(2)},${p[0].toFixed(2)}` : "-");
 const kms = (llista) => llista.map((c) => `${c.r.km.toFixed(1)}km(p${c.pena.toFixed(2)}${c.r.gent != null ? ` g${Math.round(c.r.gent * 100)}%` : ""}${c.r.foraCarretera ? ` fora${Math.round(c.r.foraCarretera)}m` : ""}${c.r.voltes && c.r.voltes.length ? " voltes" : ""})`).join(" ");
 
-function pintaRegistre() {
-  const pre = document.getElementById("reg-text");
-  if (pre && document.getElementById("registre").open) pre.textContent = registre.join("\n");
-}
 
 /** Què és una petició, sense res de l'atleta: el servei i el que demana. */
 function quePeticio(url, opts) {
@@ -414,23 +395,6 @@ async function enviaInforme() {
   }
 }
 
-async function enviaRegistre(copia) {
-  const text = registre.join("\n");
-  const boto = $(copia ? "b-reg-copia" : "b-reg-envia");
-  try {
-    if (!copia && navigator.share) { await navigator.share({ title: t.registre, text }); return; }
-    await navigator.clipboard.writeText(text);
-    boto.textContent = t.registreCopiat;
-    setTimeout(() => { boto.textContent = copia ? t.registreCopia : t.registreEnvia; }, 2000);
-  } catch (e) {
-    if (e.name === "AbortError") return;             // ha tancat el menú de compartir
-    // sense porta-retalls (http, un navegador antic): el text queda seleccionat per copiar-lo a mà
-    const sel = getSelection(), rang = document.createRange();
-    rang.selectNodeContents($("reg-text"));
-    sel.removeAllRanges(); sel.addRange(rang);
-  }
-}
-
 const T = {
   ca: {
     dies: ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"],
@@ -522,15 +486,12 @@ const T = {
     oCap: "No he pogut fer cap ruta per aquí. Mou una mica els punts (que siguin en un camí o un carrer).",
     oError: "El servei de rutes (BRouter) no respon ara mateix. Torna-ho a provar d'aquí a una estona.",
     oDFora: "fora del desnivell que volies",
-    registre: "Registre de la cerca",
-    registreAjuda: "El que ha fet la cerca pas a pas. Aquí no hi ha el teu nom, i la sortida hi és aproximada (a 1 km); l'informe a l'entrenador porta, a més, les rutes que t'han sortit.",
-    registreEnvia: "Comparteix", registreCopia: "Copia", registreCopiat: "Copiat",
     informe: "Envia l'informe a l'entrenador", informeEnviant: "Enviant…",
     informeFet: "Enviat a l'entrenador ({n}). Gràcies!", informeRutes: ["no ha sortit cap ruta", "amb la ruta que ha sortit", "amb les {n} rutes que han sortit"],
-    informeError: "No s'ha pogut enviar. Obre el registre, toca «Copia» i passa-l'hi tu.",
+    informeError: "No s'ha pogut enviar. Torna-ho a provar d'aquí a una estona.",
     informeNota: "Què no ha anat bé?", informeNotaExemple: "P. ex.: les rutes passen per una carretera amb molt de trànsit, o no n'ha sortit cap des de casa",
     informeNotaFalta: "Explica en una frase què no ha anat bé, i torna-hi.",
-    informeNo: "Aquest enllaç no pot enviar informes: obre el registre, toca «Copia» i passa-l'hi tu.",
+    informeNo: "Aquest enllaç no pot enviar informes: digues-li a l'entrenador directament.",
   },
   en: {
     dies: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
@@ -622,15 +583,12 @@ const T = {
     oCap: "I couldn't make any route here. Move the points a little (onto a path or a street).",
     oError: "The routing service (BRouter) isn't responding right now. Please try again in a while.",
     oDFora: "outside the climbing you wanted",
-    registre: "Search log",
-    registreAjuda: "What the search did step by step. Your name isn't here and the start is approximate (to 1 km); the report to your coach also carries the routes you got.",
-    registreEnvia: "Share", registreCopia: "Copy", registreCopiat: "Copied",
     informe: "Send the report to my coach", informeEnviant: "Sending…",
     informeFet: "Sent to your coach ({n}). Thanks!", informeRutes: ["no route came out", "with the route you got", "with the {n} routes you got"],
-    informeError: "Couldn't send it. Open the log, tap «Copy» and pass it on yourself.",
+    informeError: "Couldn't send it. Please try again in a while.",
     informeNota: "What went wrong?", informeNotaExemple: "E.g. the routes go along a busy road, or none came out from home",
     informeNotaFalta: "Tell us in a sentence what went wrong, then send it again.",
-    informeNo: "This link can't send reports: open the log, tap «Copy» and pass it on yourself.",
+    informeNo: "This link can't send reports: tell your coach directly.",
   },
 };
 
@@ -1654,13 +1612,6 @@ $("s-veu").addEventListener("click", () => {
 // ---------- engega ----------
 const L_ = window.L;
 capcaleraRegistre();
-$("t-registre").textContent = t.registre;
-$("registre-ajuda").textContent = t.registreAjuda;
-$("b-reg-envia").textContent = t.registreEnvia;
-$("b-reg-copia").textContent = t.registreCopia;
-$("b-reg-envia").addEventListener("click", () => enviaRegistre(false));
-$("b-reg-copia").addEventListener("click", () => enviaRegistre(true));
-$("registre").addEventListener("toggle", pintaRegistre);
 $("b-informe").textContent = t.informe;
 $("t-informe-nota").textContent = t.informeNota;
 $("informe-nota").placeholder = t.informeNotaExemple;
