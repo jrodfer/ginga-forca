@@ -127,6 +127,10 @@ details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
 /* el registre de la cerca: per copiar-lo i enviar-lo quan una ruta no surt bé */
 #registre { margin-top: 12px; }
 #informe-estat { margin-top: 8px; }
+.nota-informe { display: block; font-weight: 700; margin-bottom: 6px; }
+#informe-nota { display: block; width: 100%; margin-bottom: 10px; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; resize: vertical; }
+#informe-nota:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 #registre .fila { margin: 8px 0; }
 #reg-text { margin: 0; max-height: 50vh; overflow: auto; padding: 8px; border-radius: 8px; border: 1px solid var(--line);
   background: var(--bg); color: var(--fg); font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -199,6 +203,8 @@ details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
   <section class="card" id="resultats" hidden aria-live="polite"></section>
 
   <section class="card" id="informe" hidden>
+    <label class="nota-informe" for="informe-nota" id="t-informe-nota"></label>
+    <textarea id="informe-nota" rows="3" maxlength="1000"></textarea>
     <button class="btn sec" type="button" id="b-informe"></button>
     <p class="muted" id="informe-estat" aria-live="polite" hidden></p>
     <details id="registre">
@@ -387,6 +393,8 @@ async function enviaInforme() {
   const b = $("b-informe"), estat = $("informe-estat");
   const diu = (text) => { estat.textContent = text; estat.hidden = false; };
   if (!PROXY || !lectura || !lectura.sig) return diu(t.informeNo);
+  const nota = $("informe-nota").value.trim();
+  if (!nota) { $("informe-nota").focus(); return diu(t.informeNotaFalta); }
   const rutes = propostes.filter((x) => x && x.r && x.r.coords).slice(0, 5).map((x) => ({
     km: Math.round(x.r.km * 10) / 10, desnivell: Math.round(x.r.desnivell || 0),
     f: Motor.escriuPolilinia(x.r.coords), i: Motor.girsDe(x.r) }));
@@ -394,7 +402,7 @@ async function enviaInforme() {
   b.disabled = true; b.textContent = t.informeEnviant;
   try {
     const r = await fetch(PROXY, { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, informe: { text: registre.join("\n"), rutes } }) });
+      body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig, informe: { text: registre.join("\n"), rutes, nota } }) });
     if (!r.ok) throw new Error(`proxy ${r.status}`);
     const n = rutes.length;
     diu(omple(t.informeFet, { n: omple(t.informeRutes[Math.min(n, 2)], { n }) }));
@@ -520,6 +528,8 @@ const T = {
     informe: "Envia l'informe a l'entrenador", informeEnviant: "Enviant…",
     informeFet: "Enviat a l'entrenador ({n}). Gràcies!", informeRutes: ["no ha sortit cap ruta", "amb la ruta que ha sortit", "amb les {n} rutes que han sortit"],
     informeError: "No s'ha pogut enviar. Obre el registre, toca «Copia» i passa-l'hi tu.",
+    informeNota: "Què no ha anat bé?", informeNotaExemple: "P. ex.: les rutes passen per una carretera amb molt de trànsit, o no n'ha sortit cap des de casa",
+    informeNotaFalta: "Explica en una frase què no ha anat bé, i torna-hi.",
     informeNo: "Aquest enllaç no pot enviar informes: obre el registre, toca «Copia» i passa-l'hi tu.",
   },
   en: {
@@ -618,6 +628,8 @@ const T = {
     informe: "Send the report to my coach", informeEnviant: "Sending…",
     informeFet: "Sent to your coach ({n}). Thanks!", informeRutes: ["no route came out", "with the route you got", "with the {n} routes you got"],
     informeError: "Couldn't send it. Open the log, tap «Copy» and pass it on yourself.",
+    informeNota: "What went wrong?", informeNotaExemple: "E.g. the routes go along a busy road, or none came out from home",
+    informeNotaFalta: "Tell us in a sentence what went wrong, then send it again.",
     informeNo: "This link can't send reports: open the log, tap «Copy» and pass it on yourself.",
   },
 };
@@ -1650,6 +1662,8 @@ $("b-reg-envia").addEventListener("click", () => enviaRegistre(false));
 $("b-reg-copia").addEventListener("click", () => enviaRegistre(true));
 $("registre").addEventListener("toggle", pintaRegistre);
 $("b-informe").textContent = t.informe;
+$("t-informe-nota").textContent = t.informeNota;
+$("informe-nota").placeholder = t.informeNotaExemple;
 $("b-informe").addEventListener("click", enviaInforme);
 $("informe").hidden = !S;
 $("t-rellotge").textContent = t.rellotge;
