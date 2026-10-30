@@ -52,6 +52,12 @@ els km i el desnivell (de-a), la sortida, els punts de pas i l'arribada, i la ca
 només respon als enllaços signats (`correr.brf` és el perfil per córrer). Sense enllaç, la pàgina no fa res.
 Si amb aquests km no es pot sortir d'on es vol, la sortida s'acosta als punts de pas, i la pàgina ho diu.
 
+## «Alguna cosa no ha anat bé?» (`informe.js`)
+
+Totes les pàgines dels atletes el carreguen al `<head>` (perquè el registre ho reculli des del principi) i el munten
+a baix amb `GingaInforme.munta({ modul, clau, context })`. Vegeu el comentari del fitxer i `GUIA_COM_FUNCIONA.md`.
+La pàgina de rutes en té un de propi, amb les rutes.
+
 ## No editis res aquí
 
 Aquest repositori és només l'aparador públic (GitHub Pages). La font de totes les pàgines és al repositori privat

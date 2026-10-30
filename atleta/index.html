@@ -2,6 +2,7 @@
 <html lang="ca">
 <head>
 <meta charset="utf-8">
+<script src="../informe.js"></script>   <!-- «Què no ha anat bé?» i el seu registre -->
 <link rel="icon" type="image/svg+xml" href="https://gingacoach.com/icona.svg">
 <link rel="apple-touch-icon" href="https://gingacoach.com/icona-180.png">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -424,6 +425,8 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
   })();
 
   carrega();
+  if (window.GingaInforme) GingaInforme.munta({ modul: "àrea", clau: function () { return sessio ? { k: sessio.k, g: sessio.g } : null; },
+    context: function () { return { entrat: !!sessio }; } });
 })();
 </script>
 </body>

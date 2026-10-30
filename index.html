@@ -9,6 +9,7 @@
 if (/^https?:$/.test(location.protocol) && location.hash.length < 2 && !/[?&]exemple(&|=|$)/.test(location.search))
   location.replace(location.pathname.replace(/index\.html$/, "") + "ginga/");
 </script>
+<script src="informe.js"></script>   <!-- «Què no ha anat bé?» i el seu registre -->
 <link rel="icon" type="image/svg+xml" href="https://gingacoach.com/icona.svg">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
@@ -975,6 +976,20 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
 
   pintaVeu(); pintaMusica();
   motorLocal(desat ? { i: desat.i, fetes: desat.fetes, vista: "resum" } : null);
+
+  // ---- «Què no ha anat bé?» (web/informe.js): amb la clau signada (f), el Worker en sap l'atleta
+  if (window.GingaInforme) GingaInforme.munta({
+    en: EN,
+    modul: sessio.g ? (/apnea/.test(sessio.a || "") ? "apnea" : "ioga") : /estirament|stretch/i.test(sessio.t || "") ? "estiraments"
+      : "força",
+    clau: function () { return valora ? { k: valora.k, g: valora.g } : null; },
+    context: function () {
+      var e = foto && foto.i >= 0 ? sessio.e[foto.i] : null;
+      return { sessio: sessio.t || "", data: sessio.d || "", exemple: esExemple, exercicis: sessio.e.length,
+               vista: foto ? foto.vista : null, exercici: e ? e.n : null, video: e ? e.v || null : null,
+               series: foto && foto.fetes ? suma(foto.fetes) : null };
+    },
+  });
 })();
 </script>
 <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>

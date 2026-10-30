@@ -2,6 +2,7 @@
 <html lang="ca">
 <head>
 <meta charset="utf-8">
+<script src="../informe.js"></script>   <!-- «Què no ha anat bé?» i el seu registre -->
 <link rel="icon" type="image/svg+xml" href="https://gingacoach.com/icona.svg">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
@@ -255,6 +256,8 @@ p { margin: 0; }
       pintaTele();
     } catch (err) {}
   };
+
+  if (window.GingaInforme) GingaInforme.munta({ modul: "ioga", context: function () { return { pagina: "llista del dia" }; } });
 })();
 </script>
 <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
