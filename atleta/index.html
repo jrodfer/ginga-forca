@@ -182,6 +182,13 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var DESAT = "ginga-area", COPIA = "ginga-area-copia", ESPERA = "ginga-area-codi";
+  // ?torna=<camí>: hi ha enviat la porta d'un mòdul (../porta.js) perquè no hi tenia accés; en entrar, s'hi torna.
+  // Només un camí d'aquesta mateixa web.
+  var TORNA = (function () {
+    var t = new URLSearchParams(location.search).get("torna") || "";
+    return /^\/(?!\/)/.test(t) && !/^\/atleta\//.test(t) && t.indexOf("\\") < 0 ? t : null;
+  })();
+  function torna() { if (TORNA) { location.replace(TORNA); return true; } return false; }
   var DIES = ["Diumenge", "Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte"];
   var MESOS = ["de gener", "de febrer", "de març", "d'abril", "de maig", "de juny", "de juliol", "d'agost", "de setembre",
                "d'octubre", "de novembre", "de desembre"];
@@ -540,6 +547,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
   function entra(motiu) {
     $("carregant").hidden = true; $("area").hidden = true; $("surt").hidden = true; $("entra").hidden = false;
     if (motiu) $("entra-motiu").textContent = motiu;
+    else if (TORNA) $("entra-motiu").textContent = "Per obrir aquesta part de Ginga, entra amb el correu amb què entrenes.";
   }
 
   // ---- el Worker (../config.json diu on és, com a la pàgina d'apnea) ------------------------------------------------
@@ -560,7 +568,9 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       if (!r.ok) throw new Error(r.status);
       return r.json();
     }).then(function (doc) {
-      carregada = Date.now(); darrer = doc; desa(COPIA, doc); pinta(doc);
+      carregada = Date.now(); darrer = doc; desa(COPIA, doc);
+      if (torna()) return;
+      pinta(doc);
     }).catch(function (e) {
       if (!sessio) return entra("Aquest enllaç ja no val. Posa el teu correu i t'enviem un codi per entrar.");
       if (!darrer) { $("carregant").textContent = "No s'ha pogut carregar. Mira la connexió i torna-ho a provar."; }

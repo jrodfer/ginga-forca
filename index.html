@@ -9,6 +9,7 @@
 if (/^https?:$/.test(location.protocol) && location.hash.length < 2 && !/[?&]exemple(&|=|$)/.test(location.search))
   location.replace(location.pathname.replace(/index\.html$/, "") + "ginga/");
 </script>
+<script src="porta.js" data-portada></script>   <!-- amb una sessió, només qui té accés -->
 <script src="informe.js"></script>   <!-- «Què no ha anat bé?» i el seu registre -->
 <link rel="icon" type="image/svg+xml" href="https://gingacoach.com/icona.svg">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
