@@ -1014,7 +1014,7 @@ out tags geom qt;`;
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, rangDesnivell, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
-    foraCarretera, transitRef, perTransit, limitPrincipal, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
+    foraCarretera, transitRef, perTransit, limitPrincipal, grauTransit, NIVELL_PRINCIPAL, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, escriuPolilinia, girsDe, rutaFixa, voltes,
     puntesVoltes, corriolsDubtosos, PERFILS_BROUTER, deBrouter, consultaPobles, consultaPoblesOverpass, llegeixPobles,
     perPobles, viaForaVoltes, puntA, mesAProp, desviament, triangle, sessioOberta, penaOberta, rutaOberta,

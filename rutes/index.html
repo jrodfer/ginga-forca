@@ -85,6 +85,9 @@ p { margin: 0; }
 /* ruta a mida */
 .tria { display: flex; gap: 8px; }
 .tria .btn { flex: 1; min-width: 0; }
+.modes { flex-wrap: wrap; margin-top: 8px; }
+.modes .btn { flex: 1 1 40%; }
+.mode-fet { font-weight: 700; margin: 0 0 8px; }
 .camp { display: grid; gap: 6px; font-weight: 700; font-size: .92rem; }
 .rang { display: flex; align-items: center; gap: 6px; }
 .rang input { width: 100%; min-width: 0; font: 700 1rem var(--display); padding: 10px; border-radius: 12px;
@@ -193,6 +196,7 @@ details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
     <p class="muted" id="ajuda-mapa"></p>
     <ol class="punts" id="o-punts" hidden></ol>
     <div class="tipus-bici" id="tipus-bici" role="radiogroup" hidden></div>
+    <div class="tria modes" id="modes" role="radiogroup" hidden></div>
     <button class="btn" type="button" id="b-busca" disabled></button>
   </section>
 
@@ -232,6 +236,7 @@ details ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="motor.js"></script>
+<script src="voltes.js"></script>
 <script>
 "use strict";
 // ---------- configuració ----------
@@ -401,6 +406,12 @@ const T = {
     dies: ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"],
     run: "córrer", ride: "bici",
     tipusBici: "Tipus de bici", bicis: { "cycling-road": "Carretera", "cycling-regular": "Gravel", "cycling-mountain": "BTT" },
+    modes: "Com es fan les rutes", nomsModes: { auto: "Automàtic", popularitat: "Popularitat", biblioteca: "Biblioteca", alternatiu: "Alternatiu" },
+    modeFet: { popularitat: "Generador per popularitat Ginga", biblioteca: "Biblioteca", alternatiu: "Generador alternatiu Ginga" },
+    popular: "{x}% per trams populars", perOn: "per {v}", modeNoBo: "Cap volta per popularitat arribava a un {x}% de trams populars: aquestes són del generador alternatiu.",
+    bibliotecaAviat: "La biblioteca encara no és a punt en aquesta zona.", popularFora: "Aquí encara no tenim dades de popularitat.",
+    popularCap: "No he trobat cap volta de ~{k} km per trams populars des d'aquí. Prova un altre punt de sortida o el generador alternatiu.",
+    nomesMapa: "Calcula-la només amb el mapa",
     perfil: {
       suau: "Un circuit tranquil, sense gaire desnivell.",
       pla: "Un circuit pla i amb trams seguits, per anar a ritme sense aturar-te.",
@@ -498,6 +509,12 @@ const T = {
     dies: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     run: "run", ride: "ride",
     tipusBici: "Type of bike", bicis: { "cycling-road": "Road", "cycling-regular": "Gravel", "cycling-mountain": "MTB" },
+    modes: "How routes are made", nomsModes: { auto: "Automatic", popularitat: "Popularity", biblioteca: "Library", alternatiu: "Alternative" },
+    modeFet: { popularitat: "Ginga popularity generator", biblioteca: "Library", alternatiu: "Ginga alternative generator" },
+    popular: "{x}% on popular segments", perOn: "via {v}", modeNoBo: "No popularity loop reached {x}% popular segments: these come from the alternative generator.",
+    bibliotecaAviat: "The library isn't ready in this area yet.", popularFora: "We don't have popularity data here yet.",
+    popularCap: "I couldn't find a ~{k} km loop on popular segments from here. Try another start or the alternative generator.",
+    nomesMapa: "Make it with the map only",
     perfil: {
       suau: "An easy loop without much climbing.",
       pla: "A flat loop with long uninterrupted stretches, to hold your pace without stopping.",
@@ -650,6 +667,7 @@ function iniciaMapa() {
   $("b-busca").textContent = S.p === "pista" ? t.buscaPistes : t.busca;
   $("sortida").hidden = false;
   pintaTipusBici();
+  pintaModes();
 
   const darrer = recupera("ginga-rutes-sortida");
   mapa = L_.map("mapa", { zoomControl: true }).setView(darrer ? [darrer[1], darrer[0]] : [41.6, 2.2], darrer ? 14 : 8);
@@ -696,7 +714,8 @@ function iniciaMapa() {
   });
 
   $("b-busca").addEventListener("click", () => {
-    S.x ? buscaOberta() : S.p === "pista" ? buscaPistes() : buscaCircuits(S);
+    mesCops = 0;
+    S.x ? buscaOberta() : S.p === "pista" ? buscaPistes() : esportVoltes() ? buscaPerMode(S) : buscaCircuits(S);
   });
 }
 
@@ -728,6 +747,7 @@ function triaBici(o) {
   if (o === S.o) return;
   S.o = o;
   pintaTipusBici();
+  pintaModes();
   oblidaPropostes();             // eren d'un altre tipus de bici: a tornar a buscar
 }
 
@@ -738,6 +758,75 @@ function oblidaPropostes() {
   netejaCapes();
   $("resultats").replaceChildren();
   $("resultats").hidden = true;
+}
+
+// ---------- els modes: generador per popularitat Ginga, biblioteca, generador alternatiu Ginga ----------
+// El generador per popularitat va al navegador (voltes.js) amb la xarxa de la regió (voltes/<regió>-<esport>.json,
+// de coach/voltes/web.py): no gasta cerques del proxy. Automàtic: les voltes per popularitat si alguna és bona
+// (Voltes.LLINDAR_QUALITAT), i si no, el generador alternatiu (els circuits d'openrouteservice i BRouter de sempre).
+// «Més opcions» en fa de noves; al tercer cop surt «Calcula-la només amb el mapa» (en Joan, 30/10/2026).
+// De moment, només la bici de carretera té dades.
+const MODES = ["auto", "popularitat", "biblioteca", "alternatiu"];
+const MES_ABANS_DEL_MAPA = 3;
+let mode = "auto", mesCops = 0, indexVoltes = null, avisMode = false;
+const xarxes = new Map();
+
+function esportVoltes() {
+  return S.s === "ride" && S.o === "cycling-road" && S.p !== "pista" ? "carretera" : null;
+}
+
+function pintaModes() {
+  const caixa = $("modes");
+  caixa.hidden = !esportVoltes();
+  if (caixa.hidden) return;
+  caixa.setAttribute("aria-label", t.modes);
+  botons(caixa, MODES.map((m) => [m, t.nomsModes[m]]), mode, (m) => { mode = m; pintaModes(); oblidaPropostes(); });
+}
+
+async function xarxaDe(lat, lon, esport) {
+  if (!indexVoltes) indexVoltes = await fetch("voltes/index.json").then((r) => (r.ok ? r.json() : { regions: [] }))
+    .catch(() => ({ regions: [] }));
+  const r = Voltes.regio(indexVoltes, lat, lon, esport);
+  if (!r) return null;
+  if (!xarxes.has(r.fitxer)) xarxes.set(r.fitxer, fetch(`voltes/${r.fitxer}`).then((x) => x.json()).then(Voltes.carrega));
+  return xarxes.get(r.fitxer);
+}
+
+/** Una volta de voltes.js amb la forma de les propostes (mapa, GPX, Garmin i seguir-la). */
+function aProposta(v) {
+  return { mode: "popularitat", v, r: { coords: v.coords, acc: Motor.acumulada(v.coords), km: v.km, desnivell: v.desnivell,
+    passos: [], senseAsfalt: 0, carretera: 0, gent: null, transit: v.transit, principal: v.principal } };
+}
+
+/** Voltes per popularitat. Amb nomesBones (automàtic), només si alguna arriba al llindar; torna si n'ensenya. */
+async function buscaPopularitat(sessio, nomesBones, mes = false) {
+  const res = $("resultats"), b = $("b-busca");
+  const digues = (text) => { if (!nomesBones) { res.innerHTML = `<p>${text}</p>`; res.hidden = false; netejaCapes(); } };
+  b.disabled = true; b.textContent = t.buscant;
+  try {
+    const x = await xarxaDe(sortida[1], sortida[0], esportVoltes()).catch(() => null);
+    if (!x) { digues(t.popularFora); return false; }
+    const r = Voltes.genera(x, { sortida: [sortida[1], sortida[0]], km: Math.min(sessio.k, 200), tipus: "volta", n: 3,
+      llavor: ++llavor, exclou: mes ? propostes.filter((p) => p.v).map((p) => p.v) : [] });
+    const voltes = nomesBones ? r.voltes.filter((v) => v.bona) : r.voltes;
+    if (!voltes.length) { digues(omple(t.popularCap, { k: fmt(sessio.k, 0) })); return false; }
+    propostes = voltes.map(aProposta);
+    triada = 0;
+    avisMode = false;
+    pintaPropostes(sessio);
+    return true;
+  } finally {
+    b.disabled = false; b.textContent = t.busca;
+  }
+}
+
+async function buscaPerMode(sessio) {
+  avisMode = false;
+  if (mode === "popularitat") return buscaPopularitat(sessio, false);
+  if (mode === "biblioteca") { $("resultats").innerHTML = `<p>${t.bibliotecaAviat}</p>`; $("resultats").hidden = false; return; }
+  if (mode === "auto" && await buscaPopularitat(sessio, true)) return;
+  avisMode = mode === "auto";
+  return buscaCircuits(sessio);
 }
 
 function triaLloc(lloc) {
@@ -1263,6 +1352,19 @@ function netejaCapes() { capes.forEach((c) => c.remove()); capes = []; }
 function pintaPropostes(sessio) {
   const res = $("resultats");
   res.innerHTML = "";
+  const fet = propostes.length && (propostes[0].mode || (esportVoltes() && !S.f ? "alternatiu" : null));
+  if (fet) {
+    const cap = document.createElement("p");
+    cap.className = "mode-fet";
+    cap.textContent = t.modeFet[fet];
+    res.append(cap);
+    if (avisMode && fet === "alternatiu") {
+      const avis = document.createElement("p");
+      avis.className = "muted";
+      avis.textContent = omple(t.modeNoBo, { x: Math.round(100 * Voltes.LLINDAR_QUALITAT) });
+      res.append(avis);
+    }
+  }
   propostes.forEach((p, n) => {
     const r = p.r;
     const div = document.createElement("div");
@@ -1270,7 +1372,11 @@ function pintaPropostes(sessio) {
     const detalls = p.anada ? [t.anada] : [];
     if (p.mogut > MOGUT_M) detalls.push(omple(p.ab ? t.oMogutAB : t.oMogut, { d: distancia(p.mogut) }));
     if (p.d && (r.desnivell < p.d[0] || r.desnivell > p.d[1])) detalls.push(t.oDFora);
-    if (Motor.esCarretera(sessio)) {
+    if (p.v) {
+      detalls.push(t.carretera100, omple(t.popular, { x: Math.round(100 * p.v.popular) }), t.transit[Motor.grauTransit(r.transit)]);
+      if (r.principal > 0.03) detalls.push(omple(t.principal, { x: Math.round(100 * r.principal) }));
+      if (p.v.principals.length) detalls.push(omple(t.perOn, { v: p.v.principals.join(", ") }));
+    } else if (Motor.esCarretera(sessio)) {
       detalls.push(t.carretera100, t.transit[Motor.grauTransit(r.transit)]);
       if (r.principal > 0.03) detalls.push(omple(t.principal, { x: Math.round(100 * r.principal) }));
     }
@@ -1313,13 +1419,25 @@ function pintaPropostes(sessio) {
     llegenda.append(sessio.s === "run" ? t.llegendaRun : t.llegendaRide);
     res.append(llegenda);
   }
-  if (!S.f && !ambLimit) {           // amb límit, «més opcions» seria una cerca nova
+  const perPopularitat = fet === "popularitat";
+  if (!S.f && (!ambLimit || perPopularitat)) {   // amb límit, «més opcions» seria una cerca nova (la popularitat no en gasta)
     const mes = document.createElement("button");
     mes.className = "btn sec petit";
     mes.type = "button";
     mes.textContent = L === "en" ? "More options" : "Més opcions";
-    mes.addEventListener("click", () => { triada = 0; S.x ? buscaOberta(true) : buscaCircuits(sessio); });
+    mes.addEventListener("click", () => {
+      triada = 0;
+      if (perPopularitat) { mesCops++; buscaPopularitat(sessio, false, true); } else S.x ? buscaOberta(true) : buscaCircuits(sessio);
+    });
     res.append(mes);
+  }
+  if (perPopularitat && mesCops >= MES_ABANS_DEL_MAPA) {
+    const mapaSol = document.createElement("button");
+    mapaSol.className = "btn sec petit";
+    mapaSol.type = "button";
+    mapaSol.textContent = t.nomesMapa;
+    mapaSol.addEventListener("click", () => { triada = 0; avisMode = false; buscaCircuits(sessio); });
+    res.append(mapaSol);
   }
   res.hidden = false;
   dibuixa();

@@ -1,0 +1,16 @@
+{
+ "regions": [
+  {
+   "regio": "figueres",
+   "esport": "carretera",
+   "caixa": [
+    41.72995,
+    2.22892,
+    42.7685,
+    3.31546
+   ],
+   "data": "2026-10-30",
+   "fitxer": "figueres-carretera.json"
+  }
+ ]
+}
