@@ -87,6 +87,27 @@
     return coords;
   }
 
+  /** Al revés: [[lon, lat], ...] en polilínia (precisió 5), com coach/ruta_fixa.py: per a l'informe a l'entrenador. */
+  function escriuPolilinia(coords) {
+    const num = (v) => {
+      v = v < 0 ? ~(v << 1) : v << 1;
+      let text = "";
+      while (v >= 0x20) { text += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; }
+      return text + String.fromCharCode(v + 63);
+    };
+    let text = "", lat0 = 0, lon0 = 0;
+    for (const c of coords) {
+      const lat = Math.round(c[1] * 1e5), lon = Math.round(c[0] * 1e5);
+      text += num(lat - lat0) + num(lon - lon0);
+      lat0 = lat; lon0 = lon;
+    }
+    return text;
+  }
+
+  /** Els girs d'una ruta (els passos d'openrouteservice) com van a l'enllaç d'una ruta feta: [punt, tipus(, sortida)]. */
+  const girsDe = (r) => (r.passos || []).filter((p) => p.way_points && p.way_points[0] > 0 && p.way_points[0] < r.coords.length - 1)
+    .map((p) => [p.way_points[0], p.type].concat(p.type === 7 && Number.isInteger(p.exit_number) ? [p.exit_number] : []));
+
   /** La ruta feta de l'enllaç, amb la forma del resum d'una ruta d'openrouteservice (per al mapa, el GPX i seguir-la). */
   function rutaFixa(sessio) {
     const coords = llegeixPolilinia(sessio.f);
@@ -994,7 +1015,7 @@ out tags geom qt;`;
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, rangDesnivell, desnivellObjectiu, penalitza,
     millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, limitPrincipal, grauTransit, puntsDePas, puntsAEvitar, esCarretera,
-    radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, rutaFixa, voltes,
+    radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, escriuPolilinia, girsDe, rutaFixa, voltes,
     puntesVoltes, corriolsDubtosos, PERFILS_BROUTER, deBrouter, consultaPobles, consultaPoblesOverpass, llegeixPobles,
     perPobles, viaForaVoltes, puntA, mesAProp, desviament, triangle, sessioOberta, penaOberta, rutaOberta,
   };
