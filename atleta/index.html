@@ -306,9 +306,9 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     p.appendChild(document.createTextNode(s.pluja.prob + "% de probabilitat, " + String(s.pluja.mm).replace(".", ",") + " mm."));
     c.appendChild(p);
     var f = el("div", "fila");
-    if (s.opcions && s.opcions.lloc) f.appendChild(xip(ON[s.opcions.lloc], function () { demana({ accio: "lloc", id: s.id }); }, true));
+    if (s.opcions && s.opcions.lloc) f.appendChild(xip(ON[s.opcions.lloc], function () { demana({ accio: "lloc", id: s.id }, s); }, true));
     (s.pluja.secs || []).slice(0, 3).forEach(function (d) {
-      f.appendChild(xip("Mou-la a " + DIES[data(d).getDay()].toLowerCase(), function () { demana({ accio: "mou", id: s.id, data: d }); }));
+      f.appendChild(xip("Mou-la a " + DIES[data(d).getDay()].toLowerCase(), function () { demana({ accio: "mou", id: s.id, data: d }, s); }));
     });
     if (f.childNodes.length) c.appendChild(f);
     cont.appendChild(c);
@@ -332,9 +332,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     (o.dies || []).concat(Object.keys(avisos)).sort().forEach(function (d) {
       var motiu = avisos[d];
       var b = xip(curt(d) + (motiu ? " ⚠" : ""), function () {
-        if (!motiu) return demana({ accio: "mou", id: s.id, data: d });
-        if (confirm("Compte: " + motiu + ".\n\nVols moure-la igualment? L'equip de Ginga en rebrà l'avís."))
-          demana({ accio: "mou", id: s.id, data: d, forca: true });
+        demana(motiu ? { accio: "mou", id: s.id, data: d, forca: true, motiu: motiu } : { accio: "mou", id: s.id, data: d }, s);
       });
       if (motiu) { b.className = "xip avis"; b.title = motiu; }
       f.appendChild(b);
@@ -345,7 +343,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     if (o.lloc) {
       panell.appendChild(el("p", null, "On:"));
       var fl = el("div", "fila");
-      fl.appendChild(xip(ON[o.lloc], function () { demana({ accio: "lloc", id: s.id }); }));
+      fl.appendChild(xip(ON[o.lloc], function () { demana({ accio: "lloc", id: s.id }, s); }));
       panell.appendChild(fl);
     }
     if (o.escurca) {
@@ -354,13 +352,11 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       sel.setAttribute("aria-label", "Minuts que tens");
       for (var m = o.escurca.max; m >= o.escurca.min; m -= 5) { var op = el("option", null, m + " min"); op.value = m; sel.appendChild(op); }
       fe.appendChild(sel);
-      fe.appendChild(xip("Escurça-la", function () { demana({ accio: "escurca", id: s.id, minuts: +sel.value }); }));
+      fe.appendChild(xip("Escurça-la", function () { demana({ accio: "escurca", id: s.id, minuts: +sel.value }, s); }));
       panell.appendChild(fe);
     }
     var ft = el("div", "fila");
-    ft.appendChild(xip("Me la salto", function () {
-      if (confirm(s.clau ? "És una sessió clau: segur que te la saltes?" : "Segur que te la saltes?")) demana({ accio: "treu", id: s.id });
-    }));
+    ft.appendChild(xip("Me la salto", function () { demana({ accio: "treu", id: s.id }, s); }));
     panell.appendChild(ft);
     c.appendChild(obre);
     c.appendChild(panell);
@@ -431,10 +427,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       var dAvui = w.dies.filter(function (d) { return d.data === avui; })[0];
       if (dAvui && dAvui.sessions.some(function (s) { return s.opcions; })) {
         var f = el("div", "fila");
-        f.appendChild(xip("Avui no puc", function () {
-          if (confirm("Ginga mourà les sessions d'avui a un altre dia de la setmana, sense espatllar el pla. Si alguna no hi cap, se salta. Endavant?"))
-            demana({ accio: "no_disponible", dies: [avui] });
-        }));
+        f.appendChild(xip("Avui no puc", function () { demana({ accio: "no_disponible", dies: [avui], avui: true }); }));
         cont.appendChild(f);
       }
       dies.forEach(function (d) {
@@ -458,8 +451,31 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     r.textContent = text || "";
   }
   var CANVI = "ginga-area-canvi";
-  function demana(cos) {
+  // Cap canvi del pla es fa sense que l'atleta l'hagi confirmat: la pregunta es fa aquí, i només aquí, per a totes les
+  // accions (tests/test_atleta_confirma.py). Diu què canviarà i quan, perquè l'atleta en sigui conscient.
+  function minuscula(t) { return t.charAt(0).toLowerCase() + t.slice(1); }
+  function pregunta(cos, s) {
+    var nom = s && s.nom ? "«" + s.nom + "»" : "la sessió";
+    switch (cos.accio) {
+      case "mou":
+        return (cos.motiu ? "Compte: " + cos.motiu + ".\n\n" : "") + "Mous " + nom + " a " + minuscula(llarg(cos.data)) + "?"
+          + (cos.motiu ? " L'equip de Ginga en rebrà l'avís." : "");
+      case "lloc":
+        var on = s && s.opcions && ON[s.opcions.lloc];
+        return on ? "Fas " + nom + " " + minuscula(on) + "?" : "Canvies on fas " + nom + "?";
+      case "escurca":
+        return "Escurces " + nom + " a " + cos.minuts + " min?";
+      case "treu":
+        return s && s.clau ? "És una sessió clau: segur que te saltes " + nom + "?" : "Segur que te saltes " + nom + "?";
+      case "no_disponible":
+        return (cos.avui ? "Ginga mourà les sessions d'avui" : "Ginga mourà les sessions de " + cos.dies.map(curt).join(", "))
+          + " a un altre dia de la setmana, sense espatllar el pla. Si alguna no hi cap, se salta. Endavant?";
+    }
+    return "Fas aquest canvi al pla?";
+  }
+  function demana(cos, s) {
     if (pendent || !sessio) return;
+    if (!confirm(pregunta(cos, s))) return;
     pendent = { id: null, ts: Date.now() };
     mostra("Comprovant-ho amb el teu pla…");
     if (darrer) pinta(darrer);
