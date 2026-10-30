@@ -238,6 +238,9 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
     camp("hores_sostre", "text", "I en una setmana bona, fins a quantes?",
       "El pla es fa sobre el que es pot repetir; les setmanes que tinguis més temps, s'hi afegeix volum fàcil.", "8");
     ["hores", "hores_sostre"].forEach(function (k) { $("c-" + k).inputMode = "decimal"; $("c-" + k).maxLength = 5; });
+    // on entrena: només per avisar-lo si plou el dia d'una sessió de fora (setmana/temps.py)
+    camp("poblacio", "text", "On entrenes normalment?",
+      "La població. Només la fem servir per avisar-te si plou el dia d'una sessió de fora. Si no la vols dir, deixa-ho buit.", "Figueres");
     var qDies = opcions("dies", "Quants dies a la setmana vols entrenar?", ["1", "2", "3", "4", "5", "6", "7"].map(function (n) { return [n, n]; }));
     qDies.querySelector(".tria").className = "tria dies";      // els set números en una fila
     var DIES = ["dl", "dt", "dc", "dj", "dv", "ds", "dg"];
@@ -404,7 +407,7 @@ input[type=text], input[type=date] { font: inherit; font-weight: 700; width: 100
       var q = $("q-" + k); if (q && !q.hidden && valor(k)) r[k] = valor(k);
     });
     if (r.lesio && r.lesio !== "cap" && valor("lesio_zona")) r.lesio_zona = valor("lesio_zona");
-    ["distancia", "data_objectiu", "marca", "temporades_esport", "lesio_detall", "altres"].forEach(function (k) {
+    ["distancia", "data_objectiu", "marca", "temporades_esport", "lesio_detall", "altres", "poblacio"].forEach(function (k) {
       var c = $("c-" + k), q = $("q-" + k); if (c && (!q || !q.hidden) && c.value.trim()) r[k] = c.value.trim();
     });
     ["hores", "hores_sostre"].forEach(function (k) { var v = $("c-" + k) && hores($("c-" + k).value); if (v) r[k] = Math.round(v * 4) / 4; });
