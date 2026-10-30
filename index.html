@@ -383,8 +383,8 @@ ol.plan button.salta { all: unset; cursor: pointer; display: contents; }
     engegaMusica();
   }
 
-  // ---- música ambiental (només si la sessió porta `mu`: la preparació de l'apnea). La fa musica.js al navegador;
-  // arrenca amb el primer toc, baixa mentre parla la veu i s'apaga al final.
+  // ---- música ambiental (només si la sessió porta `mu`: la preparació de l'apnea, el ioga i els estiraments). La fa
+  // musica.js al navegador; arrenca amb el primer toc, baixa mentre parla la veu i s'apaga al final.
   var musicaSi = true, musica = null, musicaAcabada = false;
   try { musicaSi = localStorage.getItem("ginga-musica") !== "no"; } catch (err) {}
   function engegaMusica() {

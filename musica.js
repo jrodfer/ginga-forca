@@ -1,4 +1,4 @@
-// Música ambiental de les sessions tranquil·les (la pàgina d'apnea; el reproductor, si la sessió porta `mu`). Es fa
+// Música ambiental de les sessions tranquil·les (la pàgina d'apnea; el reproductor, si la sessió porta `mu`: ioga, estiraments, preparació d'apnea). Es fa
 // al navegador amb Web Audio: quatre acords lents i suaus, un soroll d'onades i alguna campaneta, amb una mica de
 // reverberació. Sense fitxers ni drets d'autor. La veu guia va per sobre: atenua(true) baixa la música mentre parla.
 //
