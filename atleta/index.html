@@ -88,7 +88,7 @@ h2 { font-size: 1.6rem; margin: 0 0 4px; }
 @media (max-width: 420px) { .dia .cos { padding-left: 0; } }
 
 /* la forma: fitness, fatigue i form d'intervals.icu */
-.xifres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 10px; }
+.xifres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 0; }
 .xifres b { display: block; font: 400 34px/1.1 var(--serif); }
 
 /* les eines */
@@ -274,10 +274,6 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
         x.appendChild(c);
       });
       fo.appendChild(x);
-      fo.appendChild(el("p", "petit muted", "Fitness: la càrrega mitjana de les últimes 6 setmanes. Fatigue: la de l'última. " +
-        "Form: la resta; negativa vol dir que carregues més del que estàs acostumat."));
-      fo.appendChild(el("p", "petit muted", "Són les de " + llarg(forma.data).toLowerCase() + ", amb tot el que havies fet " +
-        "aquell dia. Es posen al dia cada nit; les d'ara mateix, a intervals.icu."));
     }
 
     $("setmana").hidden = !actual;
