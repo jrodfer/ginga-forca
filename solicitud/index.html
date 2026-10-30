@@ -98,26 +98,38 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
 .programa li { margin: 2px 0; }
 .programa .cal { display: block; color: var(--muted); font-size: 15px; }
 .parany { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+/* l'idioma, com a la pàgina de privacitat */
+.cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.idiomes { display: flex; gap: 6px; }
+.idiomes button { font: 800 15px/1 var(--sans); padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line);
+  background: transparent; color: var(--fg); cursor: pointer; }
+.idiomes button[aria-pressed="true"] { border-color: var(--ok); }
 </style>
 <link rel="stylesheet" href="../marca.css">
 </head>
 <body>
 <main>
   <header>
+    <div class="cap">
     <svg class="lockup" viewBox="-12 -16 704 208" role="img" aria-label="ginga"><path class="lk-g" d="M91.6 42.8 A46 46 0 1 0 97.2 107.6 L72 78 L114 78"/><circle class="lk-p" cx="126" cy="6" r="15"/><g class="lk-t" transform="translate(180,30)"><circle cx="50" cy="50" r="38"/><path d="M88 10 V112 A30 30 0 0 1 58 142 H28"/><path d="M136 12 V88"/><path d="M184 88 V12"/><path d="M184 50 A38 38 0 0 1 260 50 V88"/><circle cx="336" cy="50" r="38"/><path d="M374 10 V112 A30 30 0 0 1 344 142 H314"/><circle cx="450" cy="50" r="38"/><path d="M488 10 V88"/></g><circle class="lk-i" cx="316" cy="-1" r="14"/></svg>
-    <h1>Vull entrenar amb Ginga</h1>
-    <p class="muted" style="margin:0">Deixa'ns les teves dades i què busques. L'entrenador ho mira i et respon per correu.</p>
+    <div class="idiomes" role="group" aria-label="Idioma / Language">
+      <button type="button" data-idioma="ca">Català</button>
+      <button type="button" data-idioma="en">English</button>
+    </div>
+    </div>
+    <h1 data-t="titol">Vull entrenar amb Ginga</h1>
+    <p class="muted" style="margin:0" data-t="intro">Deixa'ns les teves dades i què busques. L'entrenador ho mira i et respon per correu.</p>
   </header>
 
   <form id="formulari" novalidate>
     <section class="card">
-      <h2>Què vols fer?</h2>
-      <p class="muted" style="margin:0 0 10px">Hi ha dues maneres d'entrenar amb Ginga. Tria la que t'encaixi.</p>
+      <h2 data-t="que-vols">Què vols fer?</h2>
+      <p class="muted" style="margin:0 0 10px" data-t="dues-maneres">Hi ha dues maneres d'entrenar amb Ginga. Tria la que t'encaixi.</p>
       <div class="programes" id="q-programa">
         <label class="programa">
           <span class="cap-prog"><input type="radio" name="programa" value="ginga"> <b>Ginga</b></span>
-          <span class="sub">Per preparar una cursa o millorar en córrer, bici, natació o triatló.</span>
-          <ul>
+          <span class="sub" data-t="ginga-sub">Per preparar una cursa o millorar en córrer, bici, natació o triatló.</span>
+          <ul data-t="ginga-llista">
             <li>Un pla per setmanes cap al teu objectiu: sessions al calendari i al rellotge.</li>
             <li>Cada setmana es mira com has entrenat, com dorms i com estàs, i el pla s'ajusta.</li>
             <li>Força inclosa, pensada per al teu esport: et fa més econòmic (gastes menys energia al mateix ritme) i redueix el
@@ -126,69 +138,74 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
               encaixen amb la sessió, amb el fitxer per al rellotge.</li>
             <li>Un correu cada diumenge amb com ha anat i què ve.</li>
           </ul>
-          <span class="cal">Cal: rellotge esportiu i intervals.icu (gratuït).</span>
+          <span class="cal" data-t="ginga-cal">Cal: rellotge esportiu i intervals.icu (gratuït).</span>
         </label>
         <label class="programa">
           <span class="cap-prog"><input type="radio" name="programa" value="forca"> <b>Ginga Força</b></span>
-          <span class="sub">Per guanyar força, os i equilibri, a qualsevol edat a partir dels 18 anys.</span>
-          <ul>
+          <span class="sub" data-t="forca-sub">Per guanyar força, os i equilibri, a qualsevol edat a partir dels 18 anys.</span>
+          <ul data-t="forca-llista">
             <li>Tres sessions curtes per setmana (de 15 a 40 minuts), a casa o al gimnàs.</li>
             <li>Cada sessió s'obre amb un botó: un vídeo per exercici, les sèries i el descans, al mòbil o a la Smart TV.</li>
             <li>Comença al teu nivell i puja a poc a poc; si una sessió costa massa, el pla s'adapta.</li>
             <li>Un correu cada diumenge amb les sessions de la setmana.</li>
           </ul>
-          <span class="cal">Cal: només el mòbil. Rellotge i intervals.icu, opcionals.</span>
+          <span class="cal" data-t="forca-cal">Cal: només el mòbil. Rellotge i intervals.icu, opcionals.</span>
         </label>
       </div>
     </section>
 
     <section class="card" id="bloc-intervals" hidden>
       <h2>intervals.icu</h2>
-      <p style="margin:0 0 8px">Per a Ginga cal un compte a <b>intervals.icu</b>, una plataforma web gratuïta. S'hi connecta el
-        teu rellotge esportiu (Garmin, Coros, Polar, Suunto, Wahoo...) o Strava, i hi arriben sols tots els entrenaments.
-        Ginga hi veu com entrenes, com dorms i com estàs, i t'ajusta el pla cada setmana.</p>
+      <!-- Strava, no: el que hi arriba des de Strava no surt per l'API (condicions de Strava), i Ginga no ho veuria -->
+      <p style="margin:0 0 8px" data-t="intervals-que">Per a Ginga cal un compte a <b>intervals.icu</b>, una plataforma web
+        gratuïta. S'hi connecta directament el teu rellotge esportiu (Garmin, Coros, Polar, Suunto, Wahoo...) i hi arriben
+        sols tots els entrenaments. Ginga hi veu com entrenes, com dorms i com estàs, i t'ajusta el pla cada setmana.</p>
       <details>
-        <summary>Més detalls</summary>
-        <ul style="margin:6px 0">
+        <summary data-t="mes-detalls">Més detalls</summary>
+        <ul style="margin:6px 0" data-t="intervals-detalls">
           <li>Les sessions t'arriben al calendari i, si el rellotge ho permet, al rellotge.</li>
           <li>Cada diumenge es mira com has entrenat, dormit i recuperat (pulsacions en repòs, HRV), i s'ajusta la setmana següent.</li>
           <li>Les zones (ritmes, potència, pulsacions) surten de les teves dades, no d'una taula genèrica.</li>
+          <li>El rellotge s'hi ha de connectar directament, no a través de Strava: el que arriba de Strava, Ginga no ho
+            pot llegir (Strava no ho permet).</li>
           <li>Obrir el compte i connectar-hi el rellotge són 5 minuts. Amb un Apple Watch cal una app intermèdia.</li>
         </ul>
       </details>
       <details id="com-obrir">
-        <summary>No en tinc: com l'obro?</summary>
-        <ol style="margin:6px 0;padding-left:20px">
-          <li>Entra a <b>intervals.icu</b> i crea un compte gratuït (amb el teu correu o amb Strava).</li>
-          <li>A <b>Settings</b> (la configuració), connecta-hi el rellotge (Garmin, Coros, Polar, Suunto, Wahoo...) o
-            Strava. A partir d'aquí, els entrenaments hi arriben sols.</li>
+        <summary data-t="com-obrir">No en tinc: com l'obro?</summary>
+        <ol style="margin:6px 0;padding-left:20px" data-t="com-obrir-passos">
+          <li>Entra a <b>intervals.icu</b> i crea un compte gratuït amb el teu correu.</li>
+          <li>A <b>Settings</b> (la configuració), connecta-hi directament el rellotge (Garmin, Coros, Polar, Suunto,
+            Wahoo...), no Strava. A partir d'aquí, els entrenaments hi arriben sols.</li>
           <li>Al final de la mateixa pàgina de Settings hi ha el teu <b>ID d'atleta</b>: comença per <b>i</b> i va seguit
             de números. Copia'l aquí sota.</li>
         </ol>
-        <p class="ajuda" style="margin:0">Són uns 5 minuts. Sense rellotge, Ginga no pot seguir-te els entrenaments: mira
-          Ginga Força, que només necessita el mòbil.</p>
+        <p class="ajuda" style="margin:0" data-t="sense-rellotge">Són uns 5 minuts. Sense rellotge, Ginga no pot seguir-te els
+          entrenaments: mira Ginga Força, que només necessita el mòbil.</p>
       </details>
       <div class="pregunta camp-id" id="id-ginga" style="border-top:0">
-        <p>El teu ID d'atleta d'intervals.icu</p>
+        <p data-t="el-teu-id">El teu ID d'atleta d'intervals.icu</p>
         <input type="text" class="intervals-id" maxlength="20" placeholder="i123456" autocomplete="off" autocapitalize="off">
         <details style="margin-top:8px">
-          <summary>On el trobo?</summary>
-          <p style="margin:6px 0 0">A intervals.icu, obre <b>Settings</b> (la configuració) i baixa fins a baix de tot. L'ID
-            d'atleta comença per <b>i</b> i va seguit de números (per exemple, i123456). Al mòbil surt just a sota de les
-            notificacions; a l'ordinador, al costat.</p>
+          <summary data-t="on-el-trobo">On el trobo?</summary>
+          <p style="margin:6px 0 0" data-t="on-es-l-id">A intervals.icu, obre <b>Settings</b> (la configuració) i baixa fins
+            a baix de tot. L'ID d'atleta comença per <b>i</b> i va seguit de números (per exemple, i123456). Al mòbil surt
+            just a sota de les notificacions; a l'ordinador, al costat.</p>
         </details>
       </div>
     </section>
     <section class="card" id="bloc-forca" hidden>
-      <h2>intervals.icu <span class="etiqueta opc">opcional</span></h2>
-      <p style="margin:0 0 8px">Per a Ginga Força només et cal el mòbil: les sessions arriben per correu, amb vídeos. Però si
-        tens un rellotge connectat a <b>intervals.icu</b> (una plataforma web gratuïta), les sessions també t'arribaran al
-        calendari i veurem si les fas, com t'han anat les pulsacions i l'esforç que hi apuntis.</p>
+      <h2>intervals.icu <span class="etiqueta opc" data-t="opcional">opcional</span></h2>
+      <p style="margin:0 0 8px" data-t="forca-intervals">Per a Ginga Força només et cal el mòbil: les sessions arriben per
+        correu, amb vídeos. Però si tens un rellotge connectat a <b>intervals.icu</b> (una plataforma web gratuïta), les
+        sessions també t'arribaran al calendari i veurem si les fas, com t'han anat les pulsacions i l'esforç que hi
+        apuntis.</p>
       <details>
-        <summary>Més detalls</summary>
-        <ul style="margin:6px 0">
-          <li>intervals.icu recull sol el que registra el teu rellotge esportiu (Garmin, Coros, Polar, Suunto, Wahoo...) o
-            Strava. Sense rellotge no aporta res: n'hi ha prou amb el correu i el mòbil.</li>
+        <summary data-t="mes-detalls">Més detalls</summary>
+        <ul style="margin:6px 0" data-t="forca-detalls">
+          <li>intervals.icu recull sol el que registra el teu rellotge esportiu (Garmin, Coros, Polar, Suunto, Wahoo...),
+            si hi està connectat directament (el que arriba de Strava, Ginga no ho pot llegir). Sense rellotge no aporta
+            res: n'hi ha prou amb el correu i el mòbil.</li>
           <li>Les sessions de força t'apareixen al calendari i, si el rellotge ho permet, al rellotge.</li>
           <li>Veiem quines sessions has fet, quant han durat, les pulsacions i l'esforç (de l'1 al 10) que hi apuntis, i
             el pla s'ajusta amb més dades.</li>
@@ -196,92 +213,95 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
         </ul>
       </details>
       <div class="pregunta" style="border-top:0">
-        <p>Tens compte d'intervals.icu?</p>
+        <p data-t="tens-compte">Tens compte d'intervals.icu?</p>
         <div class="tria">
-          <label><input type="radio" name="intervals_forca" value="si"> Sí</label>
-          <label><input type="radio" name="intervals_forca" value="no"> No</label>
+          <label><input type="radio" name="intervals_forca" value="si"> <span data-t="si">Sí</span></label>
+          <label><input type="radio" name="intervals_forca" value="no"> <span data-t="no">No</span></label>
         </div>
       </div>
 
       <div class="pregunta camp-id" id="id-forca" hidden>
-        <p>El teu ID d'atleta d'intervals.icu <span class="muted" style="font-weight:400">(si el tens a mà)</span></p>
+        <p><span data-t="el-teu-id">El teu ID d'atleta d'intervals.icu</span> <span class="muted" style="font-weight:400"
+          data-t="si-el-tens">(si el tens a mà)</span></p>
         <input type="text" class="intervals-id" maxlength="20" placeholder="i123456" autocomplete="off" autocapitalize="off">
         <details style="margin-top:8px">
-          <summary>On el trobo?</summary>
-          <p style="margin:6px 0 0">A intervals.icu, obre <b>Settings</b> (la configuració) i baixa fins a baix de tot. L'ID
-            d'atleta comença per <b>i</b> i va seguit de números (per exemple, i123456). Al mòbil surt just a sota de les
-            notificacions; a l'ordinador, al costat.</p>
+          <summary data-t="on-el-trobo">On el trobo?</summary>
+          <p style="margin:6px 0 0" data-t="on-es-l-id">A intervals.icu, obre <b>Settings</b> (la configuració) i baixa fins
+            a baix de tot. L'ID d'atleta comença per <b>i</b> i va seguit de números (per exemple, i123456). Al mòbil surt
+            just a sota de les notificacions; a l'ordinador, al costat.</p>
         </details>
       </div>
     </section>
 
     <section class="card">
-      <h2>Sobre tu</h2>
-      <div class="pregunta" style="border-top:0"><p>Nom</p><input type="text" id="nom" maxlength="60" autocomplete="name"></div>
-      <div class="pregunta"><p>Correu electrònic</p><input type="text" id="email" maxlength="120" inputmode="email" autocomplete="email"></div>
-      <div class="pregunta"><p>Quants anys tens?</p>
+      <h2 data-t="sobre-tu">Sobre tu</h2>
+      <div class="pregunta" style="border-top:0"><p data-t="nom">Nom</p><input type="text" id="nom" maxlength="60" autocomplete="name"></div>
+      <div class="pregunta"><p data-t="correu">Correu electrònic</p><input type="text" id="email" maxlength="120" inputmode="email" autocomplete="email"></div>
+      <div class="pregunta"><p data-t="edat">Quants anys tens?</p>
         <div class="tria">
-          <label><input type="radio" name="edat" value="18-39"> 18 a 39</label><label><input type="radio" name="edat" value="40-49"> 40 a 49</label>
-          <label><input type="radio" name="edat" value="50-59"> 50 a 59</label><label><input type="radio" name="edat" value="60+"> 60 o més</label>
+          <label><input type="radio" name="edat" value="18-39"> <span data-t="e18">18 a 39</span></label><label><input type="radio" name="edat" value="40-49"> <span data-t="e40">40 a 49</span></label>
+          <label><input type="radio" name="edat" value="50-59"> <span data-t="e50">50 a 59</span></label><label><input type="radio" name="edat" value="60+"> <span data-t="e60">60 o més</span></label>
         </div>
-        <p class="ajuda" style="margin:8px 0 0">Ginga és per a majors de 18 anys.</p>
+        <p class="ajuda" style="margin:8px 0 0" data-t="majors">Ginga és per a majors de 18 anys.</p>
       </div>
-      <div class="pregunta"><p>Com ens has conegut? <span class="muted" style="font-weight:400">(opcional)</span></p><input type="text" id="com" maxlength="120"></div>
+      <div class="pregunta"><p><span data-t="com">Com ens has conegut?</span> <span class="muted" style="font-weight:400" data-t="opcional-p">(opcional)</span></p><input type="text" id="com" maxlength="120"></div>
       <div class="parany" aria-hidden="true"><label>Web <input type="text" id="web" tabindex="-1" autocomplete="off"></label></div>
     </section>
 
     <!-- L'objectiu, tancat: només el que Ginga pot fer (el pla, no la tècnica ni la dieta) -->
     <section class="card" id="obj-ginga" hidden>
-      <h2>El teu objectiu</h2>
-      <p class="ajuda" style="margin:0 0 10px">Ginga t'ajuda amb el pla: quant entrenes, quins dies, a quina intensitat i
-        com ho reparteixes fins a l'objectiu. La tècnica (per exemple, de natació) i la dieta, de moment no.</p>
-      <div class="pregunta" style="border-top:0"><p>Quin esport?</p>
+      <h2 data-t="objectiu">El teu objectiu</h2>
+      <p class="ajuda" style="margin:0 0 10px" data-t="objectiu-ajuda">Ginga t'ajuda amb el pla: quant entrenes, quins dies,
+        a quina intensitat i com ho reparteixes fins a l'objectiu. La tècnica (per exemple, de natació) i la dieta, de
+        moment no.</p>
+      <div class="pregunta" style="border-top:0"><p data-t="quin-esport">Quin esport?</p>
         <div class="tria">
-          <label><input type="radio" name="esport" value="correr"> Córrer</label>
-          <label><input type="radio" name="esport" value="natacio"> Natació</label>
-          <label><input type="radio" name="esport" value="bici"> Bici</label>
-          <label><input type="radio" name="esport" value="triatlo"> Triatló</label>
-          <label><input type="radio" name="esport" value="duatlo"> Duatló</label>
+          <label><input type="radio" name="esport" value="correr"> <span data-t="correr">Córrer</span></label>
+          <label><input type="radio" name="esport" value="natacio"> <span data-t="natacio">Natació</span></label>
+          <label><input type="radio" name="esport" value="bici"> <span data-t="bici">Bici</span></label>
+          <label><input type="radio" name="esport" value="triatlo"> <span data-t="triatlo">Triatló</span></label>
+          <label><input type="radio" name="esport" value="duatlo"> <span data-t="duatlo">Duatló</span></label>
         </div>
       </div>
-      <div class="pregunta"><p>Què vols aconseguir?</p>
+      <div class="pregunta"><p data-t="que-aconseguir">Què vols aconseguir?</p>
         <div class="tria u">
-          <label><input type="radio" name="objectiu_tipus" value="cursa"> Preparar una cursa o una prova concreta</label>
-          <label><input type="radio" name="objectiu_tipus" value="marca"> Millorar la meva marca en una distància</label>
-          <label><input type="radio" name="objectiu_tipus" value="distancia"> Arribar a fer una distància (sense cursa)</label>
-          <label><input type="radio" name="objectiu_tipus" value="forma"> Entrenar amb regularitat i estar en forma</label>
+          <label><input type="radio" name="objectiu_tipus" value="cursa"> <span data-t="cursa">Preparar una cursa o una prova concreta</span></label>
+          <label><input type="radio" name="objectiu_tipus" value="marca"> <span data-t="marca">Millorar la meva marca en una distància</span></label>
+          <label><input type="radio" name="objectiu_tipus" value="distancia"> <span data-t="distancia">Arribar a fer una distància (sense cursa)</span></label>
+          <label><input type="radio" name="objectiu_tipus" value="forma"> <span data-t="forma">Entrenar amb regularitat i estar en forma</span></label>
         </div>
       </div>
-      <p class="ajuda" style="margin:8px 0 0">Els detalls (quina cursa, quan, quins dies pots entrenar...) te'ls preguntarem quan comencis.</p>
+      <p class="ajuda" style="margin:8px 0 0" data-t="detalls-despres">Els detalls (quina cursa, quan, quins dies pots entrenar...) te'ls preguntarem quan comencis.</p>
     </section>
 
     <section class="card" id="obj-forca" hidden>
-      <h2>El teu objectiu</h2>
-      <div class="pregunta" style="border-top:0"><p>Què vols aconseguir? <span class="muted" style="font-weight:400">(una o dues)</span></p>
+      <h2 data-t="objectiu">El teu objectiu</h2>
+      <div class="pregunta" style="border-top:0"><p><span data-t="que-aconseguir">Què vols aconseguir?</span> <span class="muted"
+        style="font-weight:400" data-t="una-o-dues">(una o dues)</span></p>
         <div class="tria u" id="objectius-forca">
-          <label><input type="checkbox" name="objectiu_forca" value="forca"> Tenir més força per al dia a dia</label>
-          <label><input type="checkbox" name="objectiu_forca" value="equilibri"> Millorar l'equilibri i evitar caigudes</label>
-          <label><input type="checkbox" name="objectiu_forca" value="mobilitat"> Moure'm millor i estar menys rígid/a</label>
-          <label><input type="checkbox" name="objectiu_forca" value="esport"> Complementar un altre esport (córrer, bici, natació...)</label>
-          <label><input type="checkbox" name="objectiu_forca" value="habit"> Fer exercici amb regularitat</label>
+          <label><input type="checkbox" name="objectiu_forca" value="forca"> <span data-t="m-forca">Tenir més força per al dia a dia</span></label>
+          <label><input type="checkbox" name="objectiu_forca" value="equilibri"> <span data-t="m-equilibri">Millorar l'equilibri i evitar caigudes</span></label>
+          <label><input type="checkbox" name="objectiu_forca" value="mobilitat"> <span data-t="m-mobilitat">Moure'm millor i estar menys rígid/a</span></label>
+          <label><input type="checkbox" name="objectiu_forca" value="esport"> <span data-t="m-esport">Complementar un altre esport (córrer, bici, natació...)</span></label>
+          <label><input type="checkbox" name="objectiu_forca" value="habit"> <span data-t="m-habit">Fer exercici amb regularitat</span></label>
         </div>
       </div>
     </section>
 
 
     <section class="card">
-      <label class="check gran"><input type="checkbox" id="privacitat"> Accepto que Ginga faci servir aquestes dades
-        només per respondre la meva sol·licitud. Només les veu l'entrenador, no es comparteixen amb ningú i s'esborren
-        soles al cap de 90 dies si no començo. Si vull que les esborrin abans, o veure-les, puc respondre el correu que
-        m'enviaran. El responsable de les dades és Ginga.</label>
+      <label class="check gran"><input type="checkbox" id="privacitat"> <span data-t="privacitat">Accepto que Ginga faci
+        servir aquestes dades només per respondre la meva sol·licitud. Només les veu l'entrenador, no es comparteixen amb
+        ningú i s'esborren soles al cap de 90 dies si no començo. Si vull que les esborrin abans, o veure-les, puc respondre
+        el correu que m'enviaran. El responsable de les dades és Ginga.</span></label>
     </section>
     <p class="avis" id="error" hidden></p>
-    <button class="btn" type="submit" id="envia" style="width:100%">Envia la sol·licitud</button>
+    <button class="btn" type="submit" id="envia" style="width:100%" data-t="envia">Envia la sol·licitud</button>
   </form>
 
   <section id="gracies" class="card" hidden>
-    <p class="ok" style="margin:0 0 8px">Rebut!</p>
-    <p style="margin:0" id="gracies-txt">L'entrenador ho mirarà i et respondrà per correu en pocs dies.</p>
+    <p class="ok" style="margin:0 0 8px" data-t="rebut">Rebut!</p>
+    <p style="margin:0" id="gracies-txt" data-t="gracies">L'entrenador ho mirarà i et respondrà per correu en pocs dies.</p>
   </section>
 </main>
 <script>
@@ -297,6 +317,140 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
   if (params.get("p") === "forca" || params.get("p") === "ginga") {
     var pre = document.querySelector("input[name='programa'][value='" + params.get("p") + "']"); if (pre) pre.checked = true;
   }
+
+  // L'idioma: el de l'enllaç (?lang=en), el que s'ha triat abans (també a la privacitat) o el català. El català és el
+  // de l'HTML; l'anglès, aquí, amb la mateixa clau que el data-t de cada text (test_solicitud ho comprova).
+  var EN = {
+    "titol": "I want to train with Ginga",
+    "intro": "Leave us your details and what you're looking for. The coach will review it and reply by email.",
+    "que-vols": "What would you like to do?",
+    "dues-maneres": "There are two ways to train with Ginga. Choose the one that suits you.",
+    "ginga-sub": "To prepare for a race or improve your running, cycling, swimming or triathlon.",
+    "ginga-llista": "<li>A week-by-week plan towards your goal: sessions in your calendar and on your watch.</li>"
+      + "<li>Every week we look at how you've trained, slept and recovered, and the plan adjusts.</li>"
+      + "<li>Strength included, designed for your sport: it makes you more economical (less energy at the same pace) and "
+      + "lowers the risk of injury. With a video for each exercise, on your phone or Smart TV.</li>"
+      + "<li>Routes for your outdoor runs and rides: choose where you start and get loops that fit the session, with the "
+      + "file for your watch.</li>"
+      + "<li>An email every Sunday with how it went and what's next.</li>",
+    "ginga-cal": "You need: a sports watch and intervals.icu (free).",
+    "forca-sub": "To build strength, bone and balance, at any age from 18.",
+    "forca-llista": "<li>Three short sessions a week (15 to 40 minutes), at home or at the gym.</li>"
+      + "<li>Each session opens with one button: a video for each exercise, sets and rest, on your phone or Smart TV.</li>"
+      + "<li>You start at your level and build up gradually; if a session is too hard, the plan adapts.</li>"
+      + "<li>An email every Sunday with the week's sessions.</li>",
+    "forca-cal": "You need: just your phone. A watch and intervals.icu are optional.",
+    "intervals-que": "Ginga needs an account on <b>intervals.icu</b>, a free web platform. You connect your sports watch "
+      + "(Garmin, Coros, Polar, Suunto, Wahoo...) directly to it, and all your workouts arrive on their own. Ginga sees "
+      + "how you train, sleep and recover there, and adjusts your plan every week.",
+    "mes-detalls": "More details",
+    "intervals-detalls": "<li>Sessions arrive in your calendar and, if your watch supports it, on your watch.</li>"
+      + "<li>Every Sunday we look at how you've trained, slept and recovered (resting heart rate, HRV), and adjust the "
+      + "following week.</li>"
+      + "<li>Your zones (pace, power, heart rate) come from your own data, not from a generic table.</li>"
+      + "<li>Your watch must be connected directly, not through Strava: Ginga can't read what comes from Strava (Strava "
+      + "doesn't allow it).</li>"
+      + "<li>Opening the account and connecting your watch takes 5 minutes. An Apple Watch needs an extra app.</li>",
+    "com-obrir": "I don't have one: how do I open it?",
+    "com-obrir-passos": "<li>Go to <b>intervals.icu</b> and create a free account with your email.</li>"
+      + "<li>In <b>Settings</b>, connect your watch directly (Garmin, Coros, Polar, Suunto, Wahoo...), not Strava. "
+      + "From then on, your workouts arrive on their own.</li>"
+      + "<li>At the bottom of the same Settings page you'll find your <b>athlete ID</b>: it starts with <b>i</b> followed "
+      + "by numbers. Copy it below.</li>",
+    "sense-rellotge": "It takes about 5 minutes. Without a watch, Ginga can't follow your training: have a look at Ginga "
+      + "Força, which only needs your phone.",
+    "el-teu-id": "Your intervals.icu athlete ID",
+    "on-el-trobo": "Where do I find it?",
+    "on-es-l-id": "On intervals.icu, open <b>Settings</b> and scroll to the very bottom. The athlete ID starts with "
+      + "<b>i</b> followed by numbers (for example, i123456). On a phone it's just below the notifications; on a "
+      + "computer, beside them.",
+    "opcional": "optional",
+    "forca-intervals": "For Ginga Força you only need your phone: sessions arrive by email, with videos. But if you have "
+      + "a watch connected to <b>intervals.icu</b> (a free web platform), sessions will also appear in your calendar and "
+      + "we'll see whether you did them, how your heart rate went and the effort you log.",
+    "forca-detalls": "<li>intervals.icu automatically collects what your sports watch records (Garmin, Coros, Polar, "
+      + "Suunto, Wahoo...), if it's connected directly (Ginga can't read what comes from Strava). Without a watch it "
+      + "adds nothing: email and your phone are enough.</li>"
+      + "<li>Strength sessions appear in your calendar and, if your watch supports it, on your watch.</li>"
+      + "<li>We see which sessions you did, how long they took, your heart rate and the effort (1 to 10) you log, and "
+      + "the plan adjusts with more data.</li>"
+      + "<li>Opening the account and connecting your watch takes 5 minutes. An Apple Watch needs an extra app.</li>",
+    "tens-compte": "Do you have an intervals.icu account?",
+    "si": "Yes", "no": "No",
+    "si-el-tens": "(if you have it handy)",
+    "sobre-tu": "About you",
+    "nom": "Name",
+    "correu": "Email",
+    "edat": "How old are you?",
+    "e18": "18 to 39", "e40": "40 to 49", "e50": "50 to 59", "e60": "60 or over",
+    "majors": "Ginga is for people aged 18 or over.",
+    "com": "How did you hear about us?",
+    "opcional-p": "(optional)",
+    "objectiu": "Your goal",
+    "objectiu-ajuda": "Ginga helps you with the plan: how much you train, on which days, at what intensity and how it's "
+      + "spread out until your goal. Technique (swimming, for example) and diet, not for now.",
+    "quin-esport": "Which sport?",
+    "correr": "Running", "natacio": "Swimming", "bici": "Cycling", "triatlo": "Triathlon", "duatlo": "Duathlon",
+    "que-aconseguir": "What do you want to achieve?",
+    "cursa": "Prepare for a specific race or event",
+    "marca": "Improve my time over a distance",
+    "distancia": "Be able to cover a distance (no race)",
+    "forma": "Train regularly and keep fit",
+    "detalls-despres": "We'll ask for the details (which race, when, which days you can train...) when you start.",
+    "una-o-dues": "(one or two)",
+    "m-forca": "Be stronger for everyday life",
+    "m-equilibri": "Improve my balance and avoid falls",
+    "m-mobilitat": "Move better and feel less stiff",
+    "m-esport": "Complement another sport (running, cycling, swimming...)",
+    "m-habit": "Exercise regularly",
+    "privacitat": "I agree that Ginga may use this data only to answer my request. Only the coach sees it, it isn't "
+      + "shared with anyone, and it's deleted automatically after 90 days if I don't start. If I want it deleted "
+      + "sooner, or want to see it, I can reply to the email I'll receive. The data controller is Ginga.",
+    "envia": "Send request",
+    "rebut": "Received!",
+    "gracies": "The coach will review it and reply by email within a few days."
+  };
+  var MISSATGES = {
+    ca: { programa: "Tria Ginga o Ginga Força.", nom: "Falta el nom.", email: "Revisa el correu electrònic.",
+          edat: "Falta l'edat.", esport: "Tria l'esport.", tipus: "Tria què vols aconseguir.",
+          forca: "Tria què vols aconseguir (una o dues).",
+          id: "Per a Ginga cal el teu ID d'intervals.icu. Si encara no tens compte, obre «No en tinc: com l'obro?».",
+          id_format: "L'ID d'intervals.icu comença per i i va seguit de números (per exemple, i123456).",
+          privacitat: "Per enviar-la, cal marcar la casella de privacitat.", enviant: "Enviant…",
+          massa: "Avui ja s'han enviat moltes sol·licituds des d'aquí. Torna-ho a provar demà.",
+          error: "No s'ha pogut enviar. Torna-ho a provar d'aquí a una estona.", titol: "Ginga · Vull entrenar" },
+    en: { programa: "Choose Ginga or Ginga Força.", nom: "Your name is missing.", email: "Please check your email.",
+          edat: "Your age is missing.", esport: "Choose your sport.", tipus: "Choose what you want to achieve.",
+          forca: "Choose what you want to achieve (one or two).",
+          id: "Ginga needs your intervals.icu ID. If you don't have an account yet, open «I don't have one: how do I open it?».",
+          id_format: "The intervals.icu ID starts with i followed by numbers (for example, i123456).",
+          privacitat: "To send it, please tick the privacy box.", enviant: "Sending…",
+          massa: "Too many requests have been sent from here today. Please try again tomorrow.",
+          error: "It couldn't be sent. Please try again in a while.", titol: "Ginga · I want to train" }
+  };
+  var desat = (function () { try { return localStorage.getItem("ginga-idioma"); } catch (e) { return null; } })();
+  var idioma = params.get("lang") || desat || "ca";
+  function posaIdioma(i) {
+    idioma = i === "en" ? "en" : "ca";
+    document.documentElement.lang = idioma;
+    document.title = MISSATGES[idioma].titol;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-t]"), function (el) {
+      if (el.dataset.ca == null) el.dataset.ca = el.innerHTML;
+      el.innerHTML = idioma === "en" ? EN[el.dataset.t] : el.dataset.ca;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".idiomes button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.idioma === idioma));
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".idiomes button"), function (b) {
+    b.addEventListener("click", function () {
+      posaIdioma(b.dataset.idioma);
+      try { localStorage.setItem("ginga-idioma", idioma); } catch (e) {}
+    });
+  });
+  posaIdioma(idioma);
+  function t(clau) { return MISSATGES[idioma][clau]; }
+
   function idIntervals() {               // el de la secció visible, en minúscules i sense espais
     var bloc = valor("programa") === "ginga" ? $("id-ginga") : $("id-forca");
     if (!bloc || bloc.hidden) return null;
@@ -307,6 +461,7 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
   function marcats(nom) {
     return Array.prototype.map.call(document.querySelectorAll("input[name='" + nom + "']:checked"), function (x) { return x.value; });
   }
+  // el resum per a l'entrenador, sempre en català (sigui quin sigui l'idioma de la pàgina)
   var ESPORTS = { correr: "Córrer", natacio: "Natació", bici: "Bici", triatlo: "Triatló", duatlo: "Duatló" };
   var TIPUS = { cursa: "Preparar una cursa o prova", marca: "Millorar la marca en una distància",
                 distancia: "Arribar a fer una distància", forma: "Regularitat i forma" };
@@ -331,24 +486,25 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
   actualitza();
   $("formulari").addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var p = valor("programa"), t = valor("objectiu_tipus");
+    var p = valor("programa"), tipus = valor("objectiu_tipus");
     var cos = { programa: p, nom: $("nom").value.trim(), email: $("email").value.trim(),
                 edat: valor("edat"), objectiu: p ? textObjectiu(p) : "",
-                esport: p === "ginga" ? valor("esport") : null, objectiu_tipus: p === "ginga" ? t : null,
+                esport: p === "ginga" ? valor("esport") : null, objectiu_tipus: p === "ginga" ? tipus : null,
                 objectiu_forca: p === "forca" ? marcats("objectiu_forca").join(",") : null,
                 intervals: valor("programa") === "ginga" ? "si" : valor("intervals_forca"),
-                intervals_id: idIntervals(), com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked };
-    var falta = !cos.programa ? "Tria Ginga o Ginga Força." : !cos.nom ? "Falta el nom."
-      : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cos.email) ? "Revisa el correu electrònic." : !cos.edat ? "Falta l'edat."
-      : p === "ginga" && !cos.esport ? "Tria l'esport."
-      : p === "ginga" && !t ? "Tria què vols aconseguir."
-      : p === "forca" && !cos.objectiu_forca ? "Tria què vols aconseguir (una o dues)."
-      : cos.programa === "ginga" && !cos.intervals_id ? "Per a Ginga cal el teu ID d'intervals.icu. Si encara no tens compte, obre «No en tinc: com l'obro?»."
-      : cos.intervals_id && !/^i\d{1,10}$/.test(cos.intervals_id) ? "L'ID d'intervals.icu comença per i i va seguit de números (per exemple, i123456)."
-      : !cos.privacitat ? "Per enviar-la, cal marcar la casella de privacitat." : "";
+                intervals_id: idIntervals(), com: $("com").value.trim(), web: $("web").value, privacitat: $("privacitat").checked,
+                idioma: idioma };
+    var falta = !cos.programa ? t("programa") : !cos.nom ? t("nom")
+      : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cos.email) ? t("email") : !cos.edat ? t("edat")
+      : p === "ginga" && !cos.esport ? t("esport")
+      : p === "ginga" && !tipus ? t("tipus")
+      : p === "forca" && !cos.objectiu_forca ? t("forca")
+      : cos.programa === "ginga" && !cos.intervals_id ? t("id")
+      : cos.intervals_id && !/^i\d{1,10}$/.test(cos.intervals_id) ? t("id_format")
+      : !cos.privacitat ? t("privacitat") : "";
     if (falta) { $("error").hidden = false; $("error").textContent = falta; return; }
     Object.keys(cos).forEach(function (k) { if (cos[k] === "" || cos[k] === null) delete cos[k]; });
-    $("error").hidden = true; $("envia").disabled = true; $("envia").textContent = "Enviant…";
+    $("error").hidden = true; $("envia").disabled = true; $("envia").textContent = t("enviant");
     config.then(function (u) { return fetch(u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cos) }); })
       .then(function (r) { if (r.status === 429) throw new Error("massa"); if (!r.ok) throw new Error(r.status); })
       .then(function () {
@@ -356,10 +512,9 @@ textarea { font: inherit; width: 100%; min-height: 90px; padding: 12px; border-r
         window.scrollTo(0, 0);
       })
       .catch(function (err) {
-        $("envia").disabled = false; $("envia").textContent = "Envia la sol·licitud";
+        $("envia").disabled = false; $("envia").innerHTML = idioma === "en" ? EN.envia : $("envia").dataset.ca;
         $("error").hidden = false;
-        $("error").textContent = err.message === "massa" ? "Avui ja s'han enviat moltes sol·licituds des d'aquí. Torna-ho a provar demà."
-          : "No s'ha pogut enviar. Torna-ho a provar d'aquí a una estona.";
+        $("error").textContent = err.message === "massa" ? t("massa") : t("error");
       });
   });
 })();
