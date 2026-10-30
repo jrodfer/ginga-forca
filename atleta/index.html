@@ -112,6 +112,7 @@ h2 { font-size: 1.6rem; margin: 0 0 4px; }
 .xip.princ { background: var(--accent); color: #10231D; border-color: var(--accent); }
 .xip.marcat { border-color: var(--accent); background: var(--accent); color: #10231D; }
 .xip:disabled { opacity: .5; cursor: default; }
+.xip.avis { border-style: dashed; color: var(--muted); }
 select.xip { appearance: auto; }
 .pluja { margin-top: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 14px; }
 .pluja b { font-weight: 500; }
@@ -123,7 +124,6 @@ select.xip { appearance: auto; }
 .dia .plou { color: var(--muted); font-size: 13px; }
 .eina.boto { width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); color: inherit;
   font: inherit; cursor: pointer; }
-.eina.boto:first-child { border-top: 0; padding-top: 4px; }
 .subtitol { font-weight: 500; margin: 18px 0 2px; }
 .subtitol:first-child { margin-top: 4px; }
 .quin { font-size: 13px; color: var(--muted); margin: 12px 0 0; text-transform: uppercase; letter-spacing: .08em; }
@@ -327,9 +327,21 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     });
     panell.appendChild(el("p", null, "Mou-la a:"));
     var f = el("div", "fila");
-    (o.dies || []).forEach(function (d) { f.appendChild(xip(curt(d), function () { demana({ accio: "mou", id: s.id, data: d }); })); });
-    if (!(o.dies || []).length) f.appendChild(el("span", "petit muted", "Aquesta setmana no hi cap en cap altre dia sense espatllar el pla."));
+    // tots els dies d'avui endavant: els que trenquen una regla del pla, amb l'avís i el motiu (si confirma, es fa)
+    var avisos = o.avisos || {};
+    (o.dies || []).concat(Object.keys(avisos)).sort().forEach(function (d) {
+      var motiu = avisos[d];
+      var b = xip(curt(d) + (motiu ? " ⚠" : ""), function () {
+        if (!motiu) return demana({ accio: "mou", id: s.id, data: d });
+        if (confirm("Compte: " + motiu + ".\n\nVols moure-la igualment? L'equip de Ginga en rebrà l'avís."))
+          demana({ accio: "mou", id: s.id, data: d, forca: true });
+      });
+      if (motiu) { b.className = "xip avis"; b.title = motiu; }
+      f.appendChild(b);
+    });
+    if (!f.childNodes.length) f.appendChild(el("span", "petit muted", "Aquesta setmana ja no queda cap altre dia."));
     panell.appendChild(f);
+    if (Object.keys(avisos).length) panell.appendChild(el("p", "petit muted", "⚠ Aquest dia trenca alguna regla del teu pla: et direm quina abans de moure-la."));
     if (o.lloc) {
       panell.appendChild(el("p", null, "On:"));
       var fl = el("div", "fila");
@@ -453,7 +465,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     if (darrer) pinta(darrer);
     var peticio = { k: sessio.k, g: sessio.g, accio: cos.accio };
     if (cos.id != null) peticio.id = cos.id;
-    ["data", "minuts", "dies"].forEach(function (c) { if (cos[c] != null) peticio[c] = cos[c]; });
+    ["data", "minuts", "dies", "forca"].forEach(function (c) { if (cos[c] != null) peticio[c] = cos[c]; });
     config().then(function (w) {
       return fetch(w + "/area/canvi", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(peticio) });
     }).then(function (r) {
@@ -582,6 +594,14 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     });
     $("eines").hidden = !eines.length && !potModificar;
     $("llista-eines").textContent = "";
+
+    eines.forEach(function (e) {
+      var a = el("a", "eina");
+      a.href = e.url;
+      a.appendChild(el("div", "titol", e.titol));
+      if (e.text) a.appendChild(el("div", "petit muted", e.text));
+      $("llista-eines").appendChild(a);
+    });
     if (potModificar) {
       var b = el("button", "eina boto");
       b.type = "button";
@@ -590,13 +610,6 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       b.addEventListener("click", function () { obreModifica(true); });
       $("llista-eines").appendChild(b);
     }
-    eines.forEach(function (e) {
-      var a = el("a", "eina");
-      a.href = e.url;
-      a.appendChild(el("div", "titol", e.titol));
-      if (e.text) a.appendChild(el("div", "petit muted", e.text));
-      $("llista-eines").appendChild(a);
-    });
     if (setmanes.length && !actual && !ve)
       $("peu").textContent = "Aquesta setmana encara no hi és: arriba diumenge, amb el correu.";
   }
