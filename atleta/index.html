@@ -658,6 +658,8 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
   });
 
   $("surt").addEventListener("click", function () {
+    // i la galeta dels mòduls (worker/web.js): sense, ja no s'hi entra des d'aquest mòbil
+    try { fetch("/__porta/surt", { method: "POST", credentials: "same-origin" }).catch(function () {}); } catch (e) {}
     oblida(); sessio = null; darrer = null;
     entra("Sessió tancada en aquest mòbil. Per tornar a entrar, posa el teu correu.");
   });

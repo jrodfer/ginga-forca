@@ -21,15 +21,15 @@ comandament de la tele). El vídeo, sense so, es reprodueix quan comença l'expl
 exercici i «Un cop més») i s'atura als 3/4 (o a la meitat, `p`), a la postura feta, fins que s'acaba l'exercici, sense botó de pausa. Al descans, fons negre. La veu són frases gravades amb Eleven v4 d'ElevenLabs (`a`: la carpeta, amb `index.json`; ara,
 `ioga/veu/ca/` o `ioga/veu/en/`, segons l'idioma que es tria a la pàgina de ioga, i les fa `python -m estiraments.veu`). Sense `g`, tot funciona com sempre.
 
-## La porta dels mòduls (`porta.js`)
+## La porta dels mòduls (`worker/web.js` i `porta.js`)
 
-Força, ioga, apnea, tècnica i rutes només s'obren a qui té accés (en Joan, 30/10/2026). `porta.js`, el primer script
-del `<head>`, amaga la pàgina fins que el Worker confirma una clau signada per Ginga: la de l'àrea de l'atleta (val
-per a tots els mòduls), la de l'enllaç que s'obre (apnea personal, sessió de força amb `f`, ruta signada) o una que ja
-s'hagi comprovat en aquest navegador. Sense cap, porta a `atleta/?torna=<camí>` per entrar amb el correu i un codi, i
-en entrar hi torna. Sense connexió, obre amb una clau comprovada els últims 30 dies. La web de Ginga, la privacitat, la
-sol·licitud, l'àrea, l'alta, l'admin i la tele no hi passen (`tests/test_porta.py`, `OBERTES`). Els fitxers de dades
-(`sessions.json`, vídeos) continuen sent públics a GitHub Pages: la porta tanca les pàgines, no les dades.
+Força d'exemple, ioga, apnea, tècnica i rutes només s'obren a qui ha entrat (en Joan, 30/10/2026). Ho decideix el
+servidor: gingacoach.com el serveix el Worker `ginga-web` (`worker/web.js`, vegeu `worker/README.md`), que sense la
+galeta de sessió no envia cap fitxer d'un mòdul, ni la pàgina ni les dades. En lloc de la pàgina dona una porta
+que, amb la clau de l'àrea de l'atleta o la de l'enllaç del correu, demana la galeta i torna a carregar; sense cap
+clau, porta a `atleta/?torna=<camí>` per entrar amb el correu i un codi, i en entrar hi torna. Les carpetes
+públiques són a `PUBLIQUES` (`worker/web.js` i `coach/publica_web.py`): qualsevol carpeta nova queda tancada.
+`porta.js` (al navegador) es manté a les pàgines dels mòduls, però el que tanca és el servidor.
 
 ## Ioga per corredors (`ioga/`)
 
