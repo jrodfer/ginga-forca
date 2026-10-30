@@ -11,6 +11,8 @@
      - volta tancada: dos punts de pas en triangle amb la sortida, cap a una direcció (INTENTS direccions), ancorats
        a la cruïlla més popular del voltant; s'ajusta la mida fins que fa els km (com a molt AJUSTOS vegades);
      - anada i tornada: un punt de girada a mig camí, i tornar pel mateix lloc;
+     - amb arribada (la ruta a mida): de la sortida a l'arribada, amb un punt de desviament cap a una direcció per
+       fer els km;
      - el trànsit (Motor.transitRef: 1 les N- i les C- de dues xifres, 0,15 les veïnals) encareix el tram x
        (1 + PES_TRANSIT x trànsit): no es descarta cap carretera, però una de petita guanya si n'hi ha (en Joan,
        30/10/2026: «que els hi doni menys punts»);
@@ -193,12 +195,15 @@
   }
 
   /** Les voltes candidates. opcions: {sortida: [lat, lon], km, tolerancia (0.1), tipus ("volta" | "anada"),
-   *  desnivell: [min, max] o null, passaPer: [[lat, lon]], evita: [[lat, lon]] (el tram més proper de cada punt),
+   *  desnivell: [min, max] o null, passaPer: [[lat, lon]], arribada: [lat, lon] o null (acaba allà), evita: [[lat, lon]] (el tram més proper de cada punt),
    *  n (3), llavor, exclou: voltes ja ensenyades (no se'n torna cap de semblant)}. Torna {voltes, motiu}: motiu "fora" (la sortida no és a la xarxa), "cap" o null. */
   function genera(x, o) {
     const objectiu = o.km * 1000, tol = o.tolerancia ?? 0.1, aleat = llavor(o.llavor ?? 1);
     const s = mesProper(x, o.sortida[0], o.sortida[1]);
     if (s === null) return { voltes: [], motiu: "fora" };
+    const fi = o.arribada ? mesProper(x, o.arribada[0], o.arribada[1]) : null;
+    if (o.arribada && fi === null) return { voltes: [], motiu: "fora" };
+    const anada = o.tipus === "anada" && fi === null;
     const evita = new Set();
     for (const p of o.evita || []) {
       const k = mesProper(x, p[0], p[1]);
@@ -208,19 +213,20 @@
     const cands = [];
     for (let k = 0; k < INTENTS; k++) {
       const angle = 2 * Math.PI * (k + aleat() * 0.5) / INTENTS;
-      let costat = o.tipus === "anada" ? objectiu / 2 / FACTOR_RUTA : objectiu / 3 / FACTOR_RUTA;
+      let costat = anada || fi !== null ? objectiu / 2 / FACTOR_RUTA : objectiu / 3 / FACTOR_RUTA;
       for (let ajust = 0; ajust < AJUSTOS; ajust++) {
         const p = (a) => { const q = desplaca(x.lat[s], x.lon[s], costat, a); return ancora(x, q[0], q[1], Math.max(300, costat / 4)); };
-        const nodes = o.tipus === "anada" ? [s, ...pas, p(angle)] : [s, ...pas, p(angle - Math.PI / 6), p(angle + Math.PI / 6), s];
+        const nodes = fi !== null ? [s, ...pas, p(angle), fi] : anada ? [s, ...pas, p(angle)]
+          : [s, ...pas, p(angle - Math.PI / 6), p(angle + Math.PI / 6), s];
         let trams = perPunts(x, nodes, evita);
         if (!trams) break;
-        if (o.tipus === "anada") trams = trams.concat(trams.slice().reverse().map(([i, e]) => [i, !e]));
+        if (anada) trams = trams.concat(trams.slice().reverse().map(([i, e]) => [i, !e]));
         const r = resum(x, trams);
         if (!r.km) break;
         const ok = Math.abs(r.km * 1000 - objectiu) <= tol * objectiu;
         if (ok) {
           const dins = !o.desnivell || (r.desnivell >= (o.desnivell[0] ?? 0) && r.desnivell <= (o.desnivell[1] ?? Infinity));
-          if (dins && (o.tipus === "anada" || r.repetit <= REPETIT_MAX)) cands.push(r);
+          if (dins && (anada || r.repetit <= REPETIT_MAX)) cands.push(r);
           break;
         }
         costat *= Math.sqrt(objectiu / (r.km * 1000));

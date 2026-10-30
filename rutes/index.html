@@ -765,14 +765,27 @@ function oblidaPropostes() {
 // de coach/voltes/web.py): no gasta cerques del proxy. Automàtic: les voltes per popularitat si alguna és bona
 // (Voltes.LLINDAR_QUALITAT), i si no, el generador alternatiu (els circuits d'openrouteservice i BRouter de sempre).
 // «Més opcions» en fa de noves; al tercer cop surt «Calcula-la només amb el mapa» (en Joan, 30/10/2026).
-// De moment, només la bici de carretera té dades.
+// La ruta a mida també (en Joan, 30/10/2026), amb el seu rang de km, el desnivell, els punts de pas i l'arribada.
+// Els modes surten per als esports que tenen alguna regió a voltes/index.json (de moment, només la bici de carretera).
 const MODES = ["auto", "popularitat", "biblioteca", "alternatiu"];
 const MES_ABANS_DEL_MAPA = 3;
+const ESPORT_VOLTES = { "cycling-road": "carretera", "cycling-regular": "gravel", "cycling-mountain": "btt" };
 let mode = "auto", mesCops = 0, indexVoltes = null, avisMode = false;
+let demanda = null;             // què es demana al generador per popularitat (la ruta a mida)
 const xarxes = new Map();
 
+function carregaIndex() {
+  if (!indexVoltes) indexVoltes = fetch("voltes/index.json").then((r) => (r.ok ? r.json() : { regions: [] }))
+    .catch(() => ({ regions: [] }));
+  return indexVoltes;
+}
+let regionsVoltes = [];         // les de l'índex, quan ha arribat
+carregaIndex().then((ix) => { regionsVoltes = ix.regions || []; if (mapa) pintaModes(); });
+
 function esportVoltes() {
-  return S.s === "ride" && S.o === "cycling-road" && S.p !== "pista" ? "carretera" : null;
+  const e = S.x ? (oberta.s === "ride" ? ESPORT_VOLTES[oberta.ride] : oberta.run === "asfalt" ? "correr" : "trail")
+    : S.s === "ride" && S.p !== "pista" ? ESPORT_VOLTES[S.o] : null;
+  return e && regionsVoltes.some((r) => r.esport === e) ? e : null;
 }
 
 function pintaModes() {
@@ -784,9 +797,7 @@ function pintaModes() {
 }
 
 async function xarxaDe(lat, lon, esport) {
-  if (!indexVoltes) indexVoltes = await fetch("voltes/index.json").then((r) => (r.ok ? r.json() : { regions: [] }))
-    .catch(() => ({ regions: [] }));
-  const r = Voltes.regio(indexVoltes, lat, lon, esport);
+  const r = Voltes.regio(await carregaIndex(), lat, lon, esport);
   if (!r) return null;
   if (!xarxes.has(r.fitxer)) xarxes.set(r.fitxer, fetch(`voltes/${r.fitxer}`).then((x) => x.json()).then(Voltes.carrega));
   return xarxes.get(r.fitxer);
@@ -798,19 +809,25 @@ function aProposta(v) {
     passos: [], senseAsfalt: 0, carretera: 0, gent: null, transit: v.transit, principal: v.principal } };
 }
 
-/** Voltes per popularitat. Amb nomesBones (automàtic), només si alguna arriba al llindar; torna si n'ensenya. */
+/** Voltes per popularitat. Amb nomesBones (automàtic), només si alguna arriba al llindar; torna si n'ensenya.
+ *  La de la sessió és una volta de sessio.k km; la ruta a mida, la demanda que en fa buscaOberta. */
 async function buscaPopularitat(sessio, nomesBones, mes = false) {
   const res = $("resultats"), b = $("b-busca");
   const digues = (text) => { if (!nomesBones) { res.innerHTML = `<p>${text}</p>`; res.hidden = false; netejaCapes(); } };
+  const o = S.x ? demanda.voltes : { sortida: [sortida[1], sortida[0]], km: Math.min(sessio.k, 200), tipus: "volta" };
   b.disabled = true; b.textContent = t.buscant;
   try {
-    const x = await xarxaDe(sortida[1], sortida[0], esportVoltes()).catch(() => null);
+    const x = await xarxaDe(o.sortida[0], o.sortida[1], esportVoltes()).catch(() => null);
     if (!x) { digues(t.popularFora); return false; }
-    const r = Voltes.genera(x, { sortida: [sortida[1], sortida[0]], km: Math.min(sessio.k, 200), tipus: "volta", n: 3,
-      llavor: ++llavor, exclou: mes ? propostes.filter((p) => p.v).map((p) => p.v) : [] });
+    const r = Voltes.genera(x, { ...o, n: 3, llavor: ++llavor, exclou: mes ? propostes.filter((p) => p.v).map((p) => p.v) : [] });
     const voltes = nomesBones ? r.voltes.filter((v) => v.bona) : r.voltes;
-    if (!voltes.length) { digues(omple(t.popularCap, { k: fmt(sessio.k, 0) })); return false; }
+    if (!voltes.length) { digues(omple(t.popularCap, { k: S.x ? demanda.rang : fmt(sessio.k, 0) })); return false; }
     propostes = voltes.map(aProposta);
+    if (S.x) for (const p of propostes) {       // com les de BRouter: on és la sortida (i l'arribada) que en surt
+      const c = p.r.coords, fi = demanda.p.arribada;
+      p.mogut = Math.max(Motor.dist(demanda.p.sortida, c[0]), fi ? Motor.dist(fi, c[c.length - 1]) : 0);
+      Object.assign(p, { ab: Boolean(fi), d: demanda.p.desnivell });
+    }
     triada = 0;
     avisMode = false;
     pintaPropostes(sessio);
@@ -890,7 +907,7 @@ function botons(caixa, opcions, actiu, tria) {
 }
 
 function pintaOberta() {
-  const canvia = (camp) => (v) => { oberta[camp] = v; guarda(OBERTA, oberta); oblidaPropostes(); pintaOberta(); };
+  const canvia = (camp) => (v) => { oberta[camp] = v; guarda(OBERTA, oberta); oblidaPropostes(); pintaOberta(); pintaModes(); };
   botons($("o-esport"), Object.entries(t.oEsport), oberta.s, canvia("s"));
   botons($("o-terreny"), oberta.s === "run" ? Object.entries(t.oTerreny) : BICIS.map((o) => [o, t.bicis[o]]),
     oberta[oberta.s], canvia(oberta.s));
@@ -994,7 +1011,7 @@ async function encaminador(p) {
   };
 }
 
-async function buscaOberta(mes = false) {
+async function buscaOberta(mes = false, nomesMapa = mes) {
   const res = $("resultats");
   const diu = (text) => { netejaCapes(); res.replaceChildren(Object.assign(document.createElement("p"), { textContent: text })); res.hidden = false; };
   const de = (rol) => (punts.find((x) => x.rol === rol) || {}).p || null;
@@ -1010,6 +1027,16 @@ async function buscaOberta(mes = false) {
     desnivell: d0 != null || d1 != null ? [d0 || 0, d1 != null ? d1 : 1e9] : null,
   };
   Object.assign(S, { s: p.s, o: p.o, k: (k0 + k1) / 2, t: t.aMida });     // per al GPX, Garmin i les propostes
+  const ll = (q) => q && [q[1], q[0]];
+  demanda = { p, rang: `${fmt(k0)}-${fmt(k1)}`, voltes: { sortida: ll(p.sortida), arribada: ll(p.arribada), passaPer: p.pas.map(ll),
+    km: (k0 + k1) / 2, tolerancia: Math.max(0.05, (k1 - k0) / (k0 + k1)), desnivell: p.desnivell, tipus: "volta" } };
+  if (!mes) avisMode = false;
+  if (!nomesMapa && esportVoltes() && mode !== "alternatiu") {
+    if (mode === "popularitat") return buscaPopularitat(S, false);
+    if (mode === "biblioteca") return diu(t.bibliotecaAviat);
+    if (await buscaPopularitat(S, true)) return;
+    avisMode = true;
+  }
   const b = $("b-busca");
   b.disabled = true; b.textContent = t.buscant;
   reg("── ruta a mida", { s: p.s, o: p.o, km: p.km, desnivell: p.desnivell, pas: p.pas.length, arribada: Boolean(p.arribada), mes: llavorOberta });
@@ -1436,7 +1463,7 @@ function pintaPropostes(sessio) {
     mapaSol.className = "btn sec petit";
     mapaSol.type = "button";
     mapaSol.textContent = t.nomesMapa;
-    mapaSol.addEventListener("click", () => { triada = 0; avisMode = false; buscaCircuits(sessio); });
+    mapaSol.addEventListener("click", () => { triada = 0; avisMode = false; S.x ? buscaOberta(false, true) : buscaCircuits(sessio); });
     res.append(mapaSol);
   }
   res.hidden = false;
