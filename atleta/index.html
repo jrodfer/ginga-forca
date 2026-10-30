@@ -121,6 +121,12 @@ select.xip { appearance: auto; }
 .resultat.ok { border-color: var(--ok); }
 .resultat.no { border-color: var(--accent); }
 .dia .plou { color: var(--muted); font-size: 13px; }
+.eina.boto { width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); color: inherit;
+  font: inherit; cursor: pointer; }
+.eina.boto:first-child { border-top: 0; padding-top: 4px; }
+.subtitol { font-weight: 500; margin: 18px 0 2px; }
+.subtitol:first-child { margin-top: 4px; }
+.quin { font-size: 13px; color: var(--muted); margin: 12px 0 0; text-transform: uppercase; letter-spacing: .08em; }
 
 input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(--sans); color: var(--fg); background: var(--card);
   border: 1px solid var(--line); border-radius: 6px; }
@@ -169,12 +175,18 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     <div class="card" id="forma" hidden></div>
     <div class="card" id="avui"></div>
     <div class="resultat" id="resultat" role="status" aria-live="polite" hidden></div>
-    <div class="card" id="setmana"><p class="etiqueta verd">Aquesta setmana</p><div id="dies"></div><div id="no-puc"></div></div>
-    <div class="card" id="ve" hidden><p class="etiqueta verd">La setmana que ve</p><div id="dies-ve"></div><div id="no-puc-ve"></div></div>
+    <div class="card" id="setmana"><p class="etiqueta verd">Aquesta setmana</p><div id="dies"></div></div>
+    <div class="card" id="ve" hidden><p class="etiqueta verd">La setmana que ve</p><div id="dies-ve"></div></div>
     <div class="card" id="eines" hidden><p class="etiqueta">Quan vulguis, cada dia</p><div id="llista-eines"></div></div>
+    <div class="card" id="modifica" hidden>
+      <p class="etiqueta">Modifica els entrenaments</p>
+      <p class="petit muted">Mou una sessió a un altre dia, fes-la a dins o a fora, escurça-la si tens menys temps o salta-la.
+        També la d'ahir, si no la vas poder fer. Ginga ho comprova amb el teu pla abans de canviar-ho, i ho veuràs al
+        calendari i al rellotge.</p>
+      <div id="llista-modifica"></div>
+      <button type="button" class="enllac" id="tanca-modifica">Tanca</button>
+    </div>
     <p class="petit muted" id="peu">Es posa al dia sola cada diumenge, amb el correu.</p>
-    <p class="petit muted" id="peu-canvis" hidden>Pots moure una sessió, fer-la a dins o a fora, escurçar-la o saltar-la: Ginga
-      ho comprova amb el teu pla abans de canviar-ho, i ho veuràs al calendari i al rellotge.</p>
   </section>
 </main>
 <script>
@@ -229,7 +241,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     c.appendChild(b);
     cont.appendChild(c);
   }
-  function sessions(dia, cont) {
+  function sessions(dia, cont, ambCanvis, obert) {
     (dia.sessions || []).forEach(function (s) {
       var c = el("div", "sessio"), nom = el("div", "nom", s.nom);
       if (s.clau) nom.appendChild(el("span", "clau", "Sessió clau"));
@@ -237,11 +249,11 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
       c.appendChild(nom);
       if (s.interior != null) c.appendChild(el("div", "on", ON[s.tipus] || ""));
       if (s.nota) c.appendChild(el("div", "nota", s.nota));
-      if (s.pluja) pluja(s, c);
+      if (s.pluja && ambCanvis) pluja(s, c);
       (s.accions || []).forEach(function (a) {                  // a dins, la ruta no cal
         if (!(s.interior && /\/rutes\//.test(a.url || ""))) accio(a, c, true);
       });
-      if (s.opcions) canvis(s, c);
+      if (s.opcions && ambCanvis) canvis(s, c, obert);
       cont.appendChild(c);
     });
     (dia.accions || []).forEach(function (a) { accio(a, cont); });
@@ -301,13 +313,14 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     if (f.childNodes.length) c.appendChild(f);
     cont.appendChild(c);
   }
-  function canvis(s, cont) {
+  function canvis(s, cont, obert) {
     var o = s.opcions, c = el("div", "canvia"), obre = el("button", "obre", "Canvia-la");
     obre.type = "button";
     obre.setAttribute("aria-expanded", "false");
     obre.disabled = !!pendent;
     var panell = el("div", "panell");
-    panell.hidden = true;
+    panell.hidden = !obert;
+    obre.setAttribute("aria-expanded", String(!!obert));
     obre.addEventListener("click", function () {
       panell.hidden = !panell.hidden;
       obre.setAttribute("aria-expanded", String(!panell.hidden));
@@ -379,6 +392,53 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     cont.appendChild(c);
   }
 
+  // L'eina «Modifica els entrenaments»: totes les sessions que encara es poden tocar, d'aquesta setmana (també les
+  // dels dies passats que no s'han fet) i de la que ve, cadascuna amb els seus canvis oberts, i els dies que no pot.
+  var modificaObert = false;
+  function obreModifica(si) {
+    modificaObert = si;
+    $("modifica").hidden = !si;
+    if (si) $("modifica").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function quinDia(d, avui) {
+    var dif = Math.round((data(d) - data(avui)) / 864e5), nom = DIES[data(d).getDay()];
+    var quan = dif === 0 ? "Avui" : dif === -1 ? "Ahir, " + nom.toLowerCase() : dif === 1 ? "Demà, " + nom.toLowerCase() : nom;
+    return quan + " " + data(d).getDate();
+  }
+  function pintaModifica(actual, ve, avui) {
+    var cont = $("llista-modifica");
+    cont.textContent = "";
+    var hiHa = false;
+    [[actual, "Aquesta setmana"], [ve, "La setmana que ve"]].forEach(function (x) {
+      var w = x[0];
+      if (!w || !w.canvis) return;
+      var dies = w.dies.filter(function (d) { return d.sessions.some(function (s) { return s.opcions; }); });
+      if (!dies.length) return;
+      hiHa = true;
+      cont.appendChild(el("p", "subtitol", x[1]));
+      var dAvui = w.dies.filter(function (d) { return d.data === avui; })[0];
+      if (dAvui && dAvui.sessions.some(function (s) { return s.opcions; })) {
+        var f = el("div", "fila");
+        f.appendChild(xip("Avui no puc", function () {
+          if (confirm("Ginga mourà les sessions d'avui a un altre dia de la setmana, sense espatllar el pla. Si alguna no hi cap, se salta. Endavant?"))
+            demana({ accio: "no_disponible", dies: [avui] });
+        }));
+        cont.appendChild(f);
+      }
+      dies.forEach(function (d) {
+        cont.appendChild(el("p", "quin", quinDia(d.data, avui)));
+        sessions({ sessions: d.sessions.filter(function (s) { return s.opcions; })      // sense els enllaços: aquí, només canvis
+          .map(function (s) { return Object.assign({}, s, { accions: [] }); }) }, cont, true);
+      });
+      var np = el("div");
+      noPuc(w, np, avui);
+      cont.appendChild(np);
+    });
+    if (!hiHa) cont.appendChild(el("p", "muted", "Ara mateix no hi ha cap sessió que es pugui canviar."));
+    $("modifica").hidden = !modificaObert;
+  }
+  $("tanca-modifica").addEventListener("click", function () { obreModifica(false); });
+
   function mostra(text, estat) {
     var r = $("resultat");
     r.hidden = !text;
@@ -444,19 +504,7 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
     cont.appendChild(el("p", "etiqueta", "Avui"));
     cont.appendChild(el("h1", null, llarg(avui)));
     var dia = setmana && setmana.dies.filter(function (d) { return d.data === avui; })[0];
-    if (dia && ((dia.sessions || []).length || (dia.accions || []).length)) {
-      sessions(dia, cont);
-      if (setmana.canvis && dia.sessions.some(function (s) { return s.opcions; })) {
-        var f = el("div", "fila");
-        f.style.marginTop = "14px";
-        f.appendChild(xip("Avui no puc", function () {
-          if (confirm("Ginga mourà les sessions d'avui a un altre dia de la setmana, sense espatllar el pla. Si alguna no hi cap, se salta. Endavant?"))
-            demana({ accio: "no_disponible", dies: [avui] });
-        }));
-        cont.appendChild(f);
-      }
-      return;
-    }
+    if (dia && ((dia.sessions || []).length || (dia.accions || []).length)) return sessions(dia, cont);
     cont.appendChild(el("p", "muted", "Avui no tens cap sessió: descansa, que també és entrenar."));
     var seguent = setmana && setmana.dies.filter(function (d) { return d.data > avui && (d.sessions || []).length; })[0];
     if (seguent) cont.appendChild(el("p", "petit", DIES[data(seguent.data).getDay()] + ": " + resum(seguent)));
@@ -524,15 +572,24 @@ input[type="email"], #codi { width: 100%; padding: 14px; font: 400 16px/1.2 var(
 
     $("setmana").hidden = !actual;
     if (actual) pintaDies(actual, $("dies"), avui);
-    noPuc(actual, $("no-puc"), avui);
     $("ve").hidden = !ve;
     if (ve) pintaDies(ve, $("dies-ve"), avui);
-    noPuc(ve, $("no-puc-ve"), avui);
-    $("peu-canvis").hidden = !(actual && actual.canvis || ve && ve.canvis);
+    pintaModifica(actual, ve, avui);
 
     var eines = ((doc && doc.eines) || []).filter(function (e) { return segur(e.url); });
-    $("eines").hidden = !eines.length;
+    var potModificar = [actual, ve].some(function (w) {
+      return w && w.canvis && w.dies.some(function (d) { return d.sessions.some(function (x) { return x.opcions; }); });
+    });
+    $("eines").hidden = !eines.length && !potModificar;
     $("llista-eines").textContent = "";
+    if (potModificar) {
+      var b = el("button", "eina boto");
+      b.type = "button";
+      b.appendChild(el("div", "titol", "Modifica els entrenaments"));
+      b.appendChild(el("div", "petit muted", "Mou, escurça, fes a dins o a fora, o salta una sessió d'aquesta setmana."));
+      b.addEventListener("click", function () { obreModifica(true); });
+      $("llista-eines").appendChild(b);
+    }
     eines.forEach(function (e) {
       var a = el("a", "eina");
       a.href = e.url;
