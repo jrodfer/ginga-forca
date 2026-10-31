@@ -409,7 +409,10 @@ const T = {
     modes: "Com es fan les rutes", nomsModes: { auto: "Automàtic", popularitat: "Popularitat", biblioteca: "Biblioteca", alternatiu: "Alternatiu" },
     modeFet: { popularitat: "Generador per popularitat Ginga", biblioteca: "Biblioteca", alternatiu: "Generador alternatiu Ginga" },
     popular: "{x}% per trams populars", perOn: "per {v}", modeNoBo: "Cap volta per popularitat arribava a un {x}% de trams populars: aquestes són del generador alternatiu.",
-    bibliotecaAviat: "La biblioteca encara no és a punt en aquesta zona.", popularFora: "Aquí encara no tenim dades de popularitat.",
+    bibliotecaAviat: "Encara no hi ha rutes a la biblioteca en aquesta zona.", popularFora: "Encara no hi ha rutes a la biblioteca en aquesta zona.",
+    demana: "Demana-les a Ginga", demanaFet: "Fet! Ginga ja té la sol·licitud i les buscarà per aquesta zona.",
+    demanaNota: "Sol·licitud de rutes per a aquesta zona",
+    demanaLimit: "Aquest mes ja has demanat rutes a Ginga: se'n pot fer una sol·licitud al mes. La que has fet ja la tenim.",
     popularCap: "No he trobat cap volta de ~{k} km per trams populars des d'aquí. Prova un altre punt de sortida o el generador alternatiu.",
     nomesMapa: "Calcula-la només amb el mapa",
     perfil: {
@@ -512,7 +515,10 @@ const T = {
     modes: "How routes are made", nomsModes: { auto: "Automatic", popularitat: "Popularity", biblioteca: "Library", alternatiu: "Alternative" },
     modeFet: { popularitat: "Ginga popularity generator", biblioteca: "Library", alternatiu: "Ginga alternative generator" },
     popular: "{x}% on popular segments", perOn: "via {v}", modeNoBo: "No popularity loop reached {x}% popular segments: these come from the alternative generator.",
-    bibliotecaAviat: "The library isn't ready in this area yet.", popularFora: "We don't have popularity data here yet.",
+    bibliotecaAviat: "There are no routes in the library for this area yet.", popularFora: "There are no routes in the library for this area yet.",
+    demana: "Ask Ginga for them", demanaFet: "Done! Ginga has your request and will look for routes in this area.",
+    demanaNota: "Route request for this area",
+    demanaLimit: "You've already asked Ginga for routes this month: one request per month. We have the one you made.",
     popularCap: "I couldn't find a ~{k} km loop on popular segments from here. Try another start or the alternative generator.",
     nomesMapa: "Make it with the map only",
     perfil: {
@@ -766,10 +772,11 @@ function oblidaPropostes() {
 // (Voltes.LLINDAR_QUALITAT), i si no, el generador alternatiu (els circuits d'openrouteservice i BRouter de sempre).
 // «Més opcions» en fa de noves; al tercer cop surt «Calcula-la només amb el mapa» (en Joan, 30/10/2026).
 // La ruta a mida també (en Joan, 30/10/2026), amb el seu rang de km, el desnivell, els punts de pas i l'arribada.
-// Els modes surten per als esports que tenen alguna regió a voltes/index.json (de moment, només la bici de carretera).
+// Els modes surten sempre, a la bici i a peu, a les sessions i a la ruta a mida (en Joan, 31/10/2026); la pista
+// d'atletisme no en té. On no hi ha dades (voltes/index.json), l'automàtic fa el generador alternatiu, i la
+// popularitat i la biblioteca diuen que encara no hi ha rutes, amb «Demana-les a Ginga» (demanaRutes).
 const MODES = ["auto", "popularitat", "biblioteca", "alternatiu"];
 const MES_ABANS_DEL_MAPA = 3;
-const ESPORT_VOLTES = { "cycling-road": "carretera", "cycling-regular": "gravel", "cycling-mountain": "btt" };
 let mode = "auto", mesCops = 0, indexVoltes = null, avisMode = false;
 let demanda = null;             // què es demana al generador per popularitat (la ruta a mida)
 const xarxes = new Map();
@@ -783,9 +790,42 @@ let regionsVoltes = [];         // les de l'índex, quan ha arribat
 carregaIndex().then((ix) => { regionsVoltes = ix.regions || []; if (mapa) pintaModes(); });
 
 function esportVoltes() {
-  const e = S.x ? (oberta.s === "ride" ? ESPORT_VOLTES[oberta.ride] : oberta.run === "asfalt" ? "correr" : "trail")
-    : S.s === "ride" && S.p !== "pista" ? ESPORT_VOLTES[S.o] : null;
-  return e && regionsVoltes.some((r) => r.esport === e) ? e : null;
+  const perfil = S.x ? (oberta.s === "run" ? (oberta.run === "asfalt" ? "foot-walking" : "foot-hiking") : oberta.ride)
+    : S.p === "pista" ? null : S.o;
+  return Voltes.esport(perfil);
+}
+
+/** Sense rutes aquí (o la biblioteca, que encara no és a punt): el missatge i «Demana-les a Ginga». */
+function senseRutes(text, lat, lon) {
+  const res = $("resultats");
+  res.innerHTML = `<p>${text}</p><button class="btn sec" type="button" id="b-demana">${t.demana}</button>`
+    + `<p class="muted" id="demana-estat" aria-live="polite" hidden></p>`;
+  res.hidden = false;
+  netejaCapes();
+  $("b-demana").onclick = () => demanaRutes(lat, lon);
+}
+
+/** La sol·licitud de rutes a Ginga: pel canal dels informes (worker/rutes.js), amb l'esport i el lloc arrodonit
+    (~1 km, com el registre); a l'entrenador li arriba per correu (coach/informes_rutes.py) per baixar-les. */
+async function demanaRutes(lat, lon) {
+  const b = $("b-demana"), estat = $("demana-estat");
+  const diu = (text) => { estat.textContent = text; estat.hidden = false; };
+  if (!PROXY || !lectura || !lectura.sig) return diu(t.informeNo);
+  const sollicitud = { esport: esportVoltes(), mode, lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100 };
+  reg(`sol·licitud de rutes: ${sollicitud.esport} ${sollicitud.lat},${sollicitud.lon}`);
+  b.disabled = true;
+  try {
+    const r = await fetch(PROXY, { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ codi: lectura.codi, sig: lectura.sig,
+        informe: { text: registre.join("\n"), rutes: [], nota: t.demanaNota, sollicitud } }) });
+    if (r.status === 429) return diu(t.demanaLimit);
+    if (!r.ok) throw new Error(`proxy ${r.status}`);
+    diu(t.demanaFet);
+  } catch (e) {
+    console.warn("sol·licitud", e);
+    b.disabled = false;
+    diu(t.informeError);
+  }
 }
 
 function pintaModes() {
@@ -797,7 +837,7 @@ function pintaModes() {
 }
 
 async function xarxaDe(lat, lon, esport) {
-  const r = Voltes.regio(await carregaIndex(), lat, lon, esport);
+  const r = Voltes.regioPer(await carregaIndex(), lat, lon, esport);
   if (!r) return null;
   if (!xarxes.has(r.fitxer)) xarxes.set(r.fitxer, fetch(`voltes/${r.fitxer}`).then((x) => x.json()).then(Voltes.carrega));
   return xarxes.get(r.fitxer);
@@ -815,6 +855,10 @@ async function buscaPopularitat(sessio, nomesBones, mes = false) {
   const res = $("resultats"), b = $("b-busca");
   const digues = (text) => { if (!nomesBones) { res.innerHTML = `<p>${text}</p>`; res.hidden = false; netejaCapes(); } };
   const o = S.x ? demanda.voltes : { sortida: [sortida[1], sortida[0]], km: Math.min(sessio.k, 200), tipus: "volta" };
+  if (!Voltes.regioPer({ regions: regionsVoltes }, o.sortida[0], o.sortida[1], esportVoltes())) {
+    if (!nomesBones) senseRutes(t.popularFora, o.sortida[0], o.sortida[1]);
+    return false;
+  }
   b.disabled = true; b.textContent = t.buscant;
   try {
     const x = await xarxaDe(o.sortida[0], o.sortida[1], esportVoltes()).catch(() => null);
@@ -840,7 +884,7 @@ async function buscaPopularitat(sessio, nomesBones, mes = false) {
 async function buscaPerMode(sessio) {
   avisMode = false;
   if (mode === "popularitat") return buscaPopularitat(sessio, false);
-  if (mode === "biblioteca") { $("resultats").innerHTML = `<p>${t.bibliotecaAviat}</p>`; $("resultats").hidden = false; return; }
+  if (mode === "biblioteca") return senseRutes(t.bibliotecaAviat, sortida[1], sortida[0]);
   if (mode === "auto" && await buscaPopularitat(sessio, true)) return;
   avisMode = mode === "auto";
   return buscaCircuits(sessio);
@@ -1033,7 +1077,7 @@ async function buscaOberta(mes = false, nomesMapa = mes) {
   if (!mes) avisMode = false;
   if (!nomesMapa && esportVoltes() && mode !== "alternatiu") {
     if (mode === "popularitat") return buscaPopularitat(S, false);
-    if (mode === "biblioteca") return diu(t.bibliotecaAviat);
+    if (mode === "biblioteca") return senseRutes(t.bibliotecaAviat, demanda.voltes.sortida[0], demanda.voltes.sortida[1]);
     if (await buscaPopularitat(S, true)) return;
     avisMode = true;
   }

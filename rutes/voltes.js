@@ -246,7 +246,25 @@
       && lat >= r.caixa[0] && lat <= r.caixa[2] && lon >= r.caixa[1] && lon <= r.caixa[3]) || null;
   }
 
-  const api = { carrega, genera, resum, regio, mesProper, cami, LLINDAR_QUALITAT };
+  // L'esport de les voltes pel perfil de la sessió o de la ruta a mida (el d'openrouteservice, coach/rutes.py): a peu,
+  // per asfalt córrer i per camins trail. Sense xarxa de trail en un lloc, la de córrer, que té les dues menes de
+  // rutes a peu (garmin_rutes config.GRUPS): els camins populars també hi són.
+  const PER_PERFIL = { "cycling-road": "carretera", "cycling-regular": "gravel", "cycling-mountain": "btt",
+    "foot-walking": "correr", "foot-hiking": "trail" };
+  const SI_NO_HI_HA = { trail: "correr" };
+
+  /** L'esport de les voltes per a un perfil, o null (els modes surten encara que no hi hagi dades: llavors l'automàtic
+   *  fa el generador alternatiu i la resta ho diu, amb un botó per demanar-ne a Ginga). */
+  function esport(perfil) {
+    return PER_PERFIL[perfil] || null;
+  }
+
+  /** La regió que cobreix un punt per a l'esport, o la de la seva alternativa; o null. */
+  function regioPer(index, lat, lon, e) {
+    return regio(index, lat, lon, e) || (SI_NO_HI_HA[e] ? regio(index, lat, lon, SI_NO_HI_HA[e]) : null);
+  }
+
+  const api = { carrega, genera, resum, regio, regioPer, esport, mesProper, cami, LLINDAR_QUALITAT };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   arrel.Voltes = api;
 })(typeof window !== "undefined" ? window : globalThis);
