@@ -17,7 +17,9 @@
        (1 + PES_TRANSIT x trànsit): no es descarta cap carretera, però una de petita guanya si n'hi ha (en Joan,
        30/10/2026: «que els hi doni menys punts»);
      - de totes les candidates, les millors per popularitat mitjana menys PES_TRANSIT_ORDRE x trànsit mitjà, prou
-       diferents entre elles (DIFERENTS).
+       diferents entre elles (DIFERENTS);
+     - amb el terreny de la sessió (o.encaix, el camp z de coach/rutes.py), cada volta tancada en el sentit on cada
+       part cau al terreny que toca, i Motor.PES_TERRENY_VOLTES x el que no hi encaixa resta de la puntuació.
    El resum diu el % de km per trams populars (popularitat >= el llindar del fitxer) i si arriba a LLINDAR_QUALITAT. */
 
 (function (arrel) {
@@ -181,6 +183,11 @@
       principals, bona: m > 0 && mPop / m >= LLINDAR_QUALITAT };
   }
 
+  /** [metres, puja, baixa] de cada tram, en el sentit que es fa (per al terreny de la sessió). */
+  function perfilTrams(x, trams) {
+    return trams.map(([i, endavant]) => { const t = x.d.t[i]; return [t[2], endavant ? t[3] : t[4], endavant ? t[4] : t[3]]; });
+  }
+
   function comuns(x, a, b) {
     const sa = new Set(a.trams.map(([i]) => i));
     let m = 0, tot = 0;
@@ -196,7 +203,8 @@
 
   /** Les voltes candidates. opcions: {sortida: [lat, lon], km, tolerancia (0.1), tipus ("volta" | "anada"),
    *  desnivell: [min, max] o null, passaPer: [[lat, lon]], arribada: [lat, lon] o null (acaba allà), evita: [[lat, lon]] (el tram més proper de cada punt),
-   *  n (3), llavor, exclou: voltes ja ensenyades (no se'n torna cap de semblant)}. Torna {voltes, motiu}: motiu "fora" (la sortida no és a la xarxa), "cap" o null. */
+   *  n (3), llavor, exclou: voltes ja ensenyades (no se'n torna cap de semblant), encaix: el terreny de la sessió (z),
+   *  esportEncaix: run | ride}. Torna {voltes, motiu}: motiu "fora" (la sortida no és a la xarxa), "cap" o null. */
   function genera(x, o) {
     const objectiu = o.km * 1000, tol = o.tolerancia ?? 0.1, aleat = llavor(o.llavor ?? 1);
     const s = mesProper(x, o.sortida[0], o.sortida[1]);
@@ -232,7 +240,18 @@
         costat *= Math.sqrt(objectiu / (r.km * 1000));
       }
     }
-    const valor = (c) => c.pop - PES_TRANSIT_ORDRE * c.transit;
+    // el terreny de la sessió (o.encaix, el camp z): de cada volta tancada, el sentit on cada part cau on toca
+    if (o.encaix) {
+      for (let k = 0; k < cands.length; k++) {
+        const c = cands[k];
+        c.terreny = Motor.encaixTerreny(Motor.perfilDeTrams(perfilTrams(x, c.trams)), o.encaix, o.esportEncaix);
+        if (anada || fi !== null || !c.terreny) continue;
+        const girada = c.trams.slice().reverse().map(([i, e]) => [i, !e]);
+        const t = Motor.encaixTerreny(Motor.perfilDeTrams(perfilTrams(x, girada)), o.encaix, o.esportEncaix);
+        if (t < c.terreny) cands[k] = { ...resum(x, girada), terreny: t };
+      }
+    }
+    const valor = (c) => c.pop - PES_TRANSIT_ORDRE * c.transit - Motor.PES_TERRENY_VOLTES * (c.terreny || 0);
     cands.sort((a, b) => valor(b) - valor(a));
     const voltes = [];
     const ja = (o.exclou || []).concat(voltes);

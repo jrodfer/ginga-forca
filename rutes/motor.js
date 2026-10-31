@@ -612,6 +612,75 @@
     return millor;
   }
 
+  // ---------- el terreny de cada tram (camp z de la sessió, coach/rutes.py) ----------
+
+  // Criteri d'entrenador (metodologia/regles.yaml, «terreny»): una ruta on cap tram cau al terreny que toca pesa com
+  // un 50% de desviació dels km (3 x 0,5); a les voltes per popularitat, com perdre la meitat de la popularitat.
+  const PES_TERRENY = 1.5;
+  const PES_TERRENY_VOLTES = 0.5;
+  const TROS_TERRENY = 400;          // m: els trossos on es mira el pendent dins d'un tram
+  const MAX_SUAU = { ride: 6, run: 8 }; // %: la rampa més forta d'un tram suau (més, i la FC surt de la zona)
+
+  /** El perfil [[metres, altura], ...] d'un traçat amb altitud [lon, lat, ele], o null si no en té. */
+  function perfilDeCoords(coords, acc) {
+    if (!coords.length || coords[0][2] == null) return null;
+    return coords.map((c, i) => [acc[i], c[2]]);
+  }
+
+  /** El perfil d'una volta de trams: cada tram, [metres, puja, baixa] en el sentit que es fa. */
+  function perfilDeTrams(trams) {
+    const p = [[0, 0]];
+    for (const [m, puja, baixa] of trams) { const [d, e] = p[p.length - 1]; p.push([d + m, e + puja - baixa]); }
+    return p;
+  }
+
+  function alturaA(perfil, d) {
+    let lo = 0, hi = perfil.length - 1;
+    if (d <= perfil[0][0]) return perfil[0][1];
+    if (d >= perfil[hi][0]) return perfil[hi][1];
+    while (hi - lo > 1) { const mig = (lo + hi) >> 1; if (perfil[mig][0] <= d) lo = mig; else hi = mig; }
+    const [d0, e0] = perfil[lo], [d1, e1] = perfil[hi];
+    return d1 > d0 ? e0 + (e1 - e0) * (d - d0) / (d1 - d0) : e0;
+  }
+
+  /** Penalització (0 bé, 1 gens) del terreny d'una ruta per a la sessió: per a cada tram de z, el pendent de la ruta
+      allà on cau (en la mateixa part del recorregut), pesada per la llargada del tram. 0 si no hi ha z o altitud. */
+  function encaixTerreny(perfil, z, esport) {
+    if (!perfil || !Array.isArray(z) || !z.length) return 0;      // z ve de l'enllaç: pot venir de tot
+    const L = perfil[perfil.length - 1][0];
+    if (!L) return 0;
+    const pendent = (a, b) => 100 * (alturaA(perfil, b) - alturaA(perfil, a)) / Math.max(b - a, 1);
+    // els trams de feina (pujada, pla, baixada) per una banda i els suaus per l'altra, que compten la meitat: un tram
+    // de feina curt sense el seu terreny no queda diluït pels llargs de Z2
+    const suma = { clau: 0, s: 0 }, pes = { clau: 0, s: 0 };
+    for (const tram of z) {
+      if (!Array.isArray(tram)) continue;
+      const [ini, llarg, tipus, gMin = 4, gMax = 7] = tram;
+      if (tipus === "l" || !(llarg > 0) || !(ini >= 0)) continue;
+      const a = ini * L, b = Math.min(L, (ini + llarg) * L);
+      const trossos = [];
+      for (let x = a; x < b - 1; x += TROS_TERRENY) trossos.push(pendent(x, Math.min(b, x + TROS_TERRENY)));
+      if (!trossos.length) continue;
+      let p = 0;
+      if (tipus === "u") {
+        const g = pendent(a, Math.max(b, a + 200));
+        p = Math.min(1, (g < gMin ? gMin - g : g > gMax ? g - gMax : 0) / Math.max(gMin, 2));
+      } else if (tipus === "p") {
+        p = Math.min(1, Math.max(0, trossos.reduce((s, g) => s + Math.abs(g), 0) / trossos.length - 1.5) / 3);
+      } else if (tipus === "b") {
+        p = Math.min(1, Math.max(0, pendent(a, b) - 1) / 4);
+      } else if (tipus === "s") {
+        p = Math.min(1, Math.max(0, Math.max(...trossos) - (MAX_SUAU[esport] || 6)) / 6);
+      }
+      const grup = tipus === "s" ? "s" : "clau";
+      suma[grup] += llarg * p;
+      pes[grup] += llarg;
+    }
+    const clau = pes.clau ? suma.clau / pes.clau : null, suau = pes.s ? suma.s / pes.s : null;
+    if (clau === null && suau === null) return 0;
+    return ((clau || 0) + 0.5 * (suau || 0)) / ((clau !== null ? 1 : 0) + (suau !== null ? 0.5 : 0));
+  }
+
   // ---------- GPX ----------
 
   const esc = (t) => String(t).replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[c]));
@@ -1013,7 +1082,8 @@ out tags geom qt;`;
 
   const api = {
     llegeixHash, caducada, dist, acumulada, desnivellPositiu, fraccions, resumeix, rangDesnivell, desnivellObjectiu, penalitza,
-    millorPujada, gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
+    millorPujada, perfilDeCoords, perfilDeTrams, encaixTerreny, PES_TERRENY, PES_TERRENY_VOLTES,
+    gpx, indicacio, situa, properaManiobra, consultaPistes, pistes, b64url,
     foraCarretera, transitRef, perTransit, limitPrincipal, grauTransit, NIVELL_PRINCIPAL, puntsDePas, puntsAEvitar, esCarretera,
     radiGent, consultaGent, llegeixGent, indexGent, perOnVaLaGent, llegeixPolilinia, escriuPolilinia, girsDe, rutaFixa, voltes,
     puntesVoltes, corriolsDubtosos, PERFILS_BROUTER, deBrouter, consultaPobles, consultaPoblesOverpass, llegeixPobles,

@@ -420,9 +420,11 @@ const T = {
       pla: "Un circuit pla i amb trams seguits, per anar a ritme sense aturar-te.",
       desnivell: "Un circuit amb desnivell, com el que demana la sessió.",
       pujades: "Un circuit que passi per una pujada de {m} m al {g}% per fer-hi les {n} repeticions.",
+      pujada1: "Un circuit que passi per una pujada de {m} m al {g}% per fer-hi la part de feina.",
       pista: "Les sèries ({n}x{q}) surten millor a una pista d'atletisme: ritme exacte i sense semàfors.",
     },
     desnivellM: "Uns {a} m de desnivell positiu.",
+    terrenyZ: { u: "La feina, a les pujades i després d'escalfar.", p: "La part a ritme, en un tram pla." },
     fixa: "La ruta que t'ha preparat l'entrenador. Descarrega'n el GPX per al rellotge o segueix-la amb el mòbil.",
     laRuta: "La ruta",
     sortida: "D'on surts?", cerca: "Cerca", placeholder: "Ciutat, adreça o lloc",
@@ -526,9 +528,11 @@ const T = {
       pla: "A flat loop with long uninterrupted stretches, to hold your pace without stopping.",
       desnivell: "A hilly loop, as the session asks for.",
       pujades: "A loop that passes a {m} m climb at {g}% for your {n} repeats.",
+      pujada1: "A loop that passes a {m} m climb at {g}% for the main set.",
       pista: "The intervals ({n}x{q}) work best on an athletics track: exact pace and no traffic lights.",
     },
     desnivellM: "About {a} m of climbing.",
+    terrenyZ: { u: "The main set on the climbs, after the warm-up.", p: "The paced part on a flat stretch." },
     fixa: "The route your coach has set for you. Download the GPX for your watch or follow it on your phone.",
     laRuta: "The route",
     sortida: "Where are you starting from?", cerca: "Search", placeholder: "City, address or place",
@@ -655,9 +659,11 @@ function pintaSessio() {
   const r = S.r || {};
   const q = r.u === "m" ? (r.q >= 1000 && r.q % 1000 === 0 ? `${r.q / 1000} km` : `${r.q} m`) : durada(r.q || 0);
   const g = r.g ? (r.g[0] === r.g[1] ? r.g[0] : `${r.g[0]}-${r.g[1]}`) : "";
-  let que = omple(t.perfil[S.p] || t.perfil.suau, { n: r.n, q, m: r.m, g });
+  let que = omple(t.perfil[S.p === "pujades" && r.n === 1 ? "pujada1" : S.p] || t.perfil.suau, { n: r.n, q, m: r.m, g });
   const rang = Motor.rangDesnivell(S);
   if (S.p === "desnivell" && rang) que += " " + omple(t.desnivellM, { a: rang[0] === rang[1] ? rang[0] : `${rang[0]}-${rang[1]}` });
+  // el terreny de cada tram (camp z): què hi busquem, si la sessió en demana
+  for (const k of ["u", "p"]) if (S.p !== "pujades" && Array.isArray(S.z) && S.z.some((x) => x[2] === k)) que += " " + t.terrenyZ[k];
   $("que-busquem").textContent = S.f ? t.fixa : que;
   if (S.k > 100) { $("avis").textContent = t.llarga; $("avis").hidden = false; }
   $("sessio").hidden = false;
@@ -863,7 +869,7 @@ async function buscaPopularitat(sessio, nomesBones, mes = false) {
   try {
     const x = await xarxaDe(o.sortida[0], o.sortida[1], esportVoltes()).catch(() => null);
     if (!x) { digues(t.popularFora); return false; }
-    const r = Voltes.genera(x, { ...o, n: 3, llavor: ++llavor, exclou: mes ? propostes.filter((p) => p.v).map((p) => p.v) : [] });
+    const r = Voltes.genera(x, { ...o, ...(S.x ? {} : { encaix: sessio.z, esportEncaix: sessio.s }), n: 3, llavor: ++llavor, exclou: mes ? propostes.filter((p) => p.v).map((p) => p.v) : [] });
     const voltes = nomesBones ? r.voltes.filter((v) => v.bona) : r.voltes;
     if (!voltes.length) { digues(omple(t.popularCap, { k: S.x ? demanda.rang : fmt(sessio.k, 0) })); return false; }
     propostes = voltes.map(aProposta);
@@ -1324,6 +1330,9 @@ function valora(c, sessio) {
     r.foraCarretera = r.corriols = d.metres;
   }
   let pena = Motor.penalitza(r, sessio);
+  // cada part de la sessió al terreny que toca (camp z: la pujada just després d'escalfar, el ritme en pla...)
+  r.terreny = Motor.encaixTerreny(Motor.perfilDeCoords(r.coords, r.acc), sessio.z, sessio.s);
+  pena += Motor.PES_TERRENY * r.terreny;
   let pujada = null;
   if (sessio.p === "pujades") {
     pujada = Motor.millorPujada(r.coords, r.acc, sessio.r);
